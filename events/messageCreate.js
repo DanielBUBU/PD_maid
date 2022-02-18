@@ -2,6 +2,7 @@ const fs = require('fs');
 const { Client, Collection, Intents } = require('discord.js');
 const { globalPrefix } = require('../config.json');
 
+
 const commands = new Collection();
 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
@@ -15,8 +16,8 @@ for (const file of commandFiles) {
 
 module.exports = {
     name: 'messageCreate',
-    execute(message) {
-        console.log(` sent a message.`);
+    execute(client, message) {
+        //console.log(` sent a message.`);
 
         let is_command = false;
 
@@ -52,7 +53,12 @@ module.exports = {
 
         const command = commands.get(command_str);
         try {
-            command.execute(message, args);
+            if (command_str === "music") {
+                command.execute(client, message, args);
+            } else {
+                command.execute(client, message, args);
+            }
+
         } catch (error) {
             console.error(error);
             message.channel.send({ content: 'There was an error while executing this command!', ephemeral: true });

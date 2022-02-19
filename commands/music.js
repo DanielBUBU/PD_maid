@@ -2,10 +2,6 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 const { MessageAttachment, MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
 const ytdl = require('ytdl-core');
 const {
-    AudioPlayerStatus,
-    StreamType,
-    createAudioPlayer,
-    createAudioResource,
     joinVoiceChannel,
     VoiceConnectionStatus,
     entersState,
@@ -109,7 +105,7 @@ module.exports = {
                 .setCustomId('pause')
                 .setLabel('Pause')
                 .setStyle('PRIMARY'),
-                pause = new MessageButton()
+                resume = new MessageButton()
                 .setCustomId('resume')
                 .setLabel('Resume')
                 .setStyle('PRIMARY'),
@@ -124,7 +120,7 @@ module.exports = {
 
 
         const output_embed = new MessageEmbed()
-            .setColor('#0099ff')
+            .setColor('#7C183D')
             .setTitle('help-command list')
             //.setURL('https://discord.js.org/')
             //.setAuthor('Some name', 'https://i.imgur.com/wSTFkRM.png', 'https://discord.js.org')

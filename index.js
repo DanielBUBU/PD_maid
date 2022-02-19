@@ -1,6 +1,6 @@
 const fs = require('fs');
 const { Client, Collection, Intents } = require('discord.js');
-const { token } = require('./config.json');
+const { token, guildId } = require('./config.json');
 const { map } = require('zod');
 const discordModals = require('discord-modals') // Define the discord-modals package!
 
@@ -13,6 +13,7 @@ const {
     createAudioResource,
     joinVoiceChannel,
     VoiceConnectionStatus,
+    getVoiceConnection,
     entersState,
 } = require('@discordjs/voice');
 
@@ -24,6 +25,10 @@ let connection = joinVoiceChannel({
     guildId: guild.id,
 });
 */
+
+
+
+
 
 
 
@@ -42,11 +47,19 @@ discordModals(client);
 
 client.queue = [];
 client.isloop = true;
-
+client.ytpl_continuation;
 client.audio_stream;
 client.audio_resauce;
 client.audio_player = createAudioPlayer();
 client.connection;
+client.ytpl_limit = 20;
+
+if (getVoiceConnection(guildId)) {
+    console.log('Found previous connection')
+    client.connection = getVoiceConnection(guildId);
+    client.connection.subscribe(client.audio_player);
+
+}
 
 //resauce error handle
 client.audio_player.on('error', error => {
@@ -57,7 +70,7 @@ client.audio_player.on(AudioPlayerStatus.Idle, () => {
     if (client.queue) {
         let next_song_url = client.queue.shift();
         console.log(next_song_url);
-        client.audio_stream = ytdl(next_song_url, { filter: 'audioonly' });
+        client.audio_stream = ytdl(next_song_url, { filter: 'audioonly', highWaterMark: 512, dlChunkSize: 65536 });
         client.audio_resauce = createAudioResource(client.audio_stream, { inputType: StreamType.Arbitrary });
         client.audio_player.play(client.audio_resauce);
 
@@ -73,7 +86,7 @@ client.audio_player.on(AudioPlayerStatus.Idle, () => {
 
 
 
-//event collector
+//events
 const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
 
 for (const file of eventFiles) {

@@ -1,6 +1,7 @@
 const fs = require('fs');
 const { Client, Collection, Intents } = require('discord.js');
-const { globalPrefix } = require('../config.json');
+const { globalPrefix, clientId } = require('../config.json');
+const ytpl = require('ytpl');
 
 
 const commands = new Collection();
@@ -16,7 +17,7 @@ for (const file of commandFiles) {
 
 module.exports = {
     name: 'messageCreate',
-    execute(client, message) {
+    async execute(client, message) {
         //console.log(` sent a message.`);
 
         let is_command = false;
@@ -24,7 +25,10 @@ module.exports = {
 
 
         //Send by bot?
-        if (message.author.bot) return;
+        if (message.author.bot) {
+            return
+        }
+
 
         let args;
         if (message.guild) {
@@ -41,8 +45,8 @@ module.exports = {
         }
 
         const command_str = args.shift().toLowerCase();
-        console.log(command_str);
-        console.log(args);
+        // console.log(command_str);
+        // console.log(args);
 
 
         if (command_str === "6WT") {

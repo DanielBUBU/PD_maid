@@ -1,13 +1,15 @@
 const { Modal, TextInputComponent, showModal } = require('discord-modals')
 const { MessageAttachment } = require('discord.js');
+const ytpl = require('ytpl');
 
-const modal = new Modal() // We create a Modal
+
+const yt_url_modal = new Modal() // We create a Modal
     .setCustomId('add_inp')
     .setTitle('Add song or list into queue!')
     .addComponents(
         new TextInputComponent() // We create an Text Input Component
         .setCustomId('add_url_str')
-        .setLabel('URL')
+        .setLabel('URL(Timeout if the playlist is too long)')
         .setStyle('SHORT') //IMPORTANT: Text Input Component Style can be 'SHORT' or 'LONG'
         .setMinLength(0)
         .setMaxLength(100)
@@ -30,7 +32,7 @@ const {
 
 module.exports = {
     name: 'interactionCreate',
-    execute(client, interaction) {
+    async execute(client, interaction) {
 
         const vc_channel = interaction.member.voice.channelId;
         console.log(`${interaction.user.tag} in #${interaction.channel.name} triggered an interaction.`);
@@ -114,10 +116,11 @@ module.exports = {
                 case 'add':
                     {
                         //await interaction.reply({ content: 'add clicked', ephemeral: true });
-                        showModal(modal, {
+                        showModal(yt_url_modal, {
                             client: client, // The showModal() method needs the client to send the modal through the API.
                             interaction: interaction // The showModal() method needs the interaction to send the modal with the Interaction ID & Token.
                         })
+                        //interaction.channel.send({ content: 'modal showed' });
                         return
                     }
                 case 'join':
@@ -188,9 +191,9 @@ module.exports = {
                             //console.log(interaction.message.components[1]);
                             let file = new MessageAttachment('./assets/disgust.png');
                             interaction.message.channel.send({ embeds: [interaction.message.embeds[0]], components: [new_row1, new_row2] });
-                            interaction.message.delete()
+                            interaction.message.delete();
                         } catch (error) {
-
+                            console.log(error);
                         }
 
                         return
@@ -208,6 +211,43 @@ module.exports = {
                         }
 
                         return
+                    }
+                case 'ytpl_toomuch_but':
+                    {
+                        let playlist = client.ytpl_continuation;
+                        let go_flag = true;
+                        interaction.channel.send((playlist.items.length - client.ytpl_limit) + ' songs adding to list')
+                        for (let index = client.ytpl_limit; index < playlist.items.length; index++) {
+                            client.queue.push(playlist.items[index].shortUrl);
+                        }
+                        client.ytpl_continuation = playlist.continuation;
+
+
+                        if (client.ytpl_continuation) {
+                            while (go_flag) {
+                                playlist = await ytpl.continueReq(client.ytpl_continuation);
+
+                                interaction.channel.send((playlist.items.length) + ' songs adding to list')
+                                for (let index = 0; index < playlist.items.length; index++) {
+                                    client.queue.push(playlist.items[index].shortUrl);
+                                }
+
+                                client.ytpl_continuation = playlist.continuation;
+                                if (playlist.continuation) {
+                                    // let new_row1 = interaction.message.components[0];
+                                    client.ytpl_continuation = playlist.continuation;
+                                    interaction.channel.send('Detected too much song in playlist')
+                                } else {
+                                    go_flag = false;
+                                }
+                            }
+                            interaction.message.delete();
+                        } else {
+                            interaction.message.delete();
+                        }
+
+
+
                     }
             }
 

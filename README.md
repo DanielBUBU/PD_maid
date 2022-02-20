@@ -2,8 +2,8 @@
 
 ## How to use
 
-create config.json in root
-Format:
+create config.json in root</br>
+Format:</br>
 `
 {
     "clientId": "",
@@ -11,14 +11,14 @@ Format:
     "globalPrefix": "",
     "token": ""
 }
-`
-install lost packages and click start.bat
+`</br>
+install lost packages and click start.bat</br>
 
 ## Future
 
-Nowplaying function
-embed codes improve
-low quality audio or the error below due to ytdl function settings
+- Nowplaying function
+- embed codes improve
+- low quality audio or the error below due to ytdl function settings</br>
 "R [Error]: connect EACCES"
 
 ## change log

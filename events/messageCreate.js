@@ -1,7 +1,6 @@
 const fs = require('fs');
-const { Client, Collection, Intents } = require('discord.js');
-const { globalPrefix, clientId } = require('../config.json');
-const ytpl = require('ytpl');
+const { Collection } = require('discord.js');
+const { globalPrefix } = require('../config.json');
 
 
 const commands = new Collection();
@@ -67,16 +66,6 @@ module.exports = {
             console.error(error);
             message.channel.send({ content: 'There was an error while executing this command!', ephemeral: true });
         }
-
-
-        /*if (command === 'prefix') {
-            if (args.length) {
-                await prefixes.set(message.guild.id, args[0]);
-                return message.channel.send(`Successfully set prefix to \`${args[0]}\``);
-            }
-
-            return message.channel.send(`Prefix is \`${await prefixes.get(message.guild.id) || globalPrefix}\``);
-        }*/
 
     },
 };

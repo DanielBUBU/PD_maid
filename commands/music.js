@@ -1,14 +1,10 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { MessageAttachment, MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
-const ytdl = require('ytdl-core');
+
+
 const {
-    joinVoiceChannel,
-    VoiceConnectionStatus,
-    entersState,
-} = require('@discordjs/voice');
-
-
-
+    join_channel,
+} = require('../music_functions/music_func.js');
 
 
 module.exports = {
@@ -44,28 +40,7 @@ module.exports = {
 
         } else {
             message.channel.send('You are in voice channel');
-            const connection = joinVoiceChannel({
-                channelId: vc_channel,
-                guildId: message.guildId,
-                adapterCreator: message.guild.voiceAdapterCreator,
-            });
-            connection.subscribe(client.audio_player);
-            client.connection = connection;
-
-            //try to reconnect if disconnect
-            client.connection.on(VoiceConnectionStatus.Disconnected, async(oldState, newState) => {
-                try {
-                    await Promise.race([
-                        entersState(client.connection, VoiceConnectionStatus.Signalling, 5000),
-                        entersState(client.connection, VoiceConnectionStatus.Connecting, 5000),
-                    ]);
-                    // Seems to be reconnecting to a new channel - ignore disconnect
-                } catch (error) {
-                    // Seems to be a real disconnect which SHOULDN'T be recovered from
-                    console.log("connection error!!(MUSIC)");
-                    client.connection.destroy();
-                }
-            });
+            join_channel(client, message);
 
 
             row2.addComponents(

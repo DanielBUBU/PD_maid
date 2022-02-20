@@ -1,36 +1,18 @@
 const fs = require('fs');
-const { Client, Collection, Intents } = require('discord.js');
+const { Client, Intents } = require('discord.js');
 const { token, guildId } = require('./config.json');
-const { map } = require('zod');
 const discordModals = require('discord-modals') // Define the discord-modals package!
 
-const ytpl = require('ytpl');
-const ytdl = require('ytdl-core');
+
+const {
+    next_song,
+} = require('./music_functions/music_func.js');
+
 const {
     AudioPlayerStatus,
-    StreamType,
     createAudioPlayer,
-    createAudioResource,
-    joinVoiceChannel,
-    VoiceConnectionStatus,
     getVoiceConnection,
-    entersState,
 } = require('@discordjs/voice');
-
-/*
-const resource = createAudioResource(stream, { inputType: StreamType.Arbitrary });
-const player = createAudioPlayer();
-let connection = joinVoiceChannel({
-    channelId: voiceChannel.id,
-    guildId: guild.id,
-});
-*/
-
-
-
-
-
-
 
 const client = new Client({
     intents: [Intents.FLAGS.GUILDS,
@@ -52,7 +34,7 @@ client.audio_stream;
 client.audio_resauce;
 client.audio_player = createAudioPlayer();
 client.connection;
-client.ytpl_limit = 20;
+client.ytpl_limit = 400;
 
 if (getVoiceConnection(guildId)) {
     console.log('Found previous connection')
@@ -67,20 +49,7 @@ client.audio_player.on('error', error => {
 });
 //get next song automatically
 client.audio_player.on(AudioPlayerStatus.Idle, () => {
-    if (client.queue) {
-        let next_song_url = client.queue.shift();
-        console.log(next_song_url);
-        client.audio_stream = ytdl(next_song_url, { filter: 'audioonly', highWaterMark: 512, dlChunkSize: 65536 });
-        client.audio_resauce = createAudioResource(client.audio_stream, { inputType: StreamType.Arbitrary });
-        client.audio_player.play(client.audio_resauce);
-
-        if (client.isloop === true) {
-            client.queue.push(next_song_url);
-        }
-    } else {
-        console.log("queue is empty")
-    }
-
+    next_song(client, null)
 });
 
 

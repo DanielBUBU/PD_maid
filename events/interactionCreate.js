@@ -1,7 +1,13 @@
-const { Modal, TextInputComponent, showModal } = require('discord-modals')
+const { Modal, TextInputComponent, showModal } = require('discord-modals');
 const { MessageAttachment } = require('discord.js');
 const ytpl = require('ytpl');
 
+
+const {
+    next_song,
+    join_channel,
+    connection_self_destruct,
+} = require('../music_functions/music_func.js');
 
 const yt_url_modal = new Modal() // We create a Modal
     .setCustomId('add_inp')
@@ -18,16 +24,6 @@ const yt_url_modal = new Modal() // We create a Modal
         .setValue('value')
     );
 
-const ytdl = require('ytdl-core');
-const {
-    AudioPlayerStatus,
-    StreamType,
-    createAudioPlayer,
-    createAudioResource,
-    joinVoiceChannel,
-    VoiceConnectionStatus,
-    entersState,
-} = require('@discordjs/voice');
 
 
 module.exports = {
@@ -87,15 +83,11 @@ module.exports = {
                         if (client.connection) {
                             interaction.message.channel.send({ content: 'Connection detected,skipping' });
                             if (client.queue.length > 1) {
-                                let next_song_url = client.queue.shift();
-                                console.log(next_song_url);
-                                client.audio_stream = ytdl(next_song_url, { filter: 'audioonly' });
-                                client.audio_resauce = createAudioResource(client.audio_stream, { inputType: StreamType.Arbitrary });
-                                client.audio_player.play(client.audio_resauce);
+                                next_song(client, interaction);
                             } else {
-                                interaction.channel.send({ content: 'queue is empty, self distruction in 1 second' });
 
-                                client.connection.destroy();
+                                connection_self_destruct(client, interaction);
+
                                 interaction.message.components[1].components[1].setDisabled(false);
                                 interaction.message.components[1].components[2].setDisabled(true);
                                 let new_row1 = interaction.message.components[0];
@@ -127,46 +119,16 @@ module.exports = {
                     {
                         interaction.channel.send({ content: 'join clicked' });
 
-                        if (vc_channel) {
-                            const connection = joinVoiceChannel({
-                                channelId: vc_channel,
-                                guildId: interaction.guildId,
-                                adapterCreator: interaction.guild.voiceAdapterCreator,
-                            });
+                        join_channel(client, interaction);
 
-                            connection.subscribe(client.audio_player);
-                            client.connection = connection;
-
-                            //try to reconnect if disconnect
-                            client.connection.on(VoiceConnectionStatus.Disconnected, async(oldState, newState) => {
-                                try {
-                                    await Promise.race([
-                                        entersState(client.connection, VoiceConnectionStatus.Signalling, 5000),
-                                        entersState(client.connection, VoiceConnectionStatus.Connecting, 5000),
-                                    ]);
-                                    // Seems to be reconnecting to a new channel - ignore disconnect
-                                } catch (error) {
-                                    // Seems to be a real disconnect which SHOULDN'T be recovered from
-                                    console.log("connection error!!(IC)");
-                                    client.connection.destroy();
-                                }
-                            });
-
-                            interaction.message.components[1].components[1].setDisabled(true);
-                            interaction.message.components[1].components[2].setDisabled(false);
-                            let new_row1 = interaction.message.components[0];
-                            let new_row2 = interaction.message.components[1];
-                            let file = new MessageAttachment('./assets/disgust.png');
-                            interaction.message.channel.send({ embeds: [interaction.message.embeds[0]], components: [new_row1, new_row2] });
-                            interaction.message.delete();
-                            // console.log(connection);
-                            interaction.channel.send({ content: 'Joined' });
-                        } else {
-
-                            interaction.channel.send({ content: 'User needs in a voice channel to join' });
-                        }
-
-
+                        interaction.message.components[1].components[1].setDisabled(true);
+                        interaction.message.components[1].components[2].setDisabled(false);
+                        let new_row1 = interaction.message.components[0];
+                        let new_row2 = interaction.message.components[1];
+                        let file = new MessageAttachment('./assets/disgust.png');
+                        interaction.message.channel.send({ embeds: [interaction.message.embeds[0]], components: [new_row1, new_row2] });
+                        interaction.message.delete();
+                        // console.log(connection);
 
                         return
                     }
@@ -175,13 +137,7 @@ module.exports = {
                         interaction.reply({ content: 'leave clicked', ephemeral: true });
                         try {
 
-                            if (client.connection) {
-                                interaction.message.channel.send({ content: 'Connection detected, leaving' });
-                                client.connection.destroy();
-
-                            } else {
-                                interaction.message.channel.send({ content: 'No connection detected' });
-                            }
+                            connection_self_destruct(client, interaction);
                             interaction.message.components[1].components[1].setDisabled(false);
                             //console.log(interaction.message.components[1].components[1]);
                             interaction.message.components[1].components[2].setDisabled(true);
@@ -201,25 +157,28 @@ module.exports = {
                 case 'queue':
                     {
                         interaction.reply({ content: 'queue clicked' });
+                        let out_str = '';
                         if (client.queue.length > 0) {
-                            for (let index = 0; index < client.queue.length; index++) {
-                                interaction.channel.send({ content: client.queue[index] });
+                            for (let index = 0; index < 20; index++) {
+                                out_str = out_str + '\n' + index + ')' + client.queue[index];
                             }
 
                         } else {
-                            interaction.channel.send({ content: 'No song in queue' });
+                            out_str = 'No song in queue';
                         }
-
+                        interaction.channel.send({ content: out_str });
                         return
                     }
                 case 'ytpl_toomuch_but':
                     {
                         let playlist = client.ytpl_continuation;
                         let go_flag = true;
+                        /*
                         interaction.channel.send((playlist.items.length - client.ytpl_limit) + ' songs adding to list')
                         for (let index = client.ytpl_limit; index < playlist.items.length; index++) {
                             client.queue.push(playlist.items[index].shortUrl);
                         }
+                        */
                         client.ytpl_continuation = playlist.continuation;
 
 

@@ -24,11 +24,6 @@ const output_embed = new MessageEmbed()
     .setDescription('keep adding into queue?')
     .setTimestamp()
 
-const {
-    joinVoiceChannel,
-    VoiceConnectionStatus,
-} = require('@discordjs/voice');
-
 
 module.exports = {
     name: 'modalSubmit',
@@ -70,7 +65,7 @@ module.exports = {
 
 
                     } else if (ytdl.validateURL(inp_url)) {
-                        client.queue.push(inp_url);
+                        await client.queue.push(inp_url);
                         modal.reply('1 song adding to list' + `\`\`\`${inp_url}\`\`\``)
                     } else {
                         modal.reply('link not avaliable' + `\`\`\`${inp_url}\`\`\``)

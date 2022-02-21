@@ -13,6 +13,8 @@ module.exports = {
         .setDescription('Open music GUI'),
     execute(client, message, args) {
 
+        client.last_at_channel = message.channel;
+
         const vc_channel = message.member.voice.channelId;
         let row2 = new MessageActionRow();
 

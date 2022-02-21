@@ -35,6 +35,7 @@ client.audio_resauce;
 client.audio_player = createAudioPlayer();
 client.connection;
 client.ytpl_limit = 400;
+client.last_at_channel = null;
 
 if (getVoiceConnection(guildId)) {
     console.log('Found previous connection')
@@ -49,7 +50,15 @@ client.audio_player.on('error', error => {
 });
 //get next song automatically
 client.audio_player.on(AudioPlayerStatus.Idle, () => {
-    next_song(client, null)
+    setTimeout(() => {
+        if (client.audio_player.state.status === AudioPlayerStatus.Idle) {
+            next_song(client, null);
+        } else {
+            console.log(client.connection + client.audio_player + client.audio_stream +
+                client.audio_resauce);
+        }
+    }, 1000);
+
 });
 
 

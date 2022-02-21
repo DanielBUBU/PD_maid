@@ -11,20 +11,51 @@ const {
 
 const ytdl = require('ytdl-core');
 
+const { MessageAttachment, MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
+
 module.exports = {
     name: 'music_func.js',
-    next_song(client, args) {
+    async next_song(client, args) {
 
 
         if (client.queue.length) {
             const next_song_url = client.queue.shift();
+
+
+            const data = await ytdl.getBasicInfo(next_song_url);
+            let video_sec = data.videoDetails.lengthSeconds % 60;
+            let video_sec_str = video_sec.toString().padStart(2, '0');
+            //console.log(data.videoDetails.title);
+            //console.log(data.videoDetails.lengthSeconds);
+            //console.log(data.videoDetails.thumbnails[3].url);
+            //console.log(data);
+
+            const output_embed = new MessageEmbed()
+                .setColor('#7C183D')
+                .setTitle(data.videoDetails.title)
+                .setURL(next_song_url)
+                .setAuthor({ name: 'Nowplaying' })
+                //.setDescription('Nowplaying')
+                .setThumbnail(data.videoDetails.thumbnails[3].url)
+                .addField('Uploader', data.videoDetails.author.name.toString())
+                .addField('Time', (data.videoDetails.lengthSeconds - video_sec) / 60 + ":" + video_sec_str)
+                //.setImage('attachment://disgust.png')
+                .setTimestamp()
+                //.setFooter('Some footer text here', 'https://i.imgur.com/wSTFkRM.png');
+            client.last_at_channel.send({ embeds: [output_embed] }).then(msg => {
+                    setTimeout(() => msg.delete(), data.videoDetails.lengthSeconds * 1000)
+                })
+                .catch( /*Your Error handling if the Message isn't returned, sent, etc.*/ );;
+
             console.log(next_song_url);
-            client.audio_stream = ytdl(next_song_url, { filter: 'audioonly', highWaterMark: 1024, dlChunkSize: 65536 });
-            client.audio_resauce = createAudioResource(client.audio_stream, { inputType: StreamType.Arbitrary });
+            client.audio_stream = ytdl(next_song_url, { filter: 'audioonly', liveBuffer: 5000, highWaterMark: 1024, dlChunkSize: 65536 });
+            client.audio_resauce = createAudioResource(client.audio_stream, { inputType: StreamType.WebmOpus });
             client.audio_player.play(client.audio_resauce);
             if (client.isloop === true) {
                 client.queue.push(next_song_url);
             }
+
+
         } else {
             console.log("queue is empty")
         }

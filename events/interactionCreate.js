@@ -29,8 +29,7 @@ const yt_url_modal = new Modal() // We create a Modal
 module.exports = {
     name: 'interactionCreate',
     async execute(client, interaction) {
-
-        const vc_channel = interaction.member.voice.channelId;
+        client.last_at_channel = interaction.channel;
         console.log(`${interaction.user.tag} in #${interaction.channel.name} triggered an interaction.`);
 
         if (interaction.isButton()) {
@@ -85,6 +84,7 @@ module.exports = {
                             if (client.queue.length > 1) {
                                 next_song(client, interaction);
                             } else {
+                                client.resauce = null;
 
                                 connection_self_destruct(client, interaction);
 
@@ -173,12 +173,6 @@ module.exports = {
                     {
                         let playlist = client.ytpl_continuation;
                         let go_flag = true;
-                        /*
-                        interaction.channel.send((playlist.items.length - client.ytpl_limit) + ' songs adding to list')
-                        for (let index = client.ytpl_limit; index < playlist.items.length; index++) {
-                            client.queue.push(playlist.items[index].shortUrl);
-                        }
-                        */
                         client.ytpl_continuation = playlist.continuation;
 
 

@@ -85,14 +85,16 @@ module.exports = {
                                 next_song(client, interaction);
                             } else {
                                 client.resauce = null;
+                                client.queue = [];
 
+                                client.audio_stream = null;
+                                client.audio_resauce = null;
                                 connection_self_destruct(client, interaction);
 
                                 interaction.message.components[1].components[1].setDisabled(false);
                                 interaction.message.components[1].components[2].setDisabled(true);
                                 let new_row1 = interaction.message.components[0];
                                 let new_row2 = interaction.message.components[1];
-                                let file = new MessageAttachment('./assets/disgust.png');
                                 interaction.message.channel.send({ embeds: [interaction.message.embeds[0]], components: [new_row1, new_row2] });
                                 interaction.message.delete();
                                 console.log("queue is empty")

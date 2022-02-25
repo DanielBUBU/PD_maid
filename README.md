@@ -24,6 +24,10 @@ install lost packages and click start.bat</br>
 
 ## change log
 
+### Mein メイド v1.1.0 Stable #hotfix01
+- improve audio resauce stability
+- fix logic error in skip function
+
 ### Mein メイド v1.1.0 Stable
 - Add nowpalying function(Show when "next_song" function be called and auto deleting when song length end)
 

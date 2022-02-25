@@ -13,6 +13,8 @@ const ytdl = require('ytdl-core');
 
 const { MessageAttachment, MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
 
+
+
 module.exports = {
     name: 'music_func.js',
     async next_song(client, args) {
@@ -49,12 +51,15 @@ module.exports = {
 
             console.log(next_song_url);
             client.audio_stream = ytdl(next_song_url, { filter: 'audioonly', liveBuffer: 5000, highWaterMark: 1024, dlChunkSize: 65536 });
-            client.audio_resauce = createAudioResource(client.audio_stream, { inputType: StreamType.WebmOpus });
+            client.audio_resauce = createAudioResource(client.audio_stream, { inputType: StreamType.Arbitrary });
             client.audio_player.play(client.audio_resauce);
             if (client.isloop === true) {
                 client.queue.push(next_song_url);
             }
 
+            client.audio_resauce.playStream.on('error', error => {
+                console.error('Error:', error.message);
+            });
 
         } else {
             console.log("queue is empty")

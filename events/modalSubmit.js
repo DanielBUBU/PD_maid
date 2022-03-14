@@ -95,6 +95,8 @@ module.exports = {
                     console.log(error);
                 }
             }
+        } else if (modal.customId === 'remove_inp') {
+
         }
 
     },

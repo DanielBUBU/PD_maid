@@ -24,6 +24,14 @@ install lost packages and click start.bat</br>
 
 ## change log
 
+### Mein メイド v1.2.0 Stable
+- remove_inp modal event created(not functional yet)
+- playlist works different now, list won't shift if set loop to all,controlled using index now
+- single loop function
+- updated using npm update
+- removed unused packages
+- circular dependency warning solved
+
 ### Mein メイド v1.1.0 Stable #hotfix01
 - improve audio resauce stability
 - fix logic error in skip function

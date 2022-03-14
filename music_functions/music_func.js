@@ -3,6 +3,8 @@ const {
     createAudioResource,
 } = require('@discordjs/voice');
 
+const { join } = require('node:path');
+
 const {
     joinVoiceChannel,
     VoiceConnectionStatus,
@@ -13,15 +15,46 @@ const ytdl = require('ytdl-core');
 
 const { MessageAttachment, MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
 
-
+//const { clear_status } = require('./music_func.js');
 
 module.exports = {
     name: 'music_func.js',
     async next_song(client, args) {
 
+        let next_song_url = false;
+        switch (client.isloop) {
+            case 1:
+                next_song_url = client.queue[client.nowplaying];
+                break;
+            case 0:
+                for (let index = 0; index < client.nowplaying; index++) {
+                    client.queue.push(client.queue.shift());
+                }
+                client.queue.shift();
+                if (client.queue.length) {
+                    client.nowplaying = 0;
+                    next_song_url = client.queue[client.nowplaying];
+                } else {
+                    client.nowplaying = -1;
+                    console.log("queue empty")
+                }
+                break;
+            case 2:
+                if (client.queue.length > client.nowplaying + 1) {
+                    client.nowplaying++;
+                    next_song_url = client.queue[client.nowplaying];
+                } else {
+                    client.nowplaying = 0;
+                    next_song_url = client.queue[client.nowplaying];
+                }
+                break;
 
-        if (client.queue.length) {
-            const next_song_url = client.queue.shift();
+            default:
+                next_song_url = false;
+                break;
+        }
+
+        if (next_song_url) {
 
 
             const data = await ytdl.getBasicInfo(next_song_url);
@@ -53,16 +86,14 @@ module.exports = {
             client.audio_stream = ytdl(next_song_url, { filter: 'audioonly', liveBuffer: 5000, highWaterMark: 1024, dlChunkSize: 65536 });
             client.audio_resauce = createAudioResource(client.audio_stream, { inputType: StreamType.Arbitrary });
             client.audio_player.play(client.audio_resauce);
-            if (client.isloop === true) {
-                client.queue.push(next_song_url);
-            }
 
             client.audio_resauce.playStream.on('error', error => {
                 console.error('Error:', error.message);
             });
 
         } else {
-            console.log("queue is empty")
+            console.log("can't get next song path")
+            module.exports.clear_status(client, args);
         }
     },
 
@@ -113,14 +144,38 @@ module.exports = {
 
     connection_self_destruct(client, args) {
 
-        args.channel.send({ content: 'self destruction in 1 second' });
+        client.last_at_channel.send({ content: 'self destruction in 1 second' });
         if (client.connection) {
-            args.message.channel.send({ content: 'Connection detected, leaving' });
+            client.last_at_channel.send({ content: 'Connection detected, leaving' });
             client.connection.destroy();
             client.connection = null;
         } else {
-            args.message.channel.send({ content: 'No connection detected' });
+            client.last_at_channel.send({ content: 'No connection detected' });
         }
-    }
+    },
+
+
+    clear_status(client, args) {
+        client.resauce = null;
+        client.queue = [];
+        client.nowplaying = -1;
+
+        client.audio_stream = null;
+        client.audio_resauce = null;
+        client.connection.destroy();
+        client.connection = null;
+        if (args) {
+
+            args.message.components[1].components[1].setDisabled(false);
+            args.message.components[1].components[2].setDisabled(true);
+            let new_row1 = args.message.components[0];
+            let new_row2 = args.message.components[1];
+            args.message.channel.send({ embeds: [args.message.embeds[0]], components: [new_row1, new_row2] });
+            args.message.delete();
+
+
+        } else {}
+
+    },
 
 }

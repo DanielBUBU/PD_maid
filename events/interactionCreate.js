@@ -7,12 +7,13 @@ const {
     next_song,
     join_channel,
     connection_self_destruct,
+    clear_status,
 } = require('../music_functions/music_func.js');
 
 const yt_url_modal = new Modal() // We create a Modal
     .setCustomId('add_inp')
     .setTitle('Add song or list into queue!')
-    .addComponents(
+    .addComponents([
         new TextInputComponent() // We create an Text Input Component
         .setCustomId('add_url_str')
         .setLabel('URL(Timeout if the playlist is too long)')
@@ -21,8 +22,7 @@ const yt_url_modal = new Modal() // We create a Modal
         .setMaxLength(100)
         .setPlaceholder('Write a text here')
         .setRequired(true) // If it's required or not
-        .setValue('value')
-    );
+    ]);
 
 
 
@@ -37,12 +37,15 @@ module.exports = {
                 case 'loop':
                     {
                         interaction.reply({ content: 'loop clicked', ephemeral: true });
-                        if (client.isloop) {
-                            client.isloop = false;
+                        if (client.isloop === 2) {
+                            client.isloop = 0;
                             interaction.channel.send({ content: 'Set loop to false' });
+                        } else if (client.isloop === 0) {
+                            client.isloop = 1;
+                            interaction.channel.send({ content: 'Set loop to single' });
                         } else {
-                            client.isloop = true;
-                            interaction.channel.send({ content: 'Set loop to true' });
+                            client.isloop = 2;
+                            interaction.channel.send({ content: 'Set loop to multiple' });
                         }
                         return
                     }
@@ -84,20 +87,8 @@ module.exports = {
                             if (client.queue.length > 1) {
                                 next_song(client, interaction);
                             } else {
-                                client.resauce = null;
-                                client.queue = [];
-
-                                client.audio_stream = null;
-                                client.audio_resauce = null;
-                                connection_self_destruct(client, interaction);
-
-                                interaction.message.components[1].components[1].setDisabled(false);
-                                interaction.message.components[1].components[2].setDisabled(true);
-                                let new_row1 = interaction.message.components[0];
-                                let new_row2 = interaction.message.components[1];
-                                interaction.message.channel.send({ embeds: [interaction.message.embeds[0]], components: [new_row1, new_row2] });
-                                interaction.message.delete();
-                                console.log("queue is empty")
+                                clear_status(client, interaction);
+                                console.log("queue is empty");
                             }
 
 
@@ -161,9 +152,16 @@ module.exports = {
                         interaction.reply({ content: 'queue clicked' });
                         let out_str = '';
                         if (client.queue.length > 0) {
-                            for (let index = 0; index < 20; index++) {
-                                out_str = out_str + '\n' + index + ')' + client.queue[index];
+                            if (client.queue.length <= 20) {
+                                for (let index = 0; index < client.queue.length; index++) {
+                                    out_str = out_str + '\n' + index + ')' + client.queue[index];
+                                }
+                            } else {
+                                for (let index = 0; index < 20; index++) {
+                                    out_str = out_str + '\n' + index + ')' + client.queue[index];
+                                }
                             }
+
 
                         } else {
                             out_str = 'No song in queue';

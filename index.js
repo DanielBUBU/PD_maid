@@ -28,7 +28,7 @@ discordModals(client);
 // discord-modals needs your client in order to interact with modals
 
 client.queue = [];
-client.isloop = true;
+client.isloop = 2;
 client.ytpl_continuation;
 client.audio_stream;
 client.audio_resauce;
@@ -36,6 +36,7 @@ client.audio_player = createAudioPlayer();
 client.connection;
 client.ytpl_limit = 400;
 client.last_at_channel = null;
+client.nowplaying = -1;
 
 if (getVoiceConnection(guildId)) {
     console.log('Found previous connection')

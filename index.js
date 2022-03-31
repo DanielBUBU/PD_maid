@@ -1,8 +1,9 @@
 const fs = require('fs');
 const { Client, Intents } = require('discord.js');
-const { token, guildId } = require('./config.json');
+const { token, guildId, YT_auth } = require('./config.json');
 const discordModals = require('discord-modals') // Define the discord-modals package!
 
+const play_dl = require('play-dl');
 
 const {
     next_song,
@@ -16,13 +17,13 @@ const {
 
 const client = new Client({
     intents: [Intents.FLAGS.GUILDS,
-        // Intents.FLAGS.GUILD_MEMBERS,
+        Intents.FLAGS.GUILD_MEMBERS,
         Intents.FLAGS.GUILD_MESSAGES,
         Intents.FLAGS.GUILD_VOICE_STATES
     ],
     disableMentions: 'everyone',
+    //transport: 'ipc',
 })
-
 
 discordModals(client);
 // discord-modals needs your client in order to interact with modals
@@ -37,6 +38,11 @@ client.connection;
 client.ytpl_limit = 400;
 client.last_at_channel = null;
 client.nowplaying = -1;
+client.np_embed;
+
+if (YT_auth) {
+    play_dl.authorization();
+}
 
 if (getVoiceConnection(guildId)) {
     console.log('Found previous connection')
@@ -47,6 +53,7 @@ if (getVoiceConnection(guildId)) {
 
 //resauce error handle
 client.audio_player.on('error', error => {
+    console.log('ap_err');
     console.error(error);
 });
 //get next song automatically

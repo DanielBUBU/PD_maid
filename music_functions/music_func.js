@@ -3,7 +3,18 @@ const {
     createAudioResource,
 } = require('@discordjs/voice');
 
-const { join } = require('node:path');
+const {
+    MessageAttachment,
+    MessageEmbed,
+    MessageActionRow,
+    MessageButton
+} = require('discord.js');
+
+const play = require('play-dl'); // Everything
+
+// Individual functions by using destructuring
+const { video_basic_info, stream } = require('play-dl');
+
 
 const {
     joinVoiceChannel,
@@ -13,9 +24,6 @@ const {
 
 const ytdl = require('ytdl-core');
 
-const { MessageAttachment, MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
-
-//const { clear_status } = require('./music_func.js');
 
 module.exports = {
     name: 'music_func.js',
@@ -30,7 +38,9 @@ module.exports = {
                 for (let index = 0; index < client.nowplaying; index++) {
                     client.queue.push(client.queue.shift());
                 }
-                client.queue.shift();
+                if (client.nowplaying != -1) {
+                    client.queue.shift();
+                }
                 if (client.queue.length) {
                     client.nowplaying = 0;
                     next_song_url = client.queue[client.nowplaying];
@@ -77,19 +87,34 @@ module.exports = {
                 //.setImage('attachment://disgust.png')
                 .setTimestamp()
                 //.setFooter('Some footer text here', 'https://i.imgur.com/wSTFkRM.png');
-            client.last_at_channel.send({ embeds: [output_embed] }).then(msg => {
-                    setTimeout(() => msg.delete(), data.videoDetails.lengthSeconds * 1000)
-                })
-                .catch( /*Your Error handling if the Message isn't returned, sent, etc.*/ );;
+
 
             console.log(next_song_url);
-            client.audio_stream = ytdl(next_song_url, { filter: 'audioonly', liveBuffer: 5000, highWaterMark: 1024, dlChunkSize: 65536 });
-            client.audio_resauce = createAudioResource(client.audio_stream, { inputType: StreamType.Arbitrary });
-            client.audio_player.play(client.audio_resauce);
-
+            client.audio_stream = await play.stream(next_song_url, { discordPlayerCompatibility: true, quality: 2 });
+            //client.audio_stream = ytdl(next_song_url, { filter: 'audioonly', liveBuffer: 5000, highWaterMark: 1024, dlChunkSize: 65536 });
+            client.audio_resauce = createAudioResource(client.audio_stream.stream, { inputType: StreamType.Arbitrary });
             client.audio_resauce.playStream.on('error', error => {
-                console.error('Error:', error.message);
+                console.log('ar_err');
+                console.error('Error:', error, 'with track', client.audio_resauce.metadata);
             });
+
+            client.audio_player.play(client.audio_resauce);
+            console.log("Playing...");
+
+            client.last_at_channel.send({ embeds: [output_embed] }).then(msg => {
+                    client.np_embed = msg;
+                    //console.log(client.np_embed);
+                    setTimeout(() => {
+                        if (client.np_embed == msg) {
+                            msg.delete()
+                        }
+                    }, data.videoDetails.lengthSeconds * 1000);
+                })
+                .catch(console.error);;
+            /*
+                        client.audio_resauce.playStream.on('error', error => {
+                            console.error('Error:', error.message);
+                        });*/
 
         } else {
             console.log("can't get next song path")
@@ -177,5 +202,128 @@ module.exports = {
         } else {}
 
     },
+
+    send_control_panel(client, args) {
+
+        client.last_at_channel = args.channel;
+
+        const vc_channel = args.member.voice.channelId;
+        let row2 = new MessageActionRow();
+
+        if (!vc_channel) {
+            args.channel.send('You are not in voice channel');
+            row2.addComponents(
+                add = new MessageButton()
+                .setCustomId('add')
+                .setLabel('Add')
+                .setStyle('PRIMARY'),
+                join = new MessageButton()
+                .setCustomId('join')
+                .setLabel('Join')
+                .setStyle('PRIMARY'),
+                leave = new MessageButton()
+                .setCustomId('leave')
+                .setLabel('Leave')
+                .setStyle('DANGER')
+                .setDisabled(true),
+                queue = new MessageButton()
+                .setCustomId('queue')
+                .setLabel('Queue')
+                .setStyle('PRIMARY'),
+            );
+
+        } else {
+            args.channel.send('You are in voice channel');
+            module.exports.join_channel(client, args);
+
+
+            row2.addComponents(
+                add = new MessageButton()
+                .setCustomId('add')
+                .setLabel('Add')
+                .setStyle('PRIMARY'),
+                join = new MessageButton()
+                .setCustomId('join')
+                .setLabel('Join')
+                .setStyle('PRIMARY')
+                .setDisabled(true),
+                leave = new MessageButton()
+                .setCustomId('leave')
+                .setLabel('Leave')
+                .setStyle('DANGER'),
+                queue = new MessageButton()
+                .setCustomId('queue')
+                .setLabel('Queue')
+                .setStyle('PRIMARY'),
+            );
+
+        }
+
+
+
+        let file = new MessageAttachment('./assets/disgust.png');
+
+
+        const row1 = new MessageActionRow()
+            .addComponents(
+                loop = new MessageButton()
+                .setCustomId('loop')
+                .setLabel('Loop')
+                .setStyle('PRIMARY'),
+                pause = new MessageButton()
+                .setCustomId('pause')
+                .setLabel('Pause')
+                .setStyle('PRIMARY'),
+                resume = new MessageButton()
+                .setCustomId('resume')
+                .setLabel('Resume')
+                .setStyle('PRIMARY'),
+                skip = new MessageButton()
+                .setCustomId('skip')
+                .setLabel('Skip')
+                .setStyle('PRIMARY'),
+
+            );
+        let loop_mode_str = null;
+
+        switch (client.isloop) {
+            case 1:
+                loop_mode_str = "Single"
+                break;
+            case 0:
+                loop_mode_str = "None"
+                break;
+            case 2:
+                loop_mode_str = "Multiple"
+                break;
+
+            default:
+                loop_mode_str = "Unknown"
+                break;
+        }
+
+
+        let queue_str = "None";
+        if (client.queue.length != 0) {
+            queue_str = client.queue.length.toString();
+        }
+
+        const output_embed = new MessageEmbed()
+            .setColor('#7C183D')
+            .setTitle('Music control panel')
+            //.setURL('https://discord.js.org/')
+            //.setAuthor('Some name', 'https://i.imgur.com/wSTFkRM.png', 'https://discord.js.org')
+            .setDescription('Control music function here')
+            .setThumbnail('attachment://disgust.png')
+            .addField('Loop mode', loop_mode_str)
+            .addField('Total queue', client.queue.length.toString(), true)
+            //.addField('Nowplaying', client.nowplaying, true)
+            //.addField('leave', 'Some value here', true)
+            //.setImage('attachment://disgust.png')
+            .setTimestamp()
+            //.setFooter('Some footer text here', 'https://i.imgur.com/wSTFkRM.png');
+        args.channel.send({ embeds: [output_embed], files: [file], components: [row1, row2] });
+
+    }
 
 }

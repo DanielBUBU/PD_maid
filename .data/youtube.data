@@ -1,0 +1,26 @@
+{
+    "cookie": {
+        "SID": "IQinRHXig8wwJnghFhbbotXYwVQELU7n8Zz2A_b7GiduY3O1FwW-ZpeyUOhsvZB4hVSHGQ.",
+        "__Secure-1PSID": "IQinRHXig8wwJnghFhbbotXYwVQELU7n8Zz2A_b7GiduY3O1qHGK0Rq0qYlLomGd1dg3VA.",
+        "__Secure-3PSID": "IQinRHXig8wwJnghFhbbotXYwVQELU7n8Zz2A_b7GiduY3O1FVqyt0ESW1F7MOt4erLMLQ.",
+        "HSID": "A0Nkx6ELxd7G-0Gfk",
+        "SSID": "AFLIXdfyj0sMGKGA5",
+        "APISID": "4l31LPVTMvBJkN-5/AFdn4GjVHKs4w2wlv",
+        "SAPISID": "OTquIzHv_RKvMSzL/AoHcL96c9f6LrelTs",
+        "__Secure-1PAPISID": "OTquIzHv_RKvMSzL/AoHcL96c9f6LrelTs",
+        "__Secure-3PAPISID": "OTquIzHv_RKvMSzL/AoHcL96c9f6LrelTs",
+        "VISITOR_INFO1_LIVE": "nuGJdx5Vre0",
+        "LOGIN_INFO": "AFmmF2swRQIhAOlzCXBfr_3kX8Ig3itEyXYB9abTW57onWDzs_Ar3wvdAiAySgye_zHL6Bbpo39I3BQXm8BwzqCBBr7ZWCw3VJf5Zg:QUQ3MjNmeHlOUW9mZE5QYmZlZGcyalZvZEFEVmg2S3I0N3BiZ0hacFVCbzhGbHR1ZTBlQzBKajVPVDMzSXRXaXhHR3llNjN2RWloZVF1ZURMMjJ3WkRGQkdzQVZoT3l5LVQwNWY2U3lfbWRETFhVdjNpU1Q3N0dnN0lVelc4dU1PT082dkdaRHo2cVV1RC1QUGlQRng2aWg0ajE4am03Wi1R",
+        "_gcl_au": "1.1.1636426381.1647837551",
+        "PREF": "f4=4000000&tz=Asia.Tokyo&f6=40000000&library_tab_browse_id=FEmusic_liked_playlists&volume=45",
+        "YSC": "MZhCqCK7Fp4",
+        "SIDCC": "AJi4QfGGXr5MC3yWuA_AekxgMwBgjKSM6kXfawWyv97w0D_z1yvri5iBnSOzfCFyvuMRfD9VVIA",
+        "__Secure-3PSIDCC": "AJi4QfHoQlG9BmIEIEkFOdwfuOMGxwciZX76ETGjWMr69ztMtul0YCbAY6Lvw6RXe0chb73NIQ",
+        "expires": "Fri, 31-Mar-2023 06:33:04 GMT",
+        "path": "/",
+        "domain": ".youtube.com",
+        "priority": "high",
+        "SameSite": "none"
+    },
+    "file": true
+}

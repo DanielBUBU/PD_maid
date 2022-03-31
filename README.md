@@ -24,6 +24,12 @@ install lost packages and click start.bat</br>
 
 ## change log
 
+### Mein メイド v1.2.1 Stable
+- improve skip function, nowplaying embed will be delete if click skip button
+- skip button will remove the song from playlist now
+- queue button works relatively to nowplaying now
+- add send_control_panel and delete_np_embed (no error catcher yet) functions for code recycle
+
 ### Mein メイド v1.2.0 Stable
 - remove_inp modal event created(not functional yet)
 - playlist works different now, list won't shift if set loop to all,controlled using index now

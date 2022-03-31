@@ -8,6 +8,8 @@ const {
     join_channel,
     connection_self_destruct,
     clear_status,
+    send_control_panel,
+    delete_np_embed,
 } = require('../music_functions/music_func.js');
 
 const yt_url_modal = new Modal() // We create a Modal
@@ -47,6 +49,7 @@ module.exports = {
                             client.isloop = 2;
                             interaction.channel.send({ content: 'Set loop to multiple' });
                         }
+                        send_control_panel(client, interaction);
                         return
                     }
                 case 'pause':
@@ -61,7 +64,7 @@ module.exports = {
                         } else {
                             interaction.channel.send({ content: 'No connection detected' });
                         }
-
+                        send_control_panel(client, interaction);
                         return
                     }
                 case 'resume':
@@ -76,7 +79,7 @@ module.exports = {
                         } else {
                             interaction.channel.send({ content: 'No connection detected' });
                         }
-
+                        send_control_panel(client, interaction);
                         return
                     }
                 case 'skip':
@@ -84,6 +87,7 @@ module.exports = {
                         interaction.reply({ content: 'skip clicked', ephemeral: true });
                         if (client.connection) {
                             interaction.message.channel.send({ content: 'Connection detected,skipping' });
+                            delete_np_embed(client);
                             if (client.queue.length > 1) {
                                 next_song(client, interaction);
                             } else {
@@ -95,6 +99,7 @@ module.exports = {
                         } else {
                             interaction.message.channel.send({ content: 'No connection detected, press join or restart GUI' });
                         }
+                        send_control_panel(client, interaction);
 
                         return
                     }
@@ -151,22 +156,23 @@ module.exports = {
                     {
                         interaction.reply({ content: 'queue clicked' });
                         let out_str = '';
-                        if (client.queue.length > 0) {
-                            if (client.queue.length <= 20) {
-                                for (let index = 0; index < client.queue.length; index++) {
+                        if (client.nowplaying != -1) {
+                            if ((client.nowplaying + 20) <= client.queue.length) {
+                                for (let index = client.nowplaying; index < client.nowplaying + 20; index++) {
                                     out_str = out_str + '\n' + index + ')' + client.queue[index];
                                 }
                             } else {
-                                for (let index = 0; index < 20; index++) {
+                                for (let index = client.nowplaying; index < client.queue.length; index++) {
                                     out_str = out_str + '\n' + index + ')' + client.queue[index];
                                 }
                             }
 
 
                         } else {
-                            out_str = 'No song in queue';
+                            out_str = 'No song in playing';
                         }
                         interaction.channel.send({ content: out_str });
+                        send_control_panel(client, interaction);
                         return
                     }
                 case 'ytpl_toomuch_but':

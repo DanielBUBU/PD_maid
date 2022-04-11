@@ -9,7 +9,7 @@ const {
     connection_self_destruct,
     clear_status,
     send_control_panel,
-    delete_np_embed,
+    send_info_embed,
 } = require('../music_functions/music_func.js');
 
 const yt_url_modal = new Modal() // We create a Modal
@@ -27,6 +27,7 @@ const yt_url_modal = new Modal() // We create a Modal
     ]);
 
 
+const { show_queue_len } = require('./config.json');
 
 module.exports = {
     name: 'interactionCreate',
@@ -87,7 +88,6 @@ module.exports = {
                         interaction.reply({ content: 'skip clicked', ephemeral: true });
                         if (client.connection) {
                             interaction.message.channel.send({ content: 'Connection detected,skipping' });
-                            delete_np_embed(client);
                             if (client.queue.length > 1) {
                                 next_song(client, interaction);
                             } else {
@@ -155,23 +155,22 @@ module.exports = {
                 case 'queue':
                     {
                         interaction.reply({ content: 'queue clicked' });
-                        let out_str = '';
                         if (client.nowplaying != -1) {
-                            if ((client.nowplaying + 20) <= client.queue.length) {
-                                for (let index = client.nowplaying; index < client.nowplaying + 20; index++) {
-                                    out_str = out_str + '\n' + index + ')' + client.queue[index];
+                            await send_info_embed(client, client.queue[client.nowplaying], "Nowplaying is");
+                            if ((client.nowplaying + show_queue_len) <= client.queue.length) {
+                                for (let index = client.nowplaying + 1; index < client.nowplaying + show_queue_len; index++) {
+                                    await send_info_embed(client, client.queue[index], "No." + index);
                                 }
                             } else {
-                                for (let index = client.nowplaying; index < client.queue.length; index++) {
-                                    out_str = out_str + '\n' + index + ')' + client.queue[index];
+                                for (let index = client.nowplaying + 1; index < client.queue.length; index++) {
+                                    await send_info_embed(client, client.queue[index], index);
                                 }
                             }
 
 
                         } else {
-                            out_str = 'No song in playing';
+                            interaction.channel.send('No song in playing');
                         }
-                        interaction.channel.send({ content: out_str });
                         send_control_panel(client, interaction);
                         return
                     }

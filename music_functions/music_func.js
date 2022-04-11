@@ -3,8 +3,6 @@ const {
     createAudioResource,
 } = require('@discordjs/voice');
 
-//const { join } = require('node:path');
-
 const {
     joinVoiceChannel,
     VoiceConnectionStatus,
@@ -20,11 +18,11 @@ const {
     MessageButton
 } = require('discord.js');
 
-//const { clear_status } = require('./music_func.js');
-
 module.exports = {
     name: 'music_func.js',
     async next_song(client, args) {
+
+        module.exports.delete_np_embed(client);
 
         let next_song_url = false;
         switch (client.isloop) {
@@ -62,38 +60,7 @@ module.exports = {
         }
 
         if (next_song_url) {
-
-
-            const data = await ytdl.getBasicInfo(next_song_url);
-            let video_sec = data.videoDetails.lengthSeconds % 60;
-            let video_sec_str = video_sec.toString().padStart(2, '0');
-            //console.log(data.videoDetails.title);
-            //console.log(data.videoDetails.lengthSeconds);
-            //console.log(data.videoDetails.thumbnails[3].url);
-            //console.log(data);
-
-            const output_embed = new MessageEmbed()
-                .setColor('#7C183D')
-                .setTitle(data.videoDetails.title)
-                .setURL(next_song_url)
-                .setAuthor({ name: 'Nowplaying' })
-                //.setDescription('Nowplaying')
-                .setThumbnail(data.videoDetails.thumbnails[3].url)
-                .addField('Uploader', data.videoDetails.author.name.toString())
-                .addField('Time', (data.videoDetails.lengthSeconds - video_sec) / 60 + ":" + video_sec_str)
-                //.setImage('attachment://disgust.png')
-                .setTimestamp()
-                //.setFooter('Some footer text here', 'https://i.imgur.com/wSTFkRM.png');
-            client.last_at_channel.send({ embeds: [output_embed] }).then(msg => {
-                    client.np_embed = msg;
-                    //console.log(client.np_embed);
-                    setTimeout(() => {
-                        if (client.np_embed == msg) {
-                            msg.delete()
-                        }
-                    }, data.videoDetails.lengthSeconds * 1000);
-                })
-                .catch(console.error);;
+            module.exports.send_info_embed(client, next_song_url, "Nowplaying");
 
             console.log(next_song_url);
             client.audio_stream = ytdl(next_song_url, { filter: 'audioonly', liveBuffer: 5000, highWaterMark: 1024, dlChunkSize: 65536 });
@@ -180,7 +147,7 @@ module.exports = {
         client.resauce = null;
         client.queue = [];
         client.nowplaying = -1;
-
+        module.exports.delete_np_embed(client);
         client.audio_stream = null;
         client.audio_resauce = null;
         client.connection.destroy();
@@ -199,7 +166,7 @@ module.exports = {
 
     },
 
-    send_control_panel(client, args) {
+    async send_control_panel(client, args) {
 
         client.last_at_channel = args.channel;
 
@@ -318,8 +285,48 @@ module.exports = {
             //.setImage('attachment://disgust.png')
             .setTimestamp()
             //.setFooter('Some footer text here', 'https://i.imgur.com/wSTFkRM.png');
-        args.channel.send({ embeds: [output_embed], files: [file], components: [row1, row2] });
+        await args.channel.send({ embeds: [output_embed], files: [file], components: [row1, row2] });
+        if (client.nowplaying != -1) {
+            module.exports.send_info_embed(client, client.queue[client.nowplaying], "Nowplaying");
+        }
 
-    }
+    },
 
+    async send_info_embed(client, inp_url, embed_author_str) {
+
+        if (ytdl.validateURL(inp_url)) {
+
+
+            const data = await ytdl.getBasicInfo(inp_url);
+            let video_sec = data.videoDetails.lengthSeconds % 60;
+            let video_sec_str = video_sec.toString().padStart(2, '0');
+            //console.log(data.videoDetails.title);
+            //console.log(data.videoDetails.lengthSeconds);
+            //console.log(data.videoDetails.thumbnails[3].url);
+            //console.log(data);
+
+            const output_embed = new MessageEmbed()
+                .setColor('#7C183D')
+                .setTitle(data.videoDetails.title)
+                .setURL(inp_url)
+                .setAuthor({ name: embed_author_str })
+                //.setDescription('Nowplaying')
+                .setThumbnail(data.videoDetails.thumbnails[3].url)
+                .addField('Uploader', data.videoDetails.author.name.toString())
+                .addField('Time', (data.videoDetails.lengthSeconds - video_sec) / 60 + ":" + video_sec_str)
+                //.setImage('attachment://disgust.png')
+                .setTimestamp()
+                //.setFooter('Some footer text here', 'https://i.imgur.com/wSTFkRM.png');
+            client.last_at_channel.send({ embeds: [output_embed] }).then(msg => {
+                    if (embed_author_str == "Nowplaying") {
+                        module.exports.delete_np_embed(client);
+                        client.np_embed = msg;
+                    }
+                })
+                .catch(console.error);;
+        } else {
+            console.log("unsupported url")
+            module.exports.clear_status(client, args);
+        }
+    },
 }

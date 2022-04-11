@@ -27,7 +27,7 @@ const yt_url_modal = new Modal() // We create a Modal
     ]);
 
 
-const { show_queue_len } = require('./config.json');
+const { show_queue_len } = require('../config.json');
 
 module.exports = {
     name: 'interactionCreate',

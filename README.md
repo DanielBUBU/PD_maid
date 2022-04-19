@@ -26,6 +26,11 @@ install lost packages and click PD_Maid_link_start.bat,PD_Maid_link_start_admin.
 
 ## change log
 
+### Mein メイド v1.3.0 Stable
+- fix errors
+- change from ytpl to play-dl
+- add codes for fetching youtube playlist using play-dl (still testing)
+
 ### Mein メイド v1.2.2 Stable
 Please update config file
 - queue button now send embeds instead of a single message ,number of sending how many embeds can be setting in config.json

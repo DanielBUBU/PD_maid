@@ -118,13 +118,7 @@ module.exports = {
                         interaction.channel.send({ content: 'join clicked' });
 
                         join_channel(client, interaction);
-
-                        interaction.message.components[1].components[1].setDisabled(true);
-                        interaction.message.components[1].components[2].setDisabled(false);
-                        let new_row1 = interaction.message.components[0];
-                        let new_row2 = interaction.message.components[1];
-                        let file = new MessageAttachment('./assets/disgust.png');
-                        interaction.message.channel.send({ embeds: [interaction.message.embeds[0]], components: [new_row1, new_row2] });
+                        send_control_panel(client, interaction);
                         interaction.message.delete();
                         // console.log(connection);
 
@@ -136,15 +130,7 @@ module.exports = {
                         try {
 
                             connection_self_destruct(client, interaction);
-                            interaction.message.components[1].components[1].setDisabled(false);
-                            //console.log(interaction.message.components[1].components[1]);
-                            interaction.message.components[1].components[2].setDisabled(true);
-                            let new_row1 = interaction.message.components[0];
-                            let new_row2 = interaction.message.components[1];
-                            //interaction.message.edit(components = [new_row1, new_row2])
-                            //console.log(interaction.message.components[1]);
-                            let file = new MessageAttachment('./assets/disgust.png');
-                            interaction.message.channel.send({ embeds: [interaction.message.embeds[0]], components: [new_row1, new_row2] });
+                            send_control_panel(client, interaction);
                             interaction.message.delete();
                         } catch (error) {
                             console.log(error);
@@ -178,10 +164,9 @@ module.exports = {
                     {
                         let playlist = client.ytpl_continuation;
                         let go_flag = true;
-                        client.ytpl_continuation = playlist.continuation;
-
 
                         if (client.ytpl_continuation) {
+                            client.ytpl_continuation = playlist.continuation;
                             while (go_flag) {
                                 playlist = await ytpl.continueReq(client.ytpl_continuation);
 
@@ -199,13 +184,33 @@ module.exports = {
                                     go_flag = false;
                                 }
                             }
-                            interaction.message.delete();
                         } else {
                             interaction.message.delete();
                         }
 
 
 
+                    }
+                case 'play_dl_toomuch_but':
+                    {
+
+                        let playlist = client.play_dl_playlist;
+                        if (playlist) {
+
+                            let result;
+                            modal.reply(playlist.videoCount - (client.play_dl_page_limit * 100) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
+
+                            for (let index = client.play_dl_page_limit; index < playlist.total_pages; index++) {
+                                result = await playlist.page(index);
+                                result.forEach(element => {
+                                    client.queue.push(element.shift().url);
+                                });
+                            }
+                            interaction.message.delete();
+                        } else {
+                            interaction.message.delete();
+                        }
+                        client.play_dl_playlist = null;
                     }
             }
 

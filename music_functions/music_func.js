@@ -3,6 +3,8 @@ const {
     createAudioResource,
 } = require('@discordjs/voice');
 
+const play_dl = require('play-dl');
+
 const {
     joinVoiceChannel,
     VoiceConnectionStatus,
@@ -63,8 +65,12 @@ module.exports = {
             module.exports.send_info_embed(client, next_song_url, "Nowplaying");
 
             console.log(next_song_url);
-            client.audio_stream = ytdl(next_song_url, { filter: 'audioonly', liveBuffer: 5000, highWaterMark: 1024, dlChunkSize: 65536 });
-            client.audio_resauce = createAudioResource(client.audio_stream, { inputType: StreamType.Arbitrary });
+            //client.audio_stream = ytdl(next_song_url, { filter: 'audioonly', liveBuffer: 5000, highWaterMark: 1024, dlChunkSize: 65536 });
+            client.audio_stream = await play_dl.stream(next_song_url, {
+                quality: 2,
+                discordPlayerCompatibility: true
+            });
+            client.audio_resauce = createAudioResource(client.audio_stream.stream, { inputType: StreamType.Arbitrary });
             client.audio_player.play(client.audio_resauce);
 
             client.audio_resauce.playStream.on('error', error => {
@@ -167,14 +173,13 @@ module.exports = {
     },
 
     async send_control_panel(client, args) {
-
-        client.last_at_channel = args.channel;
-
-        const vc_channel = args.member.voice.channelId;
+        if (args) {
+            client.last_at_channel = args.channel;
+        }
         let row2 = new MessageActionRow();
 
-        if (!vc_channel) {
-            args.channel.send('You are not in voice channel');
+        if (!client.connection) {
+            client.last_at_channel.send('No connection detected');
             row2.addComponents(
                 add = new MessageButton()
                 .setCustomId('add')
@@ -196,9 +201,7 @@ module.exports = {
             );
 
         } else {
-            args.channel.send('You are in voice channel');
-            module.exports.join_channel(client, args);
-
+            client.last_at_channel.send('connecttion detected');
 
             row2.addComponents(
                 add = new MessageButton()
@@ -285,7 +288,7 @@ module.exports = {
             //.setImage('attachment://disgust.png')
             .setTimestamp()
             //.setFooter('Some footer text here', 'https://i.imgur.com/wSTFkRM.png');
-        await args.channel.send({ embeds: [output_embed], files: [file], components: [row1, row2] });
+        await client.last_at_channel.send({ embeds: [output_embed], files: [file], components: [row1, row2] });
         if (client.nowplaying != -1) {
             module.exports.send_info_embed(client, client.queue[client.nowplaying], "Nowplaying");
         }

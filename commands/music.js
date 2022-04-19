@@ -4,6 +4,7 @@ const { MessageAttachment, MessageEmbed, MessageActionRow, MessageButton } = req
 
 const {
     send_control_panel,
+    join_channel,
 } = require('../music_functions/music_func.js');
 
 
@@ -12,6 +13,7 @@ module.exports = {
         .setName('music')
         .setDescription('Open music GUI'),
     execute(client, message, args) {
+        join_channel(client, message);
         send_control_panel(client, message);
     },
 };

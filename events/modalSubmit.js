@@ -7,6 +7,7 @@ const {
     join_channel,
 } = require('../music_functions/music_func.js');
 
+const play_dl = require('play-dl');
 
 const { MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
 const row1 = new MessageActionRow()
@@ -41,27 +42,53 @@ module.exports = {
 
                     //fetch video
                     if (ytpl.validateID(inp_url)) {
-                        const playlist = await ytpl(inp_url, { pages: 4 });
-
-                        if (playlist.items.length >= client.ytpl_limit) {
-
-
+                        const playlist = await ytpl(inp_url, { pages: client.ytpl_limit });
+                        if (playlist.continuation) {
                             modal.channel.send({ embeds: [output_embed], components: [row1] });
-                            modal.reply((client.ytpl_limit) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
-                            for (let index = 0; index < client.ytpl_limit; index++) {
+                            modal.reply((client.ytpl_limit * 100) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
+                            for (let index = 0; index < client.ytpl_limit * 100; index++) {
                                 client.queue.push(playlist.items[index].shortUrl);
                             }
-
                             client.ytpl_continuation = playlist;
                         } else {
                             modal.reply((playlist.items.length) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
                             for (let index = 0; index < playlist.items.length; index++) {
                                 client.queue.push(playlist.items[index].shortUrl);
                             }
-
                         }
+                        /*
+                    if (inp_url.startsWith('https') && play_dl.yt_validate(inp_url) === 'playlist') {
+                        const playlist = await play_dl.playlist_info(inp_url, { incomplete: true });
+
+                        console.log(playlist.total_pages);
+                        console.log(playlist.total_videos);
+                        await playlist.fetch();
+                        console.log(playlist.total_pages);
+                        console.log(playlist.total_videos);
+                        let result;
+                        if (playlist.videoCount >= client.play_dl_video_limit) {
 
 
+                            modal.channel.send({ embeds: [output_embed], components: [row1] });
+                            modal.reply(client.play_dl_page_limit * 100 + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
+
+                            for (let index = 1; index <= client.play_dl_page_limit; index++) {
+                                console.log(index);
+                                result = await playlist.page(index);
+
+                            }
+                            client.play_dl_playlist = playlist;
+                            //    client.ytpl_continuation = playlist;
+                        } else {
+                        result = await playlist.all_videos();
+                        result = await playlist.next();
+                        modal.reply((result.length) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
+                        result.forEach(element => {
+                            client.queue.push(element.url);
+                        });
+                        //}
+
+*/
 
 
                     } else if (ytdl.validateURL(inp_url)) {

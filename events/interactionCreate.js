@@ -191,31 +191,10 @@ module.exports = {
 
 
                     }
-                case 'play_dl_toomuch_but':
-                    {
-
-                        let playlist = client.play_dl_playlist;
-                        if (playlist) {
-
-                            let result;
-                            modal.reply(playlist.videoCount - (client.play_dl_page_limit * 100) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
-
-                            for (let index = client.play_dl_page_limit; index < playlist.total_pages; index++) {
-                                result = await playlist.page(index);
-                                result.forEach(element => {
-                                    client.queue.push(element.shift().url);
-                                });
-                            }
-                            interaction.message.delete();
-                        } else {
-                            interaction.message.delete();
-                        }
-                        client.play_dl_playlist = null;
-                    }
             }
 
         } else {
-            interaction.reply({ content: '給我回去用"??"', ephemeral: true });
+            //interaction.reply({ content: '給我回去用"??"', ephemeral: true });
             return
         }
 

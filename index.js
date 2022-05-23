@@ -35,9 +35,6 @@ client.audio_resauce;
 client.audio_player = createAudioPlayer();
 client.connection = null;
 client.ytpl_limit = 2;
-client.play_dl_video_limit = 200;
-client.play_dl_page_limit = parseInt(client.play_dl_video_limit / 200);
-client.play_dl_playlist = null;
 client.last_at_channel = null;
 client.nowplaying = -1;
 

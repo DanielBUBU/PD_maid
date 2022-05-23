@@ -1,3 +1,5 @@
 
 config.json
 .data/youtube.data
+!node_modules/
+node_modules/*

@@ -10,10 +10,11 @@ Format:</br>
     "guildId": "",
     "globalPrefix": "",
     "token": ""
-    "YT_auth": boolean,
+    "YT_COOKIE": "",
     "show_queue_len": int
 }
-`YT_auth is for future use</br>
+`
+YT_COOKIE can be found in any YT video,check header section called "cookie" in developer mode</br>
 install lost packages and click PD_Maid_link_start.bat,PD_Maid_link_start_admin.bat will ask for admin permission</br>
 
 ## Future
@@ -26,9 +27,17 @@ install lost packages and click PD_Maid_link_start.bat,PD_Maid_link_start_admin.
 
 ## change log
 
+
+### Mein メイド v1.3.1 Stable
+- config.json required `YT_COOKIE` now, to support age restricted videos
+- change from play-dl to ytdl because it's not be maintained anymore
+- remove node_modules folder from git and some codes related to play-dl
+- add error handler for `next_song` and `send_info_embed` functions
+- send modal content will trigger `interactionCreate` event now due to discord.js update, so there's no respond if you using default prefix now
+
 ### Mein メイド v1.3.0 Stable
 - fix errors
-- change from ytpl to play-dl
+- change from ytdl to play-dl
 - add codes for fetching youtube playlist using play-dl (still testing)
 
 ### Mein メイド v1.2.2 Stable

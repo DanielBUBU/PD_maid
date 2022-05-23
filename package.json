@@ -16,11 +16,11 @@
     "@discordjs/voice": "^0.8.0",
     "discord-api-types": "^0.29.0",
     "discord-modals": "^1.2.9",
+    "discord-player": "^5.2.2",
     "discord.js": "^13.6.0",
     "ffmpeg": "^0.0.4",
     "ffmpeg-static": "^4.4.1",
     "libsodium-wrappers": "^0.7.9",
-    "play-dl": "^1.9.4",
     "ytdl-core": "^4.11.0",
     "ytpl": "^2.3.0"
   }

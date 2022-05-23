@@ -1,3 +1,5 @@
+console.log("Loading packages...");
+
 const fs = require('fs');
 const { Client, Intents } = require('discord.js');
 const { token, guildId } = require('./config.json');
@@ -23,7 +25,7 @@ const client = new Client({
     disableMentions: 'everyone',
 })
 
-
+console.log("Loading variables...");
 discordModals(client);
 // discord-modals needs your client in order to interact with modals
 
@@ -38,6 +40,8 @@ client.ytpl_limit = 2;
 client.last_at_channel = null;
 client.nowplaying = -1;
 
+//reconnection
+console.log("Checking previous connection...");
 if (getVoiceConnection(guildId)) {
     console.log('Found previous connection')
     client.connection = getVoiceConnection(guildId);
@@ -45,6 +49,8 @@ if (getVoiceConnection(guildId)) {
 
 }
 
+//player
+console.log("Initializing player...");
 //resauce error handle
 client.audio_player.on('error', error => {
     console.error(error);
@@ -63,13 +69,15 @@ client.audio_player.on(AudioPlayerStatus.Idle, () => {
 });
 
 
-
-
 //events
+console.log("---Start loading events---");
+var loaded_event_counter = 0;
 const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
 
 for (const file of eventFiles) {
+    loaded_event_counter++;
     const event = require(`./events/${file}`);
+    console.log("Loading events (%d/%d):%s", loaded_event_counter, eventFiles.length, event.name);
     if (event.once) {
         client.once(event.name, (...args) => event.execute(...args));
     } else {

@@ -2,7 +2,9 @@
 
 ## How to use
 
-create config.json in root</br>
+- install ffmpeg for system (https://www.wikihow.com/Install-FFmpeg-on-Windows)
+
+- create config.json in root</br>
 Format:</br>
 `
 {
@@ -15,7 +17,8 @@ Format:</br>
 }
 `
 YT_COOKIE can be found in any YT video,check header section called "cookie" in developer mode</br>
-install lost packages and click PD_Maid_link_start.bat,PD_Maid_link_start_admin.bat will ask for admin permission</br>
+- install lost packages and click PD_Maid_link_start.bat (or just run using node .),PD_Maid_link_start_admin.bat will ask for admin permission</br>
+- Once it's ready, it will output a console log</br>
 
 ## Future
 
@@ -27,6 +30,10 @@ install lost packages and click PD_Maid_link_start.bat,PD_Maid_link_start_admin.
 
 ## change log
 
+### Mein メイド v1.3.2 Stable
+- PD_maid can runs on android via termux now!!
+- change package from `ffmpeg-static` to `ffmpeg` and `avconv` because it can't be installed on termux (please install ffmpeg on your PC)
+- add loading logs
 
 ### Mein メイド v1.3.1 Stable
 - config.json required `YT_COOKIE` now, to support age restricted videos

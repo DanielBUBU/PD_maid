@@ -6,16 +6,6 @@ const { token, guildId } = require('./config.json');
 const discordModals = require('discord-modals') // Define the discord-modals package!
 
 
-const {
-    next_song,
-} = require('./music_functions/music_func.js');
-
-const {
-    AudioPlayerStatus,
-    createAudioPlayer,
-    getVoiceConnection,
-} = require('@discordjs/voice');
-
 const client = new Client({
     intents: [Intents.FLAGS.GUILDS,
         // Intents.FLAGS.GUILD_MEMBERS,
@@ -25,48 +15,48 @@ const client = new Client({
     disableMentions: 'everyone',
 })
 
+
+
+const {
+    discord_music,
+} = require('./music_functions/music_func.js');
+const dmobj = new discord_music(client);
+
 console.log("Loading variables...");
 discordModals(client);
 // discord-modals needs your client in order to interact with modals
 
+/*
 client.queue = [];
 client.isloop = 2;
-client.ytpl_continuation;
-client.audio_stream;
-client.audio_resauce;
-client.audio_player = createAudioPlayer();
-client.connection = null;
+client.ytpl_continuation = undefined;
+client.audio_stream = undefined;
+client.ffmpeg_audio_stream = undefined;
+client.audio_resauce = undefined;
+client.audio_sub = undefined;
+client.connection = undefined;
 client.ytpl_limit = 2;
 client.last_at_channel = null;
+client.last_at_vc_channel = null;
+client.last_interaction = null;
 client.nowplaying = -1;
+client.handling_vc_err = false;
+client.hd;*/
 
 //reconnection
+/*
 console.log("Checking previous connection...");
 if (getVoiceConnection(guildId)) {
     console.log('Found previous connection')
     client.connection = getVoiceConnection(guildId);
     client.connection.subscribe(client.audio_player);
-
 }
 
-//player
-console.log("Initializing player...");
-//resauce error handle
-client.audio_player.on('error', error => {
-    console.error(error);
-});
-//get next song automatically
-client.audio_player.on(AudioPlayerStatus.Idle, () => {
-    setTimeout(() => {
-        if (client.audio_player.state.status === AudioPlayerStatus.Idle) {
-            next_song(client, null);
-        } else {
-            console.log(client.connection + client.audio_player + client.audio_stream +
-                client.audio_resauce);
-        }
-    }, 1000);
+if (!global.gc) {
+    console.log("Please add --expose-gc in arguments");
+    process.exit();
+}*/
 
-});
 
 
 //events
@@ -81,7 +71,7 @@ for (const file of eventFiles) {
     if (event.once) {
         client.once(event.name, (...args) => event.execute(...args));
     } else {
-        client.on(event.name, (...args) => event.execute(client, ...args));
+        client.on(event.name, (...args) => event.execute(client, dmobj, ...args));
     }
 }
 

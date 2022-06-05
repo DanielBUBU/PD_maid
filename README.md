@@ -30,6 +30,10 @@ YT_COOKIE can be found in any YT video,check header section called "cookie" in d
 
 ## change log
 
+### Mein メイド v1.3.3 Stable
+- `music_func` now export a class called `discord_music`,it's an object now
+- added `fluent-ffmpeg` and `heapdump` for error handling and memory monitoring ,command `memsnap` will create a heapdump file in your bot's floder
+
 ### Mein メイド v1.3.2 Stable
 - PD_maid can runs on android via termux now!!
 - change package from `ffmpeg-static` to `ffmpeg` and `avconv` because it can't be installed on termux (please install ffmpeg on your PC)

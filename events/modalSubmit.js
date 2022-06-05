@@ -4,6 +4,7 @@ const ytdl = require('ytdl-core');
 const {
     next_song,
     join_channel,
+    send_control_panel,
 } = require('../music_functions/music_func.js');
 
 
@@ -24,9 +25,15 @@ const output_embed = new MessageEmbed()
     .setTimestamp()
 
 
+const {
+    discord_music,
+} = require('../music_functions/music_func.js');
+
 module.exports = {
     name: 'modalSubmit',
-    async execute(client, modal) {
+    async execute(client, dmobj, modal) {
+
+        dmobj.set_client(client);
 
 
         if (modal.customId === 'add_inp') {
@@ -40,41 +47,41 @@ module.exports = {
 
                     //fetch video
                     if (ytpl.validateID(inp_url)) {
-                        const playlist = await ytpl(inp_url, { pages: client.ytpl_limit });
+                        const playlist = await ytpl(inp_url, { pages: dmobj.ytpl_limit });
                         if (playlist.continuation) {
                             modal.channel.send({ embeds: [output_embed], components: [row1] });
-                            modal.reply((client.ytpl_limit * 100) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
-                            for (let index = 0; index < client.ytpl_limit * 100; index++) {
-                                client.queue.push(playlist.items[index].shortUrl);
+                            modal.reply((dmobj.ytpl_limit * 100) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
+                            for (let index = 0; index < dmobj.ytpl_limit * 100; index++) {
+                                dmobj.queue.push(playlist.items[index].shortUrl);
                             }
-                            client.ytpl_continuation = playlist;
+                            dmobj.ytpl_continuation = playlist;
                         } else {
                             modal.reply((playlist.items.length) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
                             for (let index = 0; index < playlist.items.length; index++) {
-                                client.queue.push(playlist.items[index].shortUrl);
+                                dmobj.queue.push(playlist.items[index].shortUrl);
                             }
                         }
                     } else if (ytdl.validateURL(inp_url)) {
-                        await client.queue.push(inp_url);
+                        await dmobj.queue.push(inp_url);
                         modal.reply('1 song adding to list' + `\`\`\`${inp_url}\`\`\``)
                     } else {
                         modal.reply('link not avaliable' + `\`\`\`${inp_url}\`\`\``)
                     }
 
                     //join channel
-                    join_channel(client, modal);
+                    dmobj.join_channel(modal);
 
                     //fetch resauce and play songs if not playing
-                    if (!client.audio_resauce) {
+                    if (!dmobj.audio_resauce) {
 
                         modal.channel.send('No resauce found, auto playing');
-                        next_song(client, modal);
+                        dmobj.next_song(modal);
 
                     } else {
-                        if (client.audio_resauce.ended) {
+                        if (dmobj.audio_resauce.ended) {
 
                             modal.channel.send('Resauce ended detected, auto playing');
-                            next_song(client, modal);
+                            dmobj.next_song(modal);
                         } else {
                             modal.channel.send('Shhhhhhhhh, resauce playing')
                         }
@@ -84,10 +91,12 @@ module.exports = {
                     modal.channel.send('Something went wrong' + `\`\`\`${inp_url}\`\`\``)
                     console.log(error);
                 }
+                dmobj.send_control_panel(modal);
             }
         } else if (modal.customId === 'remove_inp') {
 
         }
 
+        return
     },
 };

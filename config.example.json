@@ -1,0 +1,8 @@
+{
+    "clientId": "Your client ID",
+    "guildId": "Your guild ID",
+    "globalPrefix": "??",
+    "token": "Your bot's token",
+    "YT_COOKIE": "Your YT cookie string",
+    "show_queue_len": 10
+}

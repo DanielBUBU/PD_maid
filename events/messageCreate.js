@@ -1,8 +1,8 @@
 const fs = require('fs');
 const { Collection } = require('discord.js');
 const { globalPrefix } = require('../config.json');
-
-
+//var memwatch = require('memwatch-next');
+var heapdump = require('heapdump');
 const commands = new Collection();
 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
@@ -16,7 +16,7 @@ for (const file of commandFiles) {
 
 module.exports = {
     name: 'messageCreate',
-    async execute(client, message) {
+    async execute(client, dmobj, message) {
         //console.log(` sent a message.`);
 
         let is_command = false;
@@ -57,7 +57,9 @@ module.exports = {
         const command = commands.get(command_str);
         try {
             if (command_str === "music") {
-                command.execute(client, message, args);
+                command.execute(client, dmobj, message, args);
+            } else if (command_str === "memsnap") {
+                heapdump.writeSnapshot();
             } else {
                 command.execute(client, message, args);
             }

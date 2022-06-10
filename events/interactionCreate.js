@@ -159,7 +159,7 @@ module.exports = {
                         interaction.message.delete();
                         let playlist = dmobj.ytpl_continuation;
                         let go_flag = true;
-                        interaction.channel.reply("Processing...")
+                        //interaction.channel.reply("Processing...")
                         if (dmobj.ytpl_continuation) {
                             dmobj.ytpl_continuation = playlist.continuation;
                             while (go_flag) {

@@ -1,5 +1,15 @@
 # PD_maid
 
+- A discord bot with GUI
+- Here are some showcases
+
+- Main GUI
+![Main UI](./readme_assets/main_UI.png)
+- The GUI when too much songs in the YT playlist
+![YTPL too much](./readme_assets/ytpl_toomuch.png)
+- How console logs looks like when loading
+![logs](./readme_assets/console_logs.png)
+
 ## How to use
 
 - install ffmpeg for system (https://www.wikihow.com/Install-FFmpeg-on-Windows)

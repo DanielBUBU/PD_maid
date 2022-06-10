@@ -185,21 +185,21 @@ class discord_music {
                         } catch (error) {
 
                         }
-                        this.connection = null;
+                        this.connection = undefined;
+                        this.join_channel();
                         this.send_control_panel();
                     }
                 });
-
-                if (!this.player) {
-                    await this.init_player(true);
-                }
-                this.init_sub();
-                this.last_at_channel.send({ content: 'Joined' });
-
             } else {
                 this.last_at_channel.send('Plese join a voice channel first');
             }
         }
+
+
+        if (!this.player) {
+            await this.init_player(true);
+        }
+        this.init_sub();
         return
     }
 
@@ -535,16 +535,15 @@ class discord_music {
                 console.error(error);
             }
 
-            console.log(this.connection);
             try {
                 if (this.connection && this.player || !this.subscribe) {
                     this.subscribe = await this.connection.subscribe(this.player);
                     console.log("subed");
                 } else {
-
+                    console.log("sub exsist");
                 }
             } catch (error) {
-                console.error(error);
+                console.log("can't subscribe");
             }
         }
         return;

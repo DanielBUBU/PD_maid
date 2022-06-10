@@ -1,11 +1,11 @@
 console.log("Loading packages...");
 
 const fs = require('fs');
-const { Client, Intents } = require('discord.js');
-const { token, guildId } = require('./config.json');
 const discordModals = require('discord-modals') // Define the discord-modals package!
 
 
+const { Client, Intents } = require('discord.js');
+const { token, guildId } = require('./config.json');
 const client = new Client({
     intents: [Intents.FLAGS.GUILDS,
         // Intents.FLAGS.GUILD_MEMBERS,

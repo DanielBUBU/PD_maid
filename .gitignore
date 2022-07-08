@@ -3,6 +3,5 @@ config.json
 .data/youtube.data
 !node_modules/
 node_modules/*
-music_temp/*
 test.js
 t.js

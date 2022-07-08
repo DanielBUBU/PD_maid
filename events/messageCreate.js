@@ -2,7 +2,7 @@ const fs = require('fs');
 const { Collection } = require('discord.js');
 const { globalPrefix } = require('../config.json');
 //var memwatch = require('memwatch-next');
-var heapdump = require('heapdump');
+//var heapdump = require('heapdump');
 const commands = new Collection();
 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
@@ -59,7 +59,7 @@ module.exports = {
             if (command_str === "music") {
                 command.execute(client, dmobj, message, args);
             } else if (command_str === "memsnap") {
-                heapdump.writeSnapshot();
+                //heapdump.writeSnapshot();
             } else {
                 command.execute(client, message, args);
             }

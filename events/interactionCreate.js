@@ -52,7 +52,7 @@ module.exports = {
                     {
                         interaction.reply({ content: 'pause clicked', ephemeral: true });
                         if (dmobj.connection) {
-                            if (dmobj.audio_player.pause()) {
+                            if (dmobj.player.pause()) {
                                 interaction.channel.send({ content: 'Paused' });
                             } else {
                                 interaction.channel.send({ content: 'Error when pause' });
@@ -67,7 +67,7 @@ module.exports = {
                     {
                         interaction.reply({ content: 'resume clicked', ephemeral: true });
                         if (dmobj.connection) {
-                            if (dmobj.audio_player.unpause()) {
+                            if (dmobj.player.unpause()) {
                                 interaction.channel.send({ content: 'Resumed' });
                             } else {
                                 interaction.channel.send({ content: 'Error when Resumed' });
@@ -136,14 +136,14 @@ module.exports = {
                     {
                         interaction.reply({ content: 'queue clicked' });
                         if (dmobj.nowplaying != -1) {
-                            await dmobj.send_info_embed(dmobj.queue[dmobj.nowplaying], "Nowplaying is");
+                            await dmobj.send_info_embed(dmobj.queue[dmobj.nowplaying], "Nowplaying is No." + dmobj.nowplaying);
                             if ((dmobj.nowplaying + show_queue_len) <= dmobj.queue.length) {
                                 for (let index = dmobj.nowplaying + 1; index < dmobj.nowplaying + show_queue_len; index++) {
-                                    await dmobj.send_info_embed(dmobj.queue[index], "No." + index);
+                                    await dmobj.send_info_embed(dmobj.queue[index], "No." + (index));
                                 }
                             } else {
                                 for (let index = dmobj.nowplaying + 1; index < dmobj.queue.length; index++) {
-                                    await dmobj.send_info_embed(dmobj.queue[index], index);
+                                    await dmobj.send_info_embed(dmobj.queue[index], "No." + (index));
                                 }
                             }
 
@@ -185,6 +185,13 @@ module.exports = {
 
 
 
+                    }
+                case '6wt':
+                    {
+
+
+                        const user = await client.users.fetch('291905140519337984');
+                        user.send("6WT")
                     }
             }
 

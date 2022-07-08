@@ -1,8 +1,11 @@
 {
-    "clientId": "Your client ID",
+    "clientId": "Your bot client ID",
     "guildId": "Your guild ID",
+    "authed_user_id": ["Users' ID for those who can input local url"],
+    "download_chunk_size": 4194304,
     "globalPrefix": "??",
     "token": "Your bot's token",
     "YT_COOKIE": "Your YT cookie string",
-    "show_queue_len": 10
+    "show_queue_len": 10,
+    "music_temp_dir": "d:\\somewhere\\store\\PD_maid\\music_temp\\files"
 }

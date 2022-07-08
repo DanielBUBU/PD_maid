@@ -14,14 +14,16 @@
     "@discordjs/rest": "^0.3.0",
     "@discordjs/voice": "^0.8.0",
     "avconv": "^3.1.0",
-    "discord-api-types": "^0.29.0",
+    "cli-progress": "^3.11.2",
+    "discord-api-types": "^0.36.1",
     "discord-modals": "^1.2.9",
     "discord-player": "^5.2.2",
     "discord.js": "^13.6.0",
     "ffmpeg": "^0.0.4",
     "fluent-ffmpeg": "^2.1.2",
-    "heapdump": "^0.3.15",
+    "html-metadata-parser": "^2.0.4",
     "libsodium-wrappers": "^0.7.9",
+    "ws": "^8.8.0",
     "ytdl-core": "^4.11.0",
     "ytpl": "^2.3.0"
   }

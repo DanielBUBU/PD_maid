@@ -40,6 +40,12 @@ YT_COOKIE can be found in any YT video,check header section called "cookie" in d
 
 ## change log
 
+### Mein メイド v1.4.0 Stable
+- google drive (only file) and local url (both folder and file) are supported now
+- only authed users can add local url
+- will fetch cache folder once program start,local file fetching is recursive
+- GD cache by file name, local url cache using absolute url (use file name when it's not available in future)
+
 ### Mein メイド v1.3.3 Stable
 - `music_func` now export a class called `discord_music`,it's an object now
 - added `fluent-ffmpeg` and `heapdump` for error handling and memory monitoring ,command `memsnap` will create a heapdump file in your bot's floder

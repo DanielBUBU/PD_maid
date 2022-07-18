@@ -1,6 +1,9 @@
 # PD_maid
 
-- A discord bot with GUI
+![Main UI](./readme_assets/banner.png)
+
+
+- A discord bot with GUI using node.js avaliable on Windows,Linux,and Android
 - Here are some showcases
 
 - Main GUI
@@ -15,30 +18,22 @@
 - install ffmpeg for system (https://www.wikihow.com/Install-FFmpeg-on-Windows)
 
 - create config.json in root</br>
-Format:</br>
-`
-{
-    "clientId": "",
-    "guildId": "",
-    "globalPrefix": "",
-    "token": ""
-    "YT_COOKIE": "",
-    "show_queue_len": int
-}
-`
+Format example: `config.example.json`
 YT_COOKIE can be found in any YT video,check header section called "cookie" in developer mode</br>
 - install lost packages and click PD_Maid_link_start.bat (or just run using node .),PD_Maid_link_start_admin.bat will ask for admin permission</br>
 - Once it's ready, it will output a console log</br>
 
 ## Future
 
-- console logs improve
 - tag or auto reply picture function
-- low quality audio or the error below due to ytdl function settings</br>
-"R [Error]: connect EACCES"
 - http server using node.js for web UI
 
 ## change log
+
+
+### Mein メイド v1.4.1 Stable
+- File cache list can be played by your friends now, just input the exact file name
+- set `clear_console` to false to keep all logs in console
 
 ### Mein メイド v1.4.0 Stable
 - google drive (only file) and local url (both folder and file) are supported now

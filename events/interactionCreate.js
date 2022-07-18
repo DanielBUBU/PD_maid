@@ -186,12 +186,10 @@ module.exports = {
 
 
                     }
-                case '6wt':
+                case 'cache_list':
                     {
-
-
-                        const user = await client.users.fetch('291905140519337984');
-                        user.send("6WT")
+                        interaction.reply({ content: 'Fetching cache list', ephemeral: true });
+                        dmobj.send_cache_list()
                     }
             }
 

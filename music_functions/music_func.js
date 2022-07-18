@@ -31,7 +31,13 @@ const {
 
 //#endregion
 
-const { YT_COOKIE, music_temp_dir = "music_temp\\", authed_user_id = [], download_chunk_size = 4194304 } = require('../config.json');
+const {
+    YT_COOKIE,
+    music_temp_dir = "music_temp\\",
+    authed_user_id = [],
+    download_chunk_size = 4194304,
+    clear_console = true
+} = require('../config.json');
 
 class discord_music {
     //#region variables
@@ -121,7 +127,9 @@ class discord_music {
 
         if (next_song_url) {
             this.send_info_embed(next_song_url, "Nowplaying");
-
+            if (clear_console) {
+                console.clear();
+            }
             console.log(next_song_url);
 
             try {
@@ -323,10 +331,6 @@ class discord_music {
                 .setCustomId('queue')
                 .setLabel('Queue')
                 .setStyle('PRIMARY'),
-                new MessageButton()
-                .setCustomId('6wt')
-                .setLabel('6WT')
-                .setStyle('DANGER'),
             );
 
         }
@@ -353,6 +357,11 @@ class discord_music {
                 new MessageButton()
                 .setCustomId('skip')
                 .setLabel('Skip')
+                .setStyle('PRIMARY'),
+
+                new MessageButton()
+                .setCustomId('cache_list')
+                .setLabel('Cache list')
                 .setStyle('PRIMARY'),
 
             );
@@ -469,6 +478,21 @@ class discord_music {
 
     }
 
+    async send_cache_list() {
+        var out_str = "--------Local cache list--------\n";
+        if (this.cached_file.length == 0) {
+            this.last_at_channel.send({ content: 'No file cached' });
+            return;
+        } else {
+            this.cached_file.forEach(element => {
+                out_str = out_str + element.split("\\").pop() + "\n"
+            });
+        }
+        out_str = out_str + "---------------------------------"
+        this.last_at_channel.send({ content: out_str });
+        this.send_control_panel();
+    }
+
     //delete nowplaying info
     delete_np_embed() {
             if (this.np_embed) {
@@ -540,6 +564,9 @@ class discord_music {
                     this.search_file_in_url_array(authed_user_id, modal.user.id).length != 0) {
                     this.fetch_cache_files(path.resolve(inp_url), true)
                     modal.reply('adding local link to list')
+                } else if (this.search_file_in_url_array(this.cached_file, inp_url).length != 0) {
+                    modal.reply('adding local cache to list' + `\`\`\`${inp_url}\`\`\``)
+                    this.fetch_cache_files(this.search_file_in_url_array(this.cached_file, inp_url)[0], true);
                 } else {
                     modal.reply('link not avaliable' + `\`\`\`${inp_url}\`\`\``)
                 }
@@ -909,6 +936,7 @@ class discord_music {
 
     //input url to fetch file into cache or queue
     cache_queue_io(file_full_path, is_add_to_pl = false) {
+        file_full_path = this.format_local_absolute_url(file_full_path);
         fs.stat(file_full_path, (err, stats) => {
             if (stats.isFile() && this.is_file_type_avaliable(file_full_path) && !err) {
                 //if file not in cache and absolute url not in the list
@@ -949,6 +977,18 @@ class discord_music {
     }
 
     //#endregion
+
+    //#region format things
+    format_local_absolute_url(url) {
+            var url_element = url.split(":");
+            url_element[0] = url_element[0].toLowerCase();
+            url = url_element.shift();
+            url_element.forEach(element => {
+                url = url + ":" + element;
+            });
+            return url;
+        }
+        //#endregion format things
 
     send_log() {
         console.log('aus', this.audio_stream);

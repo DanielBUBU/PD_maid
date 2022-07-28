@@ -33,7 +33,7 @@ const {
 
 const {
     YT_COOKIE,
-    music_temp_dir = "music_temp\\",
+    music_temp_dir = "music_temp/",
     authed_user_id = [],
     download_chunk_size = 4194304,
     clear_console = true
@@ -447,7 +447,7 @@ class discord_music {
                     uploader_str = result.og.site_name;
                 }
             } else {
-                title_str = inp_url.split("\\").pop();
+                title_str = inp_url.split("/").pop();
                 inp_url = "https://www.google.com"
             }
 
@@ -485,7 +485,7 @@ class discord_music {
             return;
         } else {
             this.cached_file.forEach(element => {
-                out_str = out_str + element.split("\\").pop() + "\n"
+                out_str = out_str + element.split("/").pop() + "\n"
             });
         }
         out_str = out_str + "---------------------------------"
@@ -562,7 +562,7 @@ class discord_music {
                     modal.reply('adding GD link to list' + `\`\`\`${inp_url}\`\`\``)
                 } else if ((await this.is_local_url_avaliabe(inp_url)) &&
                     this.search_file_in_url_array(authed_user_id, modal.user.id).length != 0) {
-                    this.fetch_cache_files(path.resolve(inp_url), true)
+                    this.fetch_cache_files(this.format_local_absolute_url(inp_url), true)
                     modal.reply('adding local link to list')
                 } else if (this.search_file_in_url_array(this.cached_file, inp_url).length != 0) {
                     modal.reply('adding local cache to list' + `\`\`\`${inp_url}\`\`\``)
@@ -747,7 +747,7 @@ class discord_music {
 
     play_local_stream(res, begin_t) {
         console.log("tring to play local url:", res);
-        var pathToSourceFile = path.resolve(res);
+        var pathToSourceFile = res;
         try {
             this.audio_stream = fs.createReadStream(pathToSourceFile);
             this.play_stream(begin_t);
@@ -856,7 +856,6 @@ class discord_music {
                 }
             } catch (error) {
                 this.connection_self_destruct();
-                this.join_channel();
                 console.log("can't subscribe");
             }
         }
@@ -938,12 +937,12 @@ class discord_music {
     cache_queue_io(file_full_path, is_add_to_pl = false) {
         file_full_path = this.format_local_absolute_url(file_full_path);
         fs.stat(file_full_path, (err, stats) => {
-            if (stats.isFile() && this.is_file_type_avaliable(file_full_path) && !err) {
+            if (!err && stats.isFile() && this.is_file_type_avaliable(file_full_path)) {
                 //if file not in cache and absolute url not in the list
                 if (this.search_file_in_url_array(this.cached_file, file_full_path).length == 0 &&
                     this.remove_item_in_array(this.cached_file, file_full_path).length == this.cached_file.length) {
                     console.log("file fetched:", file_full_path);
-                    this.cached_file.push(path.resolve(file_full_path));
+                    this.cached_file.push(this.format_local_absolute_url(file_full_path));
                 }
                 if (is_add_to_pl) {
                     this.queue.push(file_full_path);
@@ -969,7 +968,7 @@ class discord_music {
 
     search_file_in_url_array(array, target_str) {
         array = array.filter(function(item) {
-            if (item.split("\\").pop() == target_str) {
+            if (item.split("/").pop() == target_str) {
                 return true;
             }
         });
@@ -980,11 +979,19 @@ class discord_music {
 
     //#region format things
     format_local_absolute_url(url) {
+
+            url = path.resolve(url);
+
             var url_element = url.split(":");
             url_element[0] = url_element[0].toLowerCase();
             url = url_element.shift();
             url_element.forEach(element => {
                 url = url + ":" + element;
+            });
+            url_element = url.split("\\");
+            url = url_element.shift();
+            url_element.forEach(element => {
+                url = url + "/" + element;
             });
             return url;
         }

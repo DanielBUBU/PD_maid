@@ -31,6 +31,10 @@ YT_COOKIE can be found in any YT video,check header section called "cookie" in d
 ## change log
 
 
+### Mein メイド v1.4.2 Stable
+- Improve termux support by format all local url from "\\" to "/"
+- subscribe failure won't try to rejoin now
+
 ### Mein メイド v1.4.1 Stable
 - File cache list can be played by your friends now, just input the exact file name
 - set `clear_console` to false to keep all logs in console

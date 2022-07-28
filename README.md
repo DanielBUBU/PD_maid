@@ -30,6 +30,8 @@ YT_COOKIE can be found in any YT video,check header section called "cookie" in d
 
 ## change log
 
+### Mein メイド v1.4.3 Stable
+- Improve termux url format support
 
 ### Mein メイド v1.4.2 Stable
 - Improve termux support by format all local url from "\\" to "/"

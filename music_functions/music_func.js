@@ -983,11 +983,17 @@ class discord_music {
             url = path.resolve(url);
 
             var url_element = url.split(":");
-            url_element[0] = url_element[0].toLowerCase();
-            url = url_element.shift();
-            url_element.forEach(element => {
-                url = url + ":" + element;
-            });
+            if (url_element.length > 1) {
+                url_element[0] = url_element[0].toLowerCase();
+                url = url_element.shift();
+                url_element.forEach(element => {
+                    url = url + ":" + element;
+                });
+            } else {
+                url = url_element.shift();
+            }
+
+
             url_element = url.split("\\");
             url = url_element.shift();
             url_element.forEach(element => {

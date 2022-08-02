@@ -640,7 +640,7 @@ class discord_music {
     async play_GD_url(url, begin_t, force_download = false) {
             var GD_ID = url.split("/")[5];
             var file_name = (await Meta.parser(url)).og.title.toString();
-            var file_url = path.join(this.format_local_absolute_url(music_temp_dir), file_name)
+            var file_url = this.format_local_absolute_url(path.join(music_temp_dir, file_name))
             var search_cache = this.search_file_in_url_array(this.cached_file, file_name);
             //if file is not in cache or there's need to redownload
             if (search_cache.length == 0 || force_download) {

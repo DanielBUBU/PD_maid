@@ -261,7 +261,11 @@ class discord_music {
             let new_row1 = args.message.components[0];
             let new_row2 = args.message.components[1];
             args.message.channel.send({ embeds: [args.message.embeds[0]], components: [new_row1, new_row2] });
-            args.message.delete();
+            try {
+                args.message.delete();
+            } catch (error) {
+                //console.log(error);
+            }
         } else {
             this.send_control_panel(null);
         }
@@ -363,6 +367,7 @@ class discord_music {
                 .setCustomId('cache_list')
                 .setLabel('Cache list')
                 .setStyle('PRIMARY'),
+
 
             );
         let loop_mode_str = null;
@@ -635,7 +640,7 @@ class discord_music {
     async play_GD_url(url, begin_t, force_download = false) {
             var GD_ID = url.split("/")[5];
             var file_name = (await Meta.parser(url)).og.title.toString();
-            var file_url = path.join(music_temp_dir, file_name)
+            var file_url = path.join(this.format_local_absolute_url(music_temp_dir), file_name)
             var search_cache = this.search_file_in_url_array(this.cached_file, file_name);
             //if file is not in cache or there's need to redownload
             if (search_cache.length == 0 || force_download) {

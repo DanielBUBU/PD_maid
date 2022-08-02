@@ -48,10 +48,6 @@ module.exports = {
         // console.log(args);
 
 
-        if (command_str === "6WT") {
-            //is_command = true;
-        }
-
         if (!is_command) return;
 
         const command = commands.get(command_str);

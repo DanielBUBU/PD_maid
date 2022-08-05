@@ -5,7 +5,8 @@ const {
     createAudioResource,
 } = require('@discordjs/voice');
 var path = require('path');
-const fs = require('fs')
+const fs = require('fs');
+const probe = require('node-ffprobe');
 const https = require('https');
 const {
     AudioPlayerStatus,
@@ -59,7 +60,6 @@ class discord_music {
     np_embed = undefined;
     processing_next_song = false;
     handling_chunk = false;
-    handling_chunkcount = 0;
     cached_file = [];
     //#endregion
 
@@ -88,42 +88,49 @@ class discord_music {
         this.processing_next_song = true;
         this.delete_np_embed();
         var next_song_url = false;
-        switch (this.isloop) {
-            case 1:
-                if (this.nowplaying === -1 && this.length > 0) {
-                    this.nowplaying = 0;
-                }
-                next_song_url = this.queue[this.nowplaying];
-                break;
-            case 0:
-                for (let index = 0; index < this.nowplaying; index++) {
-                    this.queue.push(this.queue.shift());
-                }
-                if (this.nowplaying != -1) {
-                    this.queue.shift();
-                }
-                if (this.queue.length) {
-                    this.nowplaying = 0;
-                    next_song_url = this.queue[this.nowplaying];
-                } else {
-                    this.nowplaying = -1;
-                    console.log("queue empty")
-                }
-                break;
-            case 2:
-                if (this.queue.length > this.nowplaying + 1) {
-                    this.nowplaying++;
-                    next_song_url = this.queue[this.nowplaying];
-                } else {
-                    this.nowplaying = 0;
-                    next_song_url = this.queue[this.nowplaying];
-                }
-                break;
 
-            default:
-                next_song_url = false;
-                break;
+        //It was playing something and it's a live video
+        if (this.nowplaying != -1 && this.is_YT_live_url(this.queue[this.nowplaying])) {
+            next_song_url = this.queue[this.nowplaying];
+        } else {
+            switch (this.isloop) {
+                case 1:
+                    if (this.nowplaying === -1 && this.length > 0) {
+                        this.nowplaying = 0;
+                    }
+                    next_song_url = this.queue[this.nowplaying];
+                    break;
+                case 0:
+                    for (let index = 0; index < this.nowplaying; index++) {
+                        this.queue.push(this.queue.shift());
+                    }
+                    if (this.nowplaying != -1) {
+                        this.queue.shift();
+                    }
+                    if (this.queue.length) {
+                        this.nowplaying = 0;
+                        next_song_url = this.queue[this.nowplaying];
+                    } else {
+                        this.nowplaying = -1;
+                        console.log("queue empty")
+                    }
+                    break;
+                case 2:
+                    if (this.queue.length > this.nowplaying + 1) {
+                        this.nowplaying++;
+                        next_song_url = this.queue[this.nowplaying];
+                    } else {
+                        this.nowplaying = 0;
+                        next_song_url = this.queue[this.nowplaying];
+                    }
+                    break;
+
+                default:
+                    next_song_url = false;
+                    break;
+            }
         }
+
 
         if (next_song_url) {
             this.send_info_embed(next_song_url, "Nowplaying");
@@ -436,13 +443,23 @@ class discord_music {
                         },
                     },
                 });
+
                 title_str = data.videoDetails.title;
                 video_sec = data.videoDetails.lengthSeconds % 60;
                 embed_thumbnail = data.videoDetails.thumbnails[3].url;
                 uploader_str = data.videoDetails.author.name.toString();
-                time_str = (data.videoDetails.lengthSeconds - video_sec) / 60 + ":" +
-                    video_sec.toString().padStart(2, '0');
+                if (this.is_YT_live_url(inp_url)) {
+                    time_str = "LIVE";
+                } else {
+                    time_str = (data.videoDetails.lengthSeconds - video_sec) / 60 + ":" +
+                        video_sec.toString().padStart(2, '0');
+                }
             } else if (await (this.is_GD_url(inp_url))) {
+                await probe(inp_url).then(function(probeData) {
+                    video_sec = probeData.format.duration % 60;
+                    time_str = (probeData.format.duration - video_sec) / 60 + ":" +
+                        parseInt(video_sec).toString();
+                })
                 var result = await Meta.parser(inp_url);
                 //console.log(result);
                 if (result.meta.title) {
@@ -452,6 +469,11 @@ class discord_music {
                     uploader_str = result.og.site_name;
                 }
             } else {
+                await probe(inp_url).then(function(probeData) {
+                    video_sec = probeData.format.duration % 60;
+                    time_str = (probeData.format.duration - video_sec) / 60 + ":" +
+                        parseInt(video_sec).toString();
+                })
                 title_str = inp_url.split("/").pop();
                 inp_url = "https://www.google.com"
             }
@@ -609,24 +631,45 @@ class discord_music {
     }
 
     //#region web urls
-    play_YT_url(url, begin_t) {
-        this.audio_stream = ytdl(url, {
-            filter: 'audioonly',
-            //liveBuffer: 5000,
-            //highWaterMark: 1024,
-            dlChunkSize: 65536,
-            quality: 'highestaudio',
-            //begin: begin_t,
-            requestOptions: {
-                headers: {
-                    cookie: YT_COOKIE,
-                    // Optional. If not given, ytdl-core will try to find it.
-                    // You can find this by going to a video's watch page, viewing the source,
-                    // and searching for "ID_TOKEN".
-                    // 'x-youtube-identity-token': 1324,
+    async play_YT_url(url, begin_t) {
+        if (this.is_YT_live_url(url)) {
+            this.audio_stream = ytdl(url, {
+                filter: "audio",
+                liveBuffer: 4000,
+                //highWaterMark: 1024,
+                //dlChunkSize: 65536,
+                //quality: 'highestaudio',
+                //begin: begin_t,
+                requestOptions: {
+                    headers: {
+                        cookie: YT_COOKIE,
+                        // Optional. If not given, ytdl-core will try to find it.
+                        // You can find this by going to a video's watch page, viewing the source,
+                        // and searching for "ID_TOKEN".
+                        // 'x-youtube-identity-token': 1324,
+                    },
                 },
-            },
-        });
+            });
+        } else {
+            this.audio_stream = ytdl(url, {
+                filter: 'audioonly',
+                //liveBuffer: 4000,
+                //highWaterMark: 1024,
+                dlChunkSize: 65536,
+                quality: 'highestaudio',
+                //begin: begin_t,
+                requestOptions: {
+                    headers: {
+                        cookie: YT_COOKIE,
+                        // Optional. If not given, ytdl-core will try to find it.
+                        // You can find this by going to a video's watch page, viewing the source,
+                        // and searching for "ID_TOKEN".
+                        // 'x-youtube-identity-token': 1324,
+                    },
+                },
+            });
+        }
+
         try {
             this.play_stream(begin_t);
         } catch (error) {
@@ -720,6 +763,7 @@ class discord_music {
         }
     }
 
+    //It will try to play the file(s) in the array until success
     play_local_stream_array(file_array = []) {
         if (file_array.length == 0) {
             throw "PLSA_ERR";
@@ -763,6 +807,7 @@ class discord_music {
 
     play_stream(begin_t) {
 
+
         try {
             this.ffmpeg_audio_stream = fluentffmpeg({ source: this.audio_stream }).toFormat('wav')
         } catch (error) {
@@ -787,6 +832,9 @@ class discord_music {
             this.init_player(true);
             this.play_stream(begin_t);
         }
+        this.audio_stream = null;
+        this.ffmpeg_audio_stream = null;
+        this.audio_resauce = null;
         return;
     }
 
@@ -871,6 +919,22 @@ class discord_music {
 
     //#region is functions
 
+    async is_YT_live_url(url) {
+        if (ytdl.validateURL(url)) {
+            var data = await ytdl.getBasicInfo(url, {
+                requestOptions: {
+                    headers: {
+                        cookie: YT_COOKIE,
+                    },
+                },
+            });
+            if (data.videoDetails.liveBroadcastDetails && data.videoDetails.liveBroadcastDetails.isLiveNow) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     async is_GD_url(url = "") {
         if (url.startsWith("https://drive.google.com/file/d/")) {
             var result = await Meta.parser(url);
@@ -896,7 +960,7 @@ class discord_music {
             fs.statSync(url);
             return true;
         } catch (error) {
-            console.log(error);
+            console.log("Local URL not avaliable:" + url);
         }
         return false;
     }

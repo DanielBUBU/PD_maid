@@ -46,6 +46,7 @@ function load_events(client, dmobj) {
     return client;
 }
 
+
 try {
     login_client();
 } catch (error) {

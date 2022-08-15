@@ -42,6 +42,7 @@ const {
 
 class discord_music {
     //#region variables
+    control_panel = undefined;
     queue = [];
     isloop = 2;
     ytpl_continuation = undefined;
@@ -84,13 +85,13 @@ class discord_music {
 
     //#region playlist maintain,connection
     //fetching queue and call functions to play song
-    next_song(args) {
+    async next_song(args, force = false) {
         this.processing_next_song = true;
         this.delete_np_embed();
         var next_song_url = false;
-
+        var is_LIVE = await this.is_YT_live_url(this.queue[this.nowplaying]);
         //It was playing something and it's a live video
-        if (this.nowplaying != -1 && this.is_YT_live_url(this.queue[this.nowplaying])) {
+        if (this.nowplaying != -1 && is_LIVE && !force) {
             next_song_url = this.queue[this.nowplaying];
         } else {
             switch (this.isloop) {
@@ -133,6 +134,7 @@ class discord_music {
 
 
         if (next_song_url) {
+            this.send_control_panel(args)
             this.send_info_embed(next_song_url, "Nowplaying");
             if (clear_console) {
                 console.clear();
@@ -202,7 +204,6 @@ class discord_music {
                             }
                             this.connection = undefined;
                             this.join_channel();
-                            this.send_control_panel();
                         }
                     });
                 } else {
@@ -215,8 +216,8 @@ class discord_music {
                 this.init_player(true);
             }
             setTimeout(() => {
-                this.init_sub();
-                if (this.nowplaying == -1) {
+                this.init_sub(false, args);
+                if (this.nowplaying == -1 && this.queue.length >= 1) {
                     this.next_song();
                 }
             }, 1000)
@@ -227,7 +228,7 @@ class discord_music {
 
     //#region reset,clear functions
     //kill sub and connection
-    connection_self_destruct() {
+    connection_self_destruct(args) {
         if (this.subscribe) {
             this.subscribe.unsubscribe();
             this.subscribe = undefined;
@@ -239,6 +240,7 @@ class discord_music {
             this.connection = undefined;
             this.last_at_channel.send({ content: 'No connection detected' });
         }
+        this.send_control_panel(args);
         return
     }
 
@@ -249,7 +251,7 @@ class discord_music {
         try {
             this.audio_stream.destroy();
         } catch (error) {
-            console.log(error);
+            // console.log(error);
         }
         try {
             this.player.stop();
@@ -261,21 +263,6 @@ class discord_music {
         this.audio_stream = null;
         this.audio_resauce = null;
         this.connection_self_destruct(args);
-        if (args) {
-
-            args.message.components[1].components[1].setDisabled(false);
-            args.message.components[1].components[2].setDisabled(true);
-            let new_row1 = args.message.components[0];
-            let new_row2 = args.message.components[1];
-            args.message.channel.send({ embeds: [args.message.embeds[0]], components: [new_row1, new_row2] });
-            try {
-                args.message.delete();
-            } catch (error) {
-                //console.log(error);
-            }
-        } else {
-            this.send_control_panel(null);
-        }
         return
     }
 
@@ -291,16 +278,26 @@ class discord_music {
     async send_control_panel(args) {
         if (args) {
             this.last_at_channel = args.channel;
-            if (args.editable) {
+            try {
+                args.message.delete();
+            } catch (error) {}
+        }
+        if (this.control_panel) {
+            if (args && args.message.id != this.control_panel.id || !args) {
+
                 try {
-                    args.message.delete();
-                } catch {}
+                    this.control_panel.delete();
+                } catch (error) {
+
+                }
             }
+
+            this.control_panel = undefined;
         }
         let row2 = new MessageActionRow();
 
         if (!this.connection) {
-            this.last_at_channel.send('No connection detected');
+            //this.last_at_channel.send({ content: 'No connection detected' });
             row2.addComponents(
                 new MessageButton()
                 .setCustomId('add')
@@ -408,14 +405,14 @@ class discord_music {
             //.setAuthor('Some name', 'https://i.imgur.com/wSTFkRM.png', 'https://discord.js.org')
             .setDescription('Control music function here')
             .setThumbnail('attachment://disgust.png')
-            .addField('Loop mode', loop_mode_str)
-            .addField('Total queue', queue_str, true)
-            //.addField('Nowplaying', this.nowplaying, true)
-            //.addField('leave', 'Some value here', true)
+            .addFields([
+                { name: 'Loop mode', value: loop_mode_str },
+                { name: 'Total queue', value: queue_str },
+            ])
             //.setImage('attachment://disgust.png')
             .setTimestamp()
             //.setFooter('Some footer text here', 'https://i.imgur.com/wSTFkRM.png');
-        await this.last_at_channel.send({ embeds: [output_embed], files: [file], components: [row1, row2] });
+        this.control_panel = await this.last_at_channel.send({ embeds: [output_embed], files: [file], components: [row1, row2] });
         if (this.nowplaying != -1) {
             this.send_info_embed(this.queue[this.nowplaying], "Nowplaying");
         }
@@ -448,7 +445,8 @@ class discord_music {
                 video_sec = data.videoDetails.lengthSeconds % 60;
                 embed_thumbnail = data.videoDetails.thumbnails[3].url;
                 uploader_str = data.videoDetails.author.name.toString();
-                if (this.is_YT_live_url(inp_url)) {
+                var is_LIVE = await this.is_YT_live_url(inp_url);
+                if (is_LIVE) {
                     time_str = "LIVE";
                 } else {
                     time_str = (data.videoDetails.lengthSeconds - video_sec) / 60 + ":" +
@@ -484,8 +482,10 @@ class discord_music {
                 .setURL(inp_url)
                 .setAuthor({ name: embed_author_str })
                 //.setDescription('Nowplaying')
-                .addField('Uploader', uploader_str)
-                .addField('Time', time_str)
+                .addFields([
+                    { name: 'Uploader', value: uploader_str },
+                    { name: 'Time', value: time_str },
+                ])
                 //.setImage('attachment://disgust.png')
                 .setTimestamp()
                 //.setFooter('Some footer text here', 'https://i.imgur.com/wSTFkRM.png');
@@ -505,7 +505,7 @@ class discord_music {
 
     }
 
-    async send_cache_list() {
+    async send_cache_list(args) {
         var out_str = "--------Local cache list--------\n";
         if (this.cached_file.length == 0) {
             this.last_at_channel.send({ content: 'No file cached' });
@@ -517,7 +517,7 @@ class discord_music {
         }
         out_str = out_str + "---------------------------------"
         this.last_at_channel.send({ content: out_str });
-        this.send_control_panel();
+        this.send_control_panel(args);
     }
 
     //delete nowplaying info
@@ -605,7 +605,7 @@ class discord_music {
 
             //fetch resauce and play songs if not playing
 
-            this.send_control_panel();
+            this.send_control_panel(modal);
         }
         //play yt stuff,modified using fluent ffmpeg,might call join_channel function
     async play_url(url, begin_t, args) {
@@ -632,7 +632,8 @@ class discord_music {
 
     //#region web urls
     async play_YT_url(url, begin_t) {
-        if (this.is_YT_live_url(url)) {
+        var is_LIVE = await this.is_YT_live_url(url);
+        if (is_LIVE) {
             this.audio_stream = ytdl(url, {
                 filter: "audio",
                 liveBuffer: 4000,
@@ -883,7 +884,7 @@ class discord_music {
     }
 
     //(re)create subscription when subscription not match/exsist
-    init_sub(force) {
+    init_sub(force, args) {
         //player
         console.log("Initializing subscribe...");
         if (!this.subscribe || force) {
@@ -907,8 +908,9 @@ class discord_music {
                 } else {
                     console.log("sub exsist");
                 }
+                this.send_control_panel(args);
             } catch (error) {
-                this.connection_self_destruct();
+                this.connection_self_destruct(args);
                 console.log("can't subscribe");
             }
         }
@@ -919,20 +921,23 @@ class discord_music {
 
     //#region is functions
 
-    async is_YT_live_url(url) {
-        if (ytdl.validateURL(url)) {
-            var data = await ytdl.getBasicInfo(url, {
-                requestOptions: {
-                    headers: {
-                        cookie: YT_COOKIE,
+    is_YT_live_url(url) {
+        return new Promise(async(resolve, reject) => {
+            if (ytdl.validateURL(url)) {
+                var data = await ytdl.getBasicInfo(url, {
+                    requestOptions: {
+                        headers: {
+                            cookie: YT_COOKIE,
+                        },
                     },
-                },
-            });
-            if (data.videoDetails.liveBroadcastDetails && data.videoDetails.liveBroadcastDetails.isLiveNow) {
-                return true;
+                });
+                if (data.videoDetails.liveBroadcastDetails && data.videoDetails.liveBroadcastDetails.isLiveNow) {
+                    resolve(true);
+                }
             }
-        }
-        return false;
+            resolve(false);
+        });
+
     }
 
     async is_GD_url(url = "") {

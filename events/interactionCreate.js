@@ -81,21 +81,7 @@ module.exports = {
                 case 'skip':
                     {
                         interaction.reply({ content: 'skip clicked', ephemeral: true });
-                        if (dmobj.connection) {
-                            interaction.message.channel.send({ content: 'Connection detected,skipping' });
-                            if (dmobj.queue.length > 1) {
-                                dmobj.next_song(interaction);
-                            } else {
-                                dmobj.clear_status(interaction);
-                                console.log("queue is empty");
-                            }
-
-
-                        } else {
-                            interaction.message.channel.send({ content: 'No connection detected, press join or restart GUI' });
-                        }
-                        dmobj.send_control_panel(interaction);
-
+                        dmobj.next_song(interaction, force = true);
                         return
                     }
                 case 'add':
@@ -110,13 +96,9 @@ module.exports = {
                     }
                 case 'join':
                     {
-                        interaction.channel.send({ content: 'join clicked' });
+                        interaction.reply({ content: 'join clicked', ephemeral: true });
 
                         dmobj.join_channel(interaction);
-                        dmobj.send_control_panel(interaction);
-                        interaction.message.delete();
-                        // console.log(connection);
-
                         return
                     }
                 case 'leave':
@@ -125,7 +107,6 @@ module.exports = {
                         try {
 
                             dmobj.connection_self_destruct(interaction);
-                            dmobj.send_control_panel(interaction);
                         } catch (error) {
                             console.log(error);
                         }
@@ -189,7 +170,7 @@ module.exports = {
                 case 'cache_list':
                     {
                         interaction.reply({ content: 'Fetching cache list', ephemeral: true });
-                        dmobj.send_cache_list()
+                        dmobj.send_cache_list(interaction);
                     }
             }
 

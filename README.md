@@ -30,6 +30,11 @@ YT_COOKIE can be found in any YT video,check header section called "cookie" in d
 
 ## change log
 
+### Mein メイド v1.4.5 Stable
+- fix live video functions
+- RPC for client
+- add field function to add fields
+
 ### Mein メイド v1.4.4 Stable
 - Audio length for GD url and local url
 - Live YT link support

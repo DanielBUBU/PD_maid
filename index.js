@@ -7,9 +7,40 @@ const {
 } = require('./music_functions/music_func.js');
 
 const { Client, Intents } = require('discord.js');
-const { token, guildId } = require('./config.json');
+const { token, guildId, clientId = null } = require('./config.json');
 
 async function login_client() {
+    if (clientId) {
+        var rpc_client = require("discord-rich-presence")('943480103038496768');
+
+        rpc_client.on('connected', () => {
+            console.log('connected!');
+
+            rpc_client.updatePresence({
+                state: 'UOOOHHHH',
+                details: 'sssseeeeeeeeeeggggsss',
+                startTimestamp: new Date(),
+                largeImageKey: '81755881_p0',
+                smallImageKey: '84503787_p0',
+                largeImageText: "Never gonna give you up",
+                smallImageText: "cute+funny",
+                partyId: 'snek_party_ID',
+                partySize: 1,
+                partyMax: 4,
+
+                buttons: [{
+                        label: "Github",
+                        url: "https://github.com/DanielBUBU/PD_maid"
+                    }]
+                    //matchSecret: 'https://github.com/DanielBUBU/PD_maid',
+                    //joinSecret: 'https://github.com/DanielBUBU/',
+                    //spectateSecret: 'https://github.com/',
+            });
+        });
+
+        process.on('unhandledRejection', console.error);
+    }
+
     var client = new Client({
         intents: [Intents.FLAGS.GUILDS,
             // Intents.FLAGS.GUILD_MEMBERS,
@@ -47,25 +78,10 @@ function load_events(client, dmobj) {
 }
 
 
+
 try {
     login_client();
 } catch (error) {
     console.log(error);
     login_client();
 }
-
-// discord-modals needs your client in order to interact with modals
-
-//reconnection
-/*
-console.log("Checking previous connection...");
-if (getVoiceConnection(guildId)) {
-    console.log('Found previous connection')
-    client.connection = getVoiceConnection(guildId);
-    client.connection.subscribe(client.audio_player);
-}
-
-if (!global.gc) {
-    console.log("Please add --expose-gc in arguments");
-    process.exit();
-}*/

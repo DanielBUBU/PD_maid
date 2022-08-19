@@ -60,6 +60,7 @@ class discord_music {
     player = undefined;
     np_embed = undefined;
     processing_next_song = false;
+    is_sending_panel = false;
     handling_chunk = false;
     cached_file = [];
     //#endregion
@@ -134,8 +135,7 @@ class discord_music {
 
 
         if (next_song_url) {
-            this.send_control_panel(args)
-            this.send_info_embed(next_song_url, "Nowplaying");
+            this.send_control_panel(args);
             if (clear_console) {
                 console.clear();
             }
@@ -276,6 +276,12 @@ class discord_music {
     //#region discord GUI
     //send control panel
     async send_control_panel(args) {
+
+        if (this.is_sending_panel) {
+            return;
+        }
+        this.is_sending_panel = true;
+
         if (args) {
             this.last_at_channel = args.channel;
             try {
@@ -319,7 +325,7 @@ class discord_music {
             );
 
         } else {
-            this.last_at_channel.send('connecttion detected');
+            console.log('connection detected');
 
             row2.addComponents(
                 new MessageButton()
@@ -416,7 +422,7 @@ class discord_music {
         if (this.nowplaying != -1) {
             this.send_info_embed(this.queue[this.nowplaying], "Nowplaying");
         }
-
+        this.is_sending_panel = false;
     }
 
     //send info using url,has special input "Nowplaying"

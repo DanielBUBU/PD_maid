@@ -155,7 +155,14 @@ class discord_music {
 */
 
         } else {
-            console.log("can't get next song path")
+            console.log("can't get next song path");
+            client.user.setPresence({
+                activities: [{
+                    name: 'cute,funny,and brutal',
+                    type: "STREAMING",
+                    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                }]
+            });
             this.clear_status(args);
             this.reset_music_parms();
         }
@@ -498,6 +505,13 @@ class discord_music {
             if (embed_thumbnail) {
                 output_embed.setThumbnail(embed_thumbnail)
             }
+            this.client.user.setPresence({
+                activities: [{
+                    name: title_str,
+                    type: "STREAMING",
+                    url: inp_url
+                }]
+            });
             this.last_at_channel.send({ embeds: [output_embed] }).then(msg => {
                     if (embed_author_str == "Nowplaying") {
                         this.delete_np_embed();

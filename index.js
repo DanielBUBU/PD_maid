@@ -7,38 +7,47 @@ const {
 } = require('./music_functions/music_func.js');
 
 const { Client, Intents } = require('discord.js');
-const { token, guildId, clientId = null } = require('./config.json');
+const { token, guildId, clientId = undefined } = require('./config.json');
+var rpc_client = require("discord-rich-presence")(clientId);
+
+async function rpc_login(params) {
+    rpc_client = require("discord-rich-presence")(clientId);
+
+    rpc_client.on('connected', () => {
+        console.log('connected!');
+
+        rpc_client.updatePresence({
+            state: 'UOOOHHHH',
+            details: 'sssseeeeeeeeeeggggsss',
+            startTimestamp: new Date(),
+            largeImageKey: '81755881_p0',
+            smallImageKey: '84503787_p0',
+            largeImageText: "Never gonna give you up",
+            smallImageText: "cute+funny",
+            partyId: 'snek_party_ID',
+            partySize: 1,
+            partyMax: 4,
+
+            buttons: [{
+                    label: "Github",
+                    url: "https://github.com/DanielBUBU/PD_maid"
+                }]
+                //matchSecret: 'https://github.com/DanielBUBU/PD_maid',
+                //joinSecret: 'https://github.com/DanielBUBU/',
+                //spectateSecret: 'https://github.com/',
+        });
+    });
+
+    rpc_client.on("error", () => {
+        rpc_login();
+    });
+
+    process.on('unhandledRejection', console.error);
+}
 
 async function login_client() {
     if (clientId) {
-        var rpc_client = require("discord-rich-presence")('943480103038496768');
-
-        rpc_client.on('connected', () => {
-            console.log('connected!');
-
-            rpc_client.updatePresence({
-                state: 'UOOOHHHH',
-                details: 'sssseeeeeeeeeeggggsss',
-                startTimestamp: new Date(),
-                largeImageKey: '81755881_p0',
-                smallImageKey: '84503787_p0',
-                largeImageText: "Never gonna give you up",
-                smallImageText: "cute+funny",
-                partyId: 'snek_party_ID',
-                partySize: 1,
-                partyMax: 4,
-
-                buttons: [{
-                        label: "Github",
-                        url: "https://github.com/DanielBUBU/PD_maid"
-                    }]
-                    //matchSecret: 'https://github.com/DanielBUBU/PD_maid',
-                    //joinSecret: 'https://github.com/DanielBUBU/',
-                    //spectateSecret: 'https://github.com/',
-            });
-        });
-
-        process.on('unhandledRejection', console.error);
+        rpc_login();
     }
 
     var client = new Client({

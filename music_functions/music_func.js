@@ -186,10 +186,15 @@ class discord_music {
                 if (this.last_at_vc_channel) {
                     this.last_at_channel.send('Connecting...');
                     this.connection = joinVoiceChannel({
-                        channelId: this.last_at_vc_channel,
-                        guildId: this.last_interaction.guildId,
-                        adapterCreator: this.last_interaction.guild.voiceAdapterCreator,
-                    });
+                            channelId: this.last_at_vc_channel,
+                            guildId: this.last_interaction.guildId,
+                            adapterCreator: this.last_interaction.guild.voiceAdapterCreator,
+                        })
+                        .once("error", (err) => {
+                            console.log(err);
+                            this.connection_self_destruct();
+                            this.join_channel();
+                        });
 
 
 
@@ -213,6 +218,7 @@ class discord_music {
                             this.join_channel();
                         }
                     });
+
                 } else {
                     this.last_at_channel.send('Plese join a voice channel first');
                 }
@@ -296,13 +302,15 @@ class discord_music {
             } catch (error) {}
         }
         if (this.control_panel) {
-            if (args && args.message.id != this.control_panel.id || !args) {
+            try {
+                if (args && args.message.id != this.control_panel.id || !args) {
 
-                try {
+
                     this.control_panel.delete();
-                } catch (error) {
 
                 }
+            } catch (error) {
+
             }
 
             this.control_panel = undefined;

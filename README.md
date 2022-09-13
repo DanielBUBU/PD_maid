@@ -14,9 +14,24 @@ https://github.com/DanielBUBU/PD_maid
 - How console logs looks like when loading
 ![logs](./readme_assets/console_logs.png)
 
+## Why PD_Maid?
+
+- GUI
+- Free and easy to build
+- Open sauce and readable codes
+- Appendable commends
+- RPC functions
+- Support mutiple platforms
+- Support Youtube,GD,and local file
+- Safety access local files and cache list for other users
+- Cross server support,bring your music to another server using join and leave buttons
+- 3 loop modes
+- Information for different links
+
 ## How to use
 
 - create a bot application here(https://discord.com/developers/applications)
+or follow the instruction here(https://discordjs.guide/preparations/adding-your-bot-to-servers.html#bot-invite-links)
 
 - install ffmpeg and Node.js on your system (https://www.wikihow.com/Install-FFmpeg-on-Windows)
 

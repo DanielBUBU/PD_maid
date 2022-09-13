@@ -1,5 +1,10 @@
 # change log
 
+## Mein メイド v1.4.7 Stable
+- RPC function fix
+- Cross server support and fix music command
+- Connection error handle
+
 ## Mein メイド v1.4.6 Stable
 - change change log
 - RPC with some nowplaying info

@@ -33,11 +33,11 @@ const {
 //#endregion
 
 const {
-    YT_COOKIE,
-    music_temp_dir = "music_temp/",
-    authed_user_id = [],
-    download_chunk_size = 4194304,
-    clear_console = true
+    YT_COOKIE = "",
+        music_temp_dir = "music_temp/",
+        authed_user_id = [],
+        download_chunk_size = 4194304,
+        clear_console = true
 } = require('../config.json');
 
 class discord_music {

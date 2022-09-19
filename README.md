@@ -37,7 +37,7 @@ or follow the instruction here(https://discordjs.guide/preparations/adding-your-
 
 - create config.json in root</br>
 Format example: `config.example.json`
-YT_COOKIE can be found in any YT video,check header section called "cookie" (or biscuit in UK) in developer mode</br>
+YT_COOKIE can be found in any YT video,type`document.cookie` in developer mode's console</br>
 ![biscuit](./readme_assets/biscuit.png)
 - install lost packages using `npm i` and click PD_Maid_link_start.bat (or just run using `node .`),PD_Maid_link_start_admin.bat will ask for admin permission</br>
 - Once it's ready, it will output a console log</br>

@@ -1,0 +1,8 @@
+{
+    "authed_user_id": [""],
+    "download_chunk_size": 4194304,
+    "globalPrefix": "/",
+    "token": "Your bot's token",
+    "show_queue_len": 10,
+    "clear_console": true
+}

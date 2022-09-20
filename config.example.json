@@ -8,5 +8,5 @@
     "YT_COOKIE": "Your YT cookie string",
     "show_queue_len": 10,
     "music_temp_dir": "d:\\somewhere\\store\\PD_maid\\music_temp\\files",
-    "clear_console": "false to keep all logs in console"
+    "clear_console": true
 }

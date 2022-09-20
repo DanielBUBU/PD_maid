@@ -8,7 +8,7 @@ const {
 
 const { Client, Intents } = require('discord.js');
 const { token, guildId, clientId = undefined } = require('./config.json');
-var rpc_client = require("discord-rich-presence")(clientId);
+var rpc_client;
 
 async function rpc_login(params) {
     rpc_client = require("discord-rich-presence")(clientId);

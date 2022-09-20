@@ -31,15 +31,22 @@ https://github.com/DanielBUBU/PD_maid
 ## How to use
 
 - create a bot application here(https://discord.com/developers/applications)
-or follow the instruction here(https://discordjs.guide/preparations/adding-your-bot-to-servers.html#bot-invite-links)
+or simply follow the instruction here(https://discordjs.guide/preparations/adding-your-bot-to-servers.html#bot-invite-links)</br>
 
-- install ffmpeg and Node.js on your system (https://www.wikihow.com/Install-FFmpeg-on-Windows)
+- Remember to change permission integer(use `8` or `4398046511095`) of the invite link and turn on the intents</br>
+![biscuit](./readme_assets/Intents.png)</br>
+![biscuit](./readme_assets/Permission.png)</br>
+
+- install ffmpeg(https://www.wikihow.com/Install-FFmpeg-on-Windows) and Node.js(https://nodejs.org/en/) on your system 
 
 - create config.json in root</br>
-Format example: `config.example.json`
-YT_COOKIE can be found in any YT video,type`document.cookie` in developer mode's console</br>
+Format example can be found in `config.example.json`</br>
+`config.minExample.json` only require bot token string</br>
+- YT_COOKIE can be found in any YT video,type`document.cookie` in developer mode's console</br>
 ![biscuit](./readme_assets/biscuit.png)
-- install lost packages using `npm i` and click PD_Maid_link_start.bat (or just run using `node .`),PD_Maid_link_start_admin.bat will ask for admin permission</br>
+- install lost packages using `npm i` in cmd</br>
+![npm](./readme_assets/npm.png)
+- Click PD_Maid_link_start.bat (or just run using `node .` in cmd),PD_Maid_link_start_admin.bat will ask for admin permission</br>
 - Once it's ready, it will output a console log</br>
 
 ## Future

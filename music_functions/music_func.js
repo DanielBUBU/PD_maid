@@ -474,7 +474,8 @@ class discord_music {
                         video_sec.toString().padStart(2, '0');
                 }
             } else if (await (this.is_GD_url(inp_url))) {
-                await probe(inp_url).then(function(probeData) {
+                var GD_ID = inp_url.split("/")[5];
+                await probe("https://drive.google.com/uc?export=open&confirm=yTib&id=" + GD_ID).then(function(probeData) {
                     video_sec = probeData.format.duration % 60;
                     time_str = (probeData.format.duration - video_sec) / 60 + ":" +
                         parseInt(video_sec).toString();

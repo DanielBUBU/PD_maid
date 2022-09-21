@@ -1,5 +1,8 @@
 # change log
 
+## Mein メイド v1.4.8 Stable
+- Google drive information fix
+
 ## Mein メイド v1.4.7 Stable
 - RPC function fix
 - Cross server support and fix music command

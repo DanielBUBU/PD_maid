@@ -1,6 +1,6 @@
 module.exports = {
     name: 'modalSubmit',
-    execute(client, dmobj, modal) {
+    execute(client, dmobj, commands, modal) {
 
         dmobj.set_client(client);
 

@@ -5,10 +5,15 @@ const discordModals = require('discord-modals') // Define the discord-modals pac
 const {
     discord_music,
 } = require('./music_functions/music_func.js');
+const {
+    commands,
+} = require('./library/importCommand');
+
 
 const { Client, Intents } = require('discord.js');
 const { token, guildId, clientId = undefined } = require('./config.json');
 var rpc_client;
+var cmdobj;
 
 async function rpc_login(params) {
     rpc_client = require("discord-rich-presence")(clientId);
@@ -61,14 +66,15 @@ async function login_client() {
 
     console.log("Loading variables...");
     const dmobj = (new discord_music(client));
-    discordModals(client, dmobj);
-    client = load_events(client, dmobj);
+    const cmdobj = (new commands(client, dmobj));
+    discordModals(client);
+    client = load_events(client, dmobj, cmdobj);
 
     //login
     client.login(token);
 }
 
-function load_events(client, dmobj) {
+function load_events(client, dmobj, cmdobj) {
     console.log("---Start loading events---");
     var loaded_event_counter = 0;
     const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
@@ -80,7 +86,7 @@ function load_events(client, dmobj) {
         if (event.once) {
             client.once(event.name, (...args) => event.execute(...args));
         } else {
-            client.on(event.name, (...args) => event.execute(client, dmobj, ...args));
+            client.on(event.name, (...args) => event.execute(client, dmobj, cmdobj, ...args));
         }
     }
     return client;

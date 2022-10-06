@@ -6,7 +6,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('help')
         .setDescription('send help for the bot'),
-    async execute(client, message, args) {
+    async execute(client, args, argsStr) {
 
         const output_embed = new MessageEmbed()
             .setColor('#0099ff')
@@ -22,7 +22,7 @@ module.exports = {
             .setImage('attachment://disgust.png')
             .setTimestamp()
             //.setFooter('Some footer text here', 'https://i.imgur.com/wSTFkRM.png');
-        message.channel.send({ embeds: [output_embed], files: [file] });
+        args.channel.send({ embeds: [output_embed], files: [file] });
         return
     },
 };

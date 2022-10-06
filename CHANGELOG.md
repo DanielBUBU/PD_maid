@@ -1,5 +1,9 @@
 # change log
 
+## Mein メイド v1.5.0 Stable
+- Command import reuse
+- fix bot rpc bug
+
 ## Mein メイド v1.4.8 Stable
 - Google drive information fix
 

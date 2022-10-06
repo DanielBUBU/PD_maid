@@ -156,7 +156,7 @@ class discord_music {
 
         } else {
             console.log("can't get next song path");
-            client.user.setPresence({
+            this.client.user.setPresence({
                 activities: [{
                     name: 'cute,funny,and brutal',
                     type: "STREAMING",

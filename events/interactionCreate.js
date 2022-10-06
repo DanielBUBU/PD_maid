@@ -21,7 +21,7 @@ const { show_queue_len } = require('../config.json');
 
 module.exports = {
     name: 'interactionCreate',
-    async execute(client, dmobj, interaction) {
+    async execute(client, dmobj, commands, interaction) {
 
 
         dmobj.set_client(client);
@@ -29,6 +29,8 @@ module.exports = {
 
         dmobj.last_at_channel = interaction.channel;
         console.log(`${interaction.user.tag} in #${interaction.channel.name} triggered an interaction.`);
+
+
 
         if (interaction.isButton()) {
             switch (interaction.customId) {
@@ -175,6 +177,7 @@ module.exports = {
             }
 
         } else {
+            commands.executeDiscordCommand(interaction.commandName, interaction);
             //interaction.reply({ content: '給我回去用"??"', ephemeral: true });
         }
 

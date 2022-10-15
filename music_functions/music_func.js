@@ -182,9 +182,9 @@ class discord_music {
 
             //var connection;
             if (!this.connection) {
-                this.last_at_channel.send('No connection found');
+                console.log('No connection found');
                 if (this.last_at_vc_channel) {
-                    this.last_at_channel.send('Connecting...');
+                    console.log('Connecting...');
                     this.connection = joinVoiceChannel({
                             channelId: this.last_at_vc_channel,
                             guildId: this.last_interaction.guildId,
@@ -246,12 +246,12 @@ class discord_music {
             this.subscribe.unsubscribe();
             this.subscribe = undefined;
         }
-        this.last_at_channel.send({ content: 'self destruction in 1 second' });
+        console.log({ content: 'self destruction in 1 second' });
         if (this.connection) {
-            this.last_at_channel.send({ content: 'Connection detected, leaving' });
+            console.log({ content: 'Connection detected, leaving' });
             this.connection.destroy();
             this.connection = undefined;
-            this.last_at_channel.send({ content: 'No connection detected' });
+            console.log({ content: 'No connection detected' });
         }
         this.send_control_panel(args);
         return

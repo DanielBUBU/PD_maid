@@ -25,7 +25,7 @@ class commands {
 
             try {
                 if (commandStr === "music") {
-                    command.execute(this.client, this.dmobj, args, argsStr);
+                    command.execute(this.client, this.dmobj, args);
                 } else if (commandStr === "memsnap") {
                     //heapdump.writeSnapshot();
                 } else {

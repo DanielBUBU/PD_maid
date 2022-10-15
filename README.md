@@ -30,6 +30,8 @@ https://github.com/DanielBUBU/PD_maid
 
 ## How to use
 
+- Startup video tutorial:https://www.youtube.com/watch?v=BbDmGMcapAY
+
 - create a bot application here(https://discord.com/developers/applications)
 or simply follow the instruction here(https://discordjs.guide/preparations/adding-your-bot-to-servers.html#bot-invite-links)</br>
 

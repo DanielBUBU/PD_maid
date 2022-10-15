@@ -1,5 +1,10 @@
 # change log
 
+## Mein メイド v1.5.1 Stable
+- replace some messages to console log 
+- reduce music command input
+- add readme video tutorial
+
 ## Mein メイド v1.5.0 Stable
 - Command import reuse
 - fix bot rpc bug

@@ -453,7 +453,7 @@ class discord_music {
                 var data = await ytdl.getBasicInfo(inp_url, {
                     requestOptions: {
                         headers: {
-                            cookie: YT_COOKIE,
+                            //cookie: YT_COOKIE,
                             // Optional. If not given, ytdl-core will try to find it.
                             // You can find this by going to a video's watch page, viewing the source,
                             // and searching for "ID_TOKEN".
@@ -663,9 +663,10 @@ class discord_music {
     async play_YT_url(url, begin_t) {
         var is_LIVE = await this.is_YT_live_url(url);
         if (is_LIVE) {
+            console.log("YT Live video");
             this.audio_stream = ytdl(url, {
                 filter: "audio",
-                liveBuffer: 4000,
+                liveBuffer: 2000,
                 //highWaterMark: 1024,
                 //dlChunkSize: 65536,
                 //quality: 'highestaudio',
@@ -702,6 +703,9 @@ class discord_music {
 
         try {
             this.play_stream(begin_t);
+            if (this.play_stream.destroyed) {
+                throw "YTDL ERR";
+            }
         } catch (error) {
             console.log("[Skipping]Can't play YT stream")
             console.log(error);

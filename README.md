@@ -44,7 +44,9 @@ or simply follow the instruction here(https://discordjs.guide/preparations/addin
 - create config.json in root</br>
 Format example can be found in `config.example.json`</br>
 `config.minExample.json` only require bot token string</br>
-- YT_COOKIE can be found in any YT video,type`document.cookie` in developer mode's console</br>
+- (Optional)YT_COOKIE can be found in any YT video with developer mode on</br>
+F12->Network->Search`cookie`->find latest one with 3 `set-cookie` below-></br>
+double click, copy and paste all stuff like `"YT_COOKIE":"HSID=xxx;SSID=xxx...__Secure-XXXXXXX=xxxx..."`</br>
 ![biscuit](./readme_assets/biscuit.png)
 - install lost packages using `npm i` in cmd</br>
 ![npm](./readme_assets/npm.png)

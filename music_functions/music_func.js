@@ -453,7 +453,7 @@ class discord_music {
                 var data = await ytdl.getBasicInfo(inp_url, {
                     requestOptions: {
                         headers: {
-                            //cookie: YT_COOKIE,
+                            cookie: YT_COOKIE,
                             // Optional. If not given, ytdl-core will try to find it.
                             // You can find this by going to a video's watch page, viewing the source,
                             // and searching for "ID_TOKEN".
@@ -466,7 +466,7 @@ class discord_music {
                 video_sec = data.videoDetails.lengthSeconds % 60;
                 embed_thumbnail = data.videoDetails.thumbnails[3].url;
                 uploader_str = data.videoDetails.author.name.toString();
-                var is_LIVE = await this.is_YT_live_url(inp_url);
+                var is_LIVE = data.videoDetails.liveBroadcastDetails && data.videoDetails.liveBroadcastDetails.isLiveNow;
                 if (is_LIVE) {
                     time_str = "LIVE";
                 } else {
@@ -661,10 +661,18 @@ class discord_music {
 
     //#region web urls
     async play_YT_url(url, begin_t) {
-        var is_LIVE = await this.is_YT_live_url(url);
-        if (is_LIVE) {
+        var data = await ytdl.getInfo(url, {
+            requestOptions: {
+                headers: {
+                    cookie: YT_COOKIE,
+                },
+            },
+        });
+        var isLIVE = data.videoDetails.liveBroadcastDetails && data.videoDetails.liveBroadcastDetails.isLiveNow;
+
+        if (isLIVE) {
             console.log("YT Live video");
-            this.audio_stream = ytdl(url, {
+            this.audio_stream = ytdl.downloadFromInfo(data, {
                 filter: "audio",
                 liveBuffer: 2000,
                 //highWaterMark: 1024,
@@ -682,7 +690,7 @@ class discord_music {
                 },
             });
         } else {
-            this.audio_stream = ytdl(url, {
+            this.audio_stream = ytdl.downloadFromInfo(data, {
                 filter: 'audioonly',
                 //liveBuffer: 4000,
                 //highWaterMark: 1024,
@@ -887,7 +895,7 @@ class discord_music {
             this.player = new createAudioPlayer();
 
             //player,resource error handle
-            this.player.on('error', error => function() {
+            this.player.on('error', () => {
                 this.handling_vc_err = true;
                 console.log("AP_err");
                 console.error(error);
@@ -970,7 +978,6 @@ class discord_music {
             }
             resolve(false);
         });
-
     }
 
     async is_GD_url(url = "") {

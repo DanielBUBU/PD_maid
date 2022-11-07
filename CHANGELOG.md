@@ -1,5 +1,11 @@
 # change log
 
+## Mein メイド v1.5.2 Stable
+- biscult for all YT request 
+- reduce YT request at the same time
+- readme biscult update
+- ping
+
 ## Mein メイド v1.5.1 Stable
 - replace some messages to console log 
 - reduce music command input

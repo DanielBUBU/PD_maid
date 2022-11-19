@@ -3,18 +3,18 @@
 const {
     StreamType,
     createAudioResource,
-} = require('@discordjs/voice');
-var path = require('path');
-const fs = require('fs');
-const probe = require('node-ffprobe');
-const https = require('https');
-const {
+    NoSubscriberBehavior,
     AudioPlayerStatus,
     createAudioPlayer,
     joinVoiceChannel,
     VoiceConnectionStatus,
     entersState,
 } = require('@discordjs/voice');
+var path = require('path');
+const fs = require('fs');
+const probe = require('node-ffprobe');
+const https = require('https');
+
 const cliProgress = require('cli-progress');
 var Meta = require('html-metadata-parser');
 
@@ -24,10 +24,11 @@ const fluentffmpeg = require('fluent-ffmpeg')
 const ytpl = require('ytpl');
 
 const {
-    MessageAttachment,
-    MessageEmbed,
-    MessageActionRow,
-    MessageButton
+    AttachmentBuilder,
+    EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle
 } = require('discord.js');
 
 //#endregion
@@ -187,7 +188,7 @@ class discord_music {
                     console.log('Connecting...');
                     this.connection = joinVoiceChannel({
                             channelId: this.last_at_vc_channel,
-                            guildId: this.last_interaction.guildId,
+                            guildId: this.last_interaction.guild.id,
                             adapterCreator: this.last_interaction.guild.voiceAdapterCreator,
                         })
                         .once("error", (err) => {
@@ -315,83 +316,83 @@ class discord_music {
 
             this.control_panel = undefined;
         }
-        let row2 = new MessageActionRow();
+        let row2 = new ActionRowBuilder();
 
         if (!this.connection) {
             //this.last_at_channel.send({ content: 'No connection detected' });
             row2.addComponents(
-                new MessageButton()
+                new ButtonBuilder()
                 .setCustomId('add')
                 .setLabel('Add')
-                .setStyle('PRIMARY'),
-                new MessageButton()
+                .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
                 .setCustomId('join')
                 .setLabel('Join')
-                .setStyle('PRIMARY'),
-                new MessageButton()
+                .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
                 .setCustomId('leave')
                 .setLabel('Leave')
-                .setStyle('DANGER')
+                .setStyle(ButtonStyle.Danger)
                 .setDisabled(true),
-                new MessageButton()
+                new ButtonBuilder()
                 .setCustomId('queue')
                 .setLabel('Queue')
-                .setStyle('PRIMARY'),
+                .setStyle(ButtonStyle.Primary),
             );
 
         } else {
             console.log('connection detected');
 
             row2.addComponents(
-                new MessageButton()
+                new ButtonBuilder()
                 .setCustomId('add')
                 .setLabel('Add')
-                .setStyle('PRIMARY'),
-                new MessageButton()
+                .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
                 .setCustomId('join')
                 .setLabel('Join')
-                .setStyle('PRIMARY')
+                .setStyle(ButtonStyle.Primary)
                 .setDisabled(true),
-                new MessageButton()
+                new ButtonBuilder()
                 .setCustomId('leave')
                 .setLabel('Leave')
-                .setStyle('DANGER'),
-                new MessageButton()
+                .setStyle(ButtonStyle.Danger),
+                new ButtonBuilder()
                 .setCustomId('queue')
                 .setLabel('Queue')
-                .setStyle('PRIMARY'),
+                .setStyle(ButtonStyle.Primary),
             );
 
         }
 
 
 
-        let file = new MessageAttachment('./assets/disgust.png');
+        let file = new AttachmentBuilder('./assets/disgust.png');
 
 
-        const row1 = new MessageActionRow()
+        const row1 = new ActionRowBuilder()
             .addComponents(
-                new MessageButton()
+                new ButtonBuilder()
                 .setCustomId('loop')
                 .setLabel('Loop')
-                .setStyle('PRIMARY'),
-                new MessageButton()
+                .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
                 .setCustomId('pause')
                 .setLabel('Pause')
-                .setStyle('PRIMARY'),
-                new MessageButton()
+                .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
                 .setCustomId('resume')
                 .setLabel('Resume')
-                .setStyle('PRIMARY'),
-                new MessageButton()
+                .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
                 .setCustomId('skip')
                 .setLabel('Skip')
-                .setStyle('PRIMARY'),
+                .setStyle(ButtonStyle.Primary),
 
-                new MessageButton()
+                new ButtonBuilder()
                 .setCustomId('cache_list')
                 .setLabel('Cache list')
-                .setStyle('PRIMARY'),
+                .setStyle(ButtonStyle.Primary),
 
 
             );
@@ -419,7 +420,7 @@ class discord_music {
             queue_str = this.queue.length.toString();
         }
 
-        const output_embed = new MessageEmbed()
+        const output_embed = new EmbedBuilder()
             .setColor('#7C183D')
             .setTitle('Music control panel')
             //.setURL('https://discord.js.org/')
@@ -498,7 +499,7 @@ class discord_music {
                 inp_url = "https://www.google.com"
             }
 
-            var output_embed = new MessageEmbed()
+            var output_embed = new EmbedBuilder()
                 .setColor('#7C183D')
                 .setTitle(title_str)
                 .setURL(inp_url)
@@ -566,27 +567,27 @@ class discord_music {
 
     //#region all urls,adding things to queue
 
-    async fetch_url_to_queue(modal) {
-            if (modal) {
-                this.last_at_vc_channel = modal.member.voice.channelId;
-                this.last_at_channel = modal.channel;
-                this.last_interaction = modal;
+    async fetch_url_to_queue(interaction) {
+            if (interaction) {
+                this.last_at_vc_channel = interaction.member.voice.channelId;
+                this.last_at_channel = interaction.channel;
+                this.last_interaction = interaction;
             }
-            const row1 = new MessageActionRow()
+            const row1 = new ActionRowBuilder()
                 .addComponents(
-                    new MessageButton()
+                    new ButtonBuilder()
                     .setCustomId('ytpl_toomuch_but')
                     .setLabel('Add anyway')
-                    .setStyle('PRIMARY'),
+                    .setStyle(ButtonStyle.Primary),
 
                 );
 
-            const output_embed = new MessageEmbed()
+            const output_embed = new EmbedBuilder()
                 .setColor('#831341')
                 .setTitle('Detected too much song in playlist')
                 .setDescription('keep adding into queue?')
                 .setTimestamp();
-            var inp_url = modal.getTextInputValue('add_url_str').toString();
+            var inp_url = interaction.fields.getTextInputValue('add_url_str').toString();
             var GD_ID = inp_url.split("/")[5];
             try {
 
@@ -596,45 +597,45 @@ class discord_music {
                     const playlist = await ytpl(inp_url, { pages: this.ytpl_limit });
                     if (playlist.continuation) {
 
-                        modal.channel.send({ embeds: [output_embed], components: [row1] });
+                        interaction.channel.send({ embeds: [output_embed], components: [row1] });
 
-                        modal.reply((this.ytpl_limit * 100) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
+                        interaction.reply((this.ytpl_limit * 100) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
                         for (let index = 0; index < this.ytpl_limit * 100; index++) {
                             this.queue.push(playlist.items[index].shortUrl);
                         }
                         this.ytpl_continuation = playlist;
                     } else {
-                        modal.reply((playlist.items.length) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
+                        interaction.reply((playlist.items.length) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
                         for (let index = 0; index < playlist.items.length; index++) {
                             this.queue.push(playlist.items[index].shortUrl);
                         }
                     }
                 } else if (ytdl.validateURL(inp_url)) {
                     await this.queue.push(inp_url);
-                    modal.reply('1 song adding to list' + `\`\`\`${inp_url}\`\`\``)
+                    interaction.reply('1 song adding to list' + `\`\`\`${inp_url}\`\`\``)
                 } else if ((await this.is_GD_url(inp_url))) {
                     inp_url = "https://drive.google.com/file/d/" + GD_ID;
                     await this.queue.push(inp_url);
-                    modal.reply('adding GD link to list' + `\`\`\`${inp_url}\`\`\``)
+                    interaction.reply('adding GD link to list' + `\`\`\`${inp_url}\`\`\``)
                 } else if ((await this.is_local_url_avaliabe(inp_url)) &&
-                    this.search_file_in_url_array(authed_user_id, modal.user.id).length != 0) {
+                    this.search_file_in_url_array(authed_user_id, interaction.user.id).length != 0) {
                     this.fetch_cache_files(this.format_local_absolute_url(inp_url), true)
-                    modal.reply('adding local link to list')
+                    interaction.reply('adding local link to list')
                 } else if (this.search_file_in_url_array(this.cached_file, inp_url).length != 0) {
-                    modal.reply('adding local cache to list' + `\`\`\`${inp_url}\`\`\``)
+                    interaction.reply('adding local cache to list' + `\`\`\`${inp_url}\`\`\``)
                     this.fetch_cache_files(this.search_file_in_url_array(this.cached_file, inp_url)[0], true);
                 } else {
-                    modal.reply('link not avaliable' + `\`\`\`${inp_url}\`\`\``)
+                    interaction.reply('link not avaliable' + `\`\`\`${inp_url}\`\`\``)
                 }
                 this.join_channel();
             } catch (error) {
-                modal.channel.send('Something went wrong' + `\`\`\`${inp_url}\`\`\``)
+                interaction.channel.send('Something went wrong' + `\`\`\`${inp_url}\`\`\``)
                 console.log(error);
             }
 
             //fetch resauce and play songs if not playing
 
-            this.send_control_panel(modal);
+            this.send_control_panel(interaction);
         }
         //play yt stuff,modified using fluent ffmpeg,might call join_channel function
     async play_url(url, begin_t, args) {
@@ -860,7 +861,7 @@ class discord_music {
             this.ffmpeg_audio_stream.setStartTime(Math.ceil(begin_t / 1000)) // set the song start time
         }
         try {
-            this.audio_resauce = createAudioResource(this.audio_stream, { inputType: StreamType.Arbitrary });
+            this.audio_resauce = createAudioResource(this.ffmpeg_audio_stream, { inputType: StreamType.Arbitrary });
         } catch (error) {
             throw "CAR_ERR";
         }
@@ -892,10 +893,14 @@ class discord_music {
         //player
         console.log("Initializing player...");
         if (!this.player || force) {
-            this.player = new createAudioPlayer();
+            this.player = createAudioPlayer({
+                behaviors: {
+                    noSubscriber: NoSubscriberBehavior.Pause,
+                },
+            });
 
             //player,resource error handle
-            this.player.on('error', () => {
+            this.player.on('error', (error) => {
                 this.handling_vc_err = true;
                 console.log("AP_err");
                 console.error(error);
@@ -943,7 +948,7 @@ class discord_music {
             }
 
             try {
-                if (this.connection && this.player || !this.subscribe) {
+                if (this.connection && this.player && !this.subscribe) {
                     this.subscribe = this.connection.subscribe(this.player);
                     console.log("subed");
                 } else {

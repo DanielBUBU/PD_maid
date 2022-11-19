@@ -1,7 +1,8 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
+const { generateDependencyReport } = require('@discordjs/voice');
 
 const {
-    MessageEmbed
+    EmbedBuilder,
 } = require('discord.js');
 
 module.exports = {
@@ -9,10 +10,12 @@ module.exports = {
         .setName('ping')
         .setDescription('Replies with Pong!'),
     async execute(client, args, argsStr) {
+
+        console.log(generateDependencyReport());
         args.channel.send('Pinging......').then(resultMessage => {
             let networkLatency = (resultMessage.createdTimestamp - args.createdTimestamp);
             let apiLatency = client.ws.ping;
-            const exampleEmbed1 = new MessageEmbed()
+            const exampleEmbed1 = new EmbedBuilder()
                 .setColor('#7C183D')
                 .setTitle(`PONG!!\nDelay :【${networkLatency}】ms\nAPI Delay【${apiLatency}】ms `)
             setTimeout(() => {

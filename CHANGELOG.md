@@ -1,5 +1,10 @@
 # change log
 
+## Mein メイド v1.5.5 Stable
+- discordjs v14 
+- uninstall/update packs
+- ping
+
 ## Mein メイド v1.5.2 Stable
 - biscult for all YT request 
 - reduce YT request at the same time

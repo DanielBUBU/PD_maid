@@ -1,41 +1,60 @@
-const { Modal, TextInputComponent, showModal } = require('discord-modals');
+const {
+    ActionRowBuilder,
+    Events,
+    ModalBuilder,
+    TextInputBuilder,
+    TextInputStyle
+} = require('discord.js');
 const ytpl = require('ytpl');
 
 
-const yt_url_modal = new Modal() // We create a Modal
-    .setCustomId('add_inp')
-    .setTitle('Add song or list into queue!')
-    .addComponents([
-        new TextInputComponent() // We create an Text Input Component
-        .setCustomId('add_url_str')
-        .setLabel('URL(Timeout if the playlist is too long)')
-        .setStyle('SHORT') //IMPORTANT: Text Input Component Style can be 'SHORT' or 'LONG'
-        .setMinLength(0)
-        .setMaxLength(100)
-        .setPlaceholder('Write a text here')
-        .setRequired(true) // If it's required or not
-    ]);
 
+
+const {
+    AttachmentBuilder,
+    MessageEmbed,
+    MessageActionRow,
+    MessageButton
+} = require('discord.js');
+
+const file = new AttachmentBuilder('./assets/disgust.png');
 
 const { show_queue_len } = require('../config.json');
+
+function setDmobjChannel(client, dmobj, interaction) {
+    dmobj.set_client(client);
+    dmobj.set_last_at_channel(interaction.channel);
+
+    dmobj.last_at_channel = interaction.channel;
+}
 
 module.exports = {
     name: 'interactionCreate',
     async execute(client, dmobj, commands, interaction) {
 
 
-        dmobj.set_client(client);
-        dmobj.set_last_at_channel(interaction.channel);
-
-        dmobj.last_at_channel = interaction.channel;
         console.log(`${interaction.user.tag} in #${interaction.channel.name} triggered an interaction.`);
 
+        if (interaction.isModalSubmit()) {
+            switch (interaction.customId) {
+                case 'add_inp':
+                    {
+                        dmobj.set_client(client);
 
+
+                        dmobj.set_last_at_channel(interaction.channel);
+                        // const vc_channel = modal.member.voice.channelId;
+                        dmobj.fetch_url_to_queue(interaction);
+                        return;
+                    }
+            }
+        }
 
         if (interaction.isButton()) {
             switch (interaction.customId) {
                 case 'loop':
                     {
+                        setDmobjChannel(client, dmobj, interaction);
                         interaction.reply({ content: 'loop clicked', ephemeral: true });
                         if (dmobj.isloop === 2) {
                             dmobj.isloop = 0;
@@ -52,6 +71,7 @@ module.exports = {
                     }
                 case 'pause':
                     {
+                        setDmobjChannel(client, dmobj, interaction);
                         interaction.reply({ content: 'pause clicked', ephemeral: true });
                         if (dmobj.connection) {
                             if (dmobj.player.pause()) {
@@ -67,6 +87,7 @@ module.exports = {
                     }
                 case 'resume':
                     {
+                        setDmobjChannel(client, dmobj, interaction);
                         interaction.reply({ content: 'resume clicked', ephemeral: true });
                         if (dmobj.connection) {
                             if (dmobj.player.unpause()) {
@@ -82,22 +103,38 @@ module.exports = {
                     }
                 case 'skip':
                     {
+                        setDmobjChannel(client, dmobj, interaction);
                         interaction.reply({ content: 'skip clicked', ephemeral: true });
                         dmobj.next_song(interaction, force = true);
                         return
                     }
                 case 'add':
                     {
+                        setDmobjChannel(client, dmobj, interaction);
                         //await interaction.reply({ content: 'add clicked', ephemeral: true });
-                        showModal(yt_url_modal, {
-                            client: client, // The showModal() method needs the client to send the modal through the API.
-                            interaction: interaction // The showModal() method needs the interaction to send the modal with the Interaction ID & Token.
-                        })
-                        //interaction.channel.send({ content: 'modal showed' });
+                        const ytInpModal = new ModalBuilder()
+                            .setCustomId('add_inp')
+                            .setTitle('Add song or list into queue!')
+
+                        // Create the text input components
+                        const ytUrlInput = new TextInputBuilder()
+                            .setCustomId('add_url_str')
+                            .setLabel('URL(Timeout if the playlist is too long)')
+                            // Short means only a single line of text
+                            .setStyle(TextInputStyle.Short)
+                            .setMinLength(0)
+                            .setMaxLength(100)
+                            .setPlaceholder('Write a text here')
+                            .setRequired(true)
+                        const firstActionRow = new ActionRowBuilder().addComponents(ytUrlInput);
+                        // Add inputs to the modal
+                        ytInpModal.addComponents(firstActionRow);
+                        await interaction.showModal(ytInpModal);
                         return
                     }
                 case 'join':
                     {
+                        setDmobjChannel(client, dmobj, interaction);
                         interaction.reply({ content: 'join clicked', ephemeral: true });
 
                         dmobj.join_channel(interaction);
@@ -105,6 +142,7 @@ module.exports = {
                     }
                 case 'leave':
                     {
+                        setDmobjChannel(client, dmobj, interaction);
                         interaction.reply({ content: 'leave clicked', ephemeral: true });
                         try {
 
@@ -117,6 +155,7 @@ module.exports = {
                     }
                 case 'queue':
                     {
+                        setDmobjChannel(client, dmobj, interaction);
                         interaction.reply({ content: 'queue clicked' });
                         if (dmobj.nowplaying != -1) {
                             await dmobj.send_info_embed(dmobj.queue[dmobj.nowplaying], "Nowplaying is No." + dmobj.nowplaying);
@@ -139,6 +178,7 @@ module.exports = {
                     }
                 case 'ytpl_toomuch_but':
                     {
+                        setDmobjChannel(client, dmobj, interaction);
                         interaction.message.delete();
                         let playlist = dmobj.ytpl_continuation;
                         let go_flag = true;
@@ -171,8 +211,10 @@ module.exports = {
                     }
                 case 'cache_list':
                     {
+                        setDmobjChannel(client, dmobj, interaction);
                         interaction.reply({ content: 'Fetching cache list', ephemeral: true });
                         dmobj.send_cache_list(interaction);
+                        return;
                     }
             }
 

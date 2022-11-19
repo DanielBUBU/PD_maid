@@ -1,6 +1,5 @@
 console.log("Loading packages...");
 const fs = require('fs');
-const discordModals = require('discord-modals') // Define the discord-modals package!
 
 const {
     discord_music,
@@ -9,8 +8,7 @@ const {
     commands,
 } = require('./library/importCommand');
 
-
-const { Client, Intents } = require('discord.js');
+const { Client, GatewayIntentBits, Partials } = require('discord.js');
 const { token, guildId, clientId = undefined } = require('./config.json');
 var rpc_client;
 
@@ -54,19 +52,21 @@ async function login_client() {
         rpc_login();
     }
 
-    var client = new Client({
-        intents: [Intents.FLAGS.GUILDS,
-            // Intents.FLAGS.GUILD_MEMBERS,
-            Intents.FLAGS.GUILD_MESSAGES,
-            Intents.FLAGS.GUILD_VOICE_STATES
-        ],
-        disableMentions: 'everyone',
-    })
 
+    var client = new Client({
+        intents: [GatewayIntentBits.Guilds,
+            GatewayIntentBits.GuildMessages,
+            GatewayIntentBits.GuildMessageReactions,
+            GatewayIntentBits.GuildVoiceStates,
+            GatewayIntentBits.MessageContent
+        ],
+        partials: [Partials.Channel],
+
+        disableMentions: 'everyone',
+    });
     console.log("Loading variables...");
     const dmobj = (new discord_music(client));
     const cmdobj = (new commands(client, dmobj));
-    discordModals(client);
     client = load_events(client, dmobj, cmdobj);
 
     //login

@@ -5,7 +5,7 @@ const { globalPrefix } = require('../config.json');
 module.exports = {
     name: 'messageCreate',
     async execute(client, dmobj, commands, message) {
-        //console.log(` sent a message.`);
+        //console.log(message);
 
         let is_command = false;
 
@@ -32,8 +32,8 @@ module.exports = {
         }
 
         const command_str = args.shift().toLowerCase();
-        // console.log(command_str);
-        // console.log(args);
+        //console.log(command_str);
+        //console.log(is_command);
 
 
         if (!is_command) return;

@@ -7,7 +7,7 @@ module.exports = {
         client.user.setPresence({
             activities: [{
                 name: 'cute,funny,and brutal',
-                type: "STREAMING",
+                type: 1,
                 url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
             }]
         });

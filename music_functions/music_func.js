@@ -160,7 +160,7 @@ class discord_music {
             this.client.user.setPresence({
                 activities: [{
                     name: 'cute,funny,and brutal',
-                    type: "STREAMING",
+                    type: 1,
                     url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
                 }]
             });
@@ -518,7 +518,7 @@ class discord_music {
             this.client.user.setPresence({
                 activities: [{
                     name: title_str,
-                    type: "STREAMING",
+                    type: 1,
                     url: inp_url
                 }]
             });

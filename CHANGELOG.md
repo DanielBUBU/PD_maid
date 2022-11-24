@@ -1,5 +1,10 @@
 # change log
 
+## Mein メイド v1.5.6 Stable
+- fix bot RPC
+- login options and handlers,user rpc need add `"rpc": true` into the config now
+- bat file for building slash commands
+
 ## Mein メイド v1.5.5 Stable
 - discordjs v14 
 - uninstall/update packs

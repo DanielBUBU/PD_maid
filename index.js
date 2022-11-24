@@ -9,8 +9,11 @@ const {
 } = require('./library/importCommand');
 
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
-const { token, guildId, clientId = undefined } = require('./config.json');
+const { token, guildId, clientId = undefined, rpc = false } = require('./config.json');
 var rpc_client;
+
+var rpcRetryFlag = true;
+var rpcRetryCount = 0;
 
 async function rpc_login(params) {
     rpc_client = require("discord-rich-presence")(clientId);
@@ -31,6 +34,9 @@ async function rpc_login(params) {
             partyMax: 4,
 
             buttons: [{
+                    label: "Youtube",
+                    url: "https://www.youtube.com/@DanielBUBU"
+                }, {
                     label: "Github",
                     url: "https://github.com/DanielBUBU/PD_maid"
                 }]
@@ -41,14 +47,26 @@ async function rpc_login(params) {
     });
 
     rpc_client.on("error", () => {
-        rpc_login();
+        if (rpcRetryFlag && rpcRetryCount < 3) {
+            rpc_login();
+            rpcRetryCount++;
+            console.log(rpcRetryCount + "rpc login failed");
+        }
+        setTimeout(() => {
+            if (rpcRetryCount >= 3) {
+                rpcRetryFlag = false;
+                console.log("rpc retry exceed limit, stop trying")
+            } else {
+                rpcRetryCount = 0;
+            }
+        }, 600000);
     });
 
     process.on('unhandledRejection', console.error);
 }
 
 async function login_client() {
-    if (clientId) {
+    if (clientId && rpc) {
         rpc_login();
     }
 
@@ -70,7 +88,12 @@ async function login_client() {
     client = load_events(client, dmobj, cmdobj);
 
     //login
-    client.login(token);
+    try {
+        client.login(token);
+    } catch {
+        console.log("Login failed, retrying");
+        login_client();
+    }
 }
 
 function load_events(client, dmobj, cmdobj) {
@@ -91,11 +114,4 @@ function load_events(client, dmobj, cmdobj) {
     return client;
 }
 
-
-
-try {
-    login_client();
-} catch (error) {
-    console.log(error);
-    login_client();
-}
+login_client();

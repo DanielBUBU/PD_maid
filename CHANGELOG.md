@@ -1,5 +1,8 @@
 # change log
 
+## Mein メイド v1.5.7 Stable
+- optimize error handle
+
 ## Mein メイド v1.5.6 Stable
 - fix bot RPC
 - login options and handlers,user rpc need add `"rpc": true` into the config now

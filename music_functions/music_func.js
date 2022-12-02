@@ -434,9 +434,14 @@ class discord_music {
             //.setImage('attachment://disgust.png')
             .setTimestamp()
             //.setFooter('Some footer text here', 'https://i.imgur.com/wSTFkRM.png');
-        this.control_panel = await this.last_at_channel.send({ embeds: [output_embed], files: [file], components: [row1, row2] });
-        if (this.nowplaying != -1) {
-            this.send_info_embed(this.queue[this.nowplaying], "Nowplaying");
+
+        try {
+            this.control_panel = await this.last_at_channel.send({ embeds: [output_embed], files: [file], components: [row1, row2] });
+            if (this.nowplaying != -1) {
+                this.send_info_embed(this.queue[this.nowplaying], "Nowplaying");
+            }
+        } catch (error) {
+            console.log(error);
         }
         this.is_sending_panel = false;
     }
@@ -908,7 +913,7 @@ class discord_music {
                 this.init_player(true);
 
                 this.join_channel();
-                this.play_YT_url(this.queue[this.nowplaying], error.resource.playbackDuration);
+                this.play_url(this.queue[this.nowplaying], error.resource.playbackDuration);
                 console.log("AP_err_handled");
                 this.handling_vc_err = false;
             });

@@ -8,3 +8,5 @@ t.js
 music_temp/maitetsulr-vocalalbum1.flac
 music_temp/maitetsulr-vocalalbum2.flac
 *.flac
+appmap.yml
+tmp/*

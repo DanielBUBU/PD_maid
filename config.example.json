@@ -1,7 +1,8 @@
 {
     "clientId": "Your bot client ID",
     "rpc": true,
-    "guildId": "Your guild ID",
+    "guildId": ["Your guild ID"],
+    "buildSlashCommandOnStartup": true,
     "authed_user_id": ["Users' ID for those who can input local url"],
     "download_chunk_size": 4194304,
     "globalPrefix": "??",

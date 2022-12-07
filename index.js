@@ -1,15 +1,17 @@
 console.log("Loading packages...");
-const fs = require('fs');
-
 const {
     discord_music,
 } = require('./music_functions/music_func.js');
 const {
     commands,
+    load_events,
 } = require('./library/importCommand');
+const {
+    deployCommands
+} = require('./library/deploy-commands');
 
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
-const { token, guildId, clientId = undefined, rpc = false } = require('./config.json');
+const { token, buildSlashCommandOnStartup = false, clientId = undefined, rpc = false } = require('./config.json');
 var rpc_client;
 
 var rpcRetryFlag = true;
@@ -70,6 +72,13 @@ async function login_client() {
         rpc_login();
     }
 
+    if (buildSlashCommandOnStartup) {
+        try {
+            deployCommands();
+        } catch (error) {
+            console.error(error);
+        }
+    }
 
     var client = new Client({
         intents: [GatewayIntentBits.Guilds,
@@ -96,22 +105,5 @@ async function login_client() {
     }
 }
 
-function load_events(client, dmobj, cmdobj) {
-    console.log("---Start loading events---");
-    var loaded_event_counter = 0;
-    const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
-
-    for (const file of eventFiles) {
-        loaded_event_counter++;
-        const event = require(`./events/${file}`);
-        console.log("Loading events (%d/%d):%s", loaded_event_counter, eventFiles.length, event.name);
-        if (event.once) {
-            client.once(event.name, (...args) => event.execute(...args));
-        } else {
-            client.on(event.name, (...args) => event.execute(client, dmobj, cmdobj, ...args));
-        }
-    }
-    return client;
-}
 
 login_client();

@@ -1,5 +1,11 @@
 # change log
 
+## Mein メイド v1.5.8 Stable
+- optimize error handle
+- ID for errors
+- better loading progress
+- appmap package still testing
+
 ## Mein メイド v1.5.7 Stable
 - optimize error handle
 

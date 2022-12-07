@@ -20,7 +20,7 @@ var Meta = require('html-metadata-parser');
 
 const ytdl = require('ytdl-core');
 
-const fluentffmpeg = require('fluent-ffmpeg')
+const fluentffmpeg = require('fluent-ffmpeg');
 const ytpl = require('ytpl');
 
 const {
@@ -58,6 +58,7 @@ class discord_music {
     last_interaction = null;
     nowplaying = -1;
     handling_vc_err = false;
+    PBD = 0;
     player = undefined;
     np_embed = undefined;
     processing_next_song = false;
@@ -69,8 +70,9 @@ class discord_music {
     //#region constructor & set functions
 
     constructor(client) {
-        this.client = client;
+        this.set_client(client);
         this.fetch_cache_files(music_temp_dir);
+        this.init_player();
     }
 
     //update client info
@@ -87,7 +89,9 @@ class discord_music {
 
     //#region playlist maintain,connection
     //fetching queue and call functions to play song
-    async next_song(args, force = false) {
+    async next_song(force = false) {
+        this.handling_vc_err = false;
+        this.PBD = 0;
         this.processing_next_song = true;
         this.delete_np_embed();
         var next_song_url = false;
@@ -136,25 +140,17 @@ class discord_music {
 
 
         if (next_song_url) {
-            this.send_control_panel(args);
             if (clear_console) {
                 console.clear();
             }
-            console.log(next_song_url);
+            console.log(next_song_url + " TS:" + Date.now());
 
             try {
-                this.play_url(next_song_url, 0, args);
+                this.play_url(next_song_url, 0);
             } catch (error) {
                 console.error('next_song func error:', error.message);
-                this.next_song(args);
+                this.next_song(true);
             }
-
-            /*
-            this.audio_resauce.playStream.on('error', error => {
-                console.error('Error:', error.message);
-            });
-*/
-
         } else {
             console.log("can't get next song path");
             this.client.user.setPresence({
@@ -164,7 +160,7 @@ class discord_music {
                     url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
                 }]
             });
-            this.clear_status(args);
+            this.clear_status(true);
             this.reset_music_parms();
         }
     }
@@ -192,7 +188,7 @@ class discord_music {
                             adapterCreator: this.last_interaction.guild.voiceAdapterCreator,
                         })
                         .once("error", (err) => {
-                            console.log(err);
+                            console.log("CON ERR" + err);
                             this.connection_self_destruct();
                             this.join_channel();
                         });
@@ -227,12 +223,12 @@ class discord_music {
 
 
             if (!this.player) {
-                this.init_player(true);
+                this.init_player();
             }
             setTimeout(() => {
                 this.init_sub(false, args);
                 if (this.nowplaying == -1 && this.queue.length >= 1) {
-                    this.next_song();
+                    this.next_song(true);
                 }
             }, 1000)
 
@@ -242,41 +238,46 @@ class discord_music {
 
     //#region reset,clear functions
     //kill sub and connection
-    connection_self_destruct(args) {
-        if (this.subscribe) {
-            this.subscribe.unsubscribe();
-            this.subscribe = undefined;
-        }
-        console.log({ content: 'self destruction in 1 second' });
+    connection_self_destruct() {
+        console.log('self destruction in 1 second');
         if (this.connection) {
-            console.log({ content: 'Connection detected, leaving' });
+            console.log('Connection detected, leaving');
             this.connection.destroy();
             this.connection = undefined;
-            console.log({ content: 'No connection detected' });
         }
-        this.send_control_panel(args);
+        this.send_control_panel();
         return
     }
 
     //reset all stuff except loop mode,player,client,last at (vc) channels,queue,nowplaying
     //it will call connection_self_destruct
-    clear_status(args) {
+    clear_status(connectionSD = false, callbackF) {
         this.delete_np_embed();
-        try {
-            this.audio_stream.destroy();
-        } catch (error) {
-            // console.log(error);
-        }
         try {
             this.player.stop();
         } catch (error) {
-            console.log(error);
+            console.log("CSPS Err");
+        }
+        try {
+            this.audio_stream.destroy();
+        } catch (error) {
+            console.log("CSASD Err");
         }
         this.ffmpeg_audio_stream = null;
         //this.audio_resauce.playstream.destroy();
         this.audio_stream = null;
         this.audio_resauce = null;
-        this.connection_self_destruct(args);
+        this.init_player(true);
+        if (this.subscribe) {
+            this.subscribe.unsubscribe();
+            this.subscribe = undefined;
+        }
+        if (connectionSD) {
+            this.connection_self_destruct();
+        }
+        if (callbackF) {
+            callbackF();
+        }
         return
     }
 
@@ -291,7 +292,7 @@ class discord_music {
     //send control panel
     async send_control_panel(args) {
 
-        if (this.is_sending_panel) {
+        if (this.is_sending_panel || this.handling_vc_err) {
             return;
         }
         this.is_sending_panel = true;
@@ -299,19 +300,21 @@ class discord_music {
         if (args) {
             this.last_at_channel = args.channel;
             try {
+                //generated panel cliked, must delete it
                 args.message.delete();
-            } catch (error) {}
+            } catch (error) {
+                console.log("DelOLDCP ERR");
+            }
         }
         if (this.control_panel) {
             try {
-                if (args && args.message.id != this.control_panel.id || !args) {
-
-
+                //when stored panel is not the one clicked, delete the stored panel too
+                //or it's request from program in order to refresh the panel
+                if ((args && args.message.id != this.control_panel.id) || !args) {
                     this.control_panel.delete();
-
                 }
             } catch (error) {
-
+                console.log("DelCP ERR");
             }
 
             this.control_panel = undefined;
@@ -441,7 +444,7 @@ class discord_music {
                 this.send_info_embed(this.queue[this.nowplaying], "Nowplaying");
             }
         } catch (error) {
-            console.log(error);
+            console.log("SIE Sending Err");
         }
         this.is_sending_panel = false;
     }
@@ -561,7 +564,7 @@ class discord_music {
                 try {
                     this.np_embed.delete();
                 } catch (error) {
-
+                    console.log("DelNPE ERR");
                 }
                 this.np_embed = null;
             }
@@ -573,76 +576,77 @@ class discord_music {
     //#region all urls,adding things to queue
 
     async fetch_url_to_queue(interaction) {
-            if (interaction) {
-                this.last_at_vc_channel = interaction.member.voice.channelId;
-                this.last_at_channel = interaction.channel;
-                this.last_interaction = interaction;
-            }
-            const row1 = new ActionRowBuilder()
-                .addComponents(
-                    new ButtonBuilder()
-                    .setCustomId('ytpl_toomuch_but')
-                    .setLabel('Add anyway')
-                    .setStyle(ButtonStyle.Primary),
-
-                );
-
-            const output_embed = new EmbedBuilder()
-                .setColor('#831341')
-                .setTitle('Detected too much song in playlist')
-                .setDescription('keep adding into queue?')
-                .setTimestamp();
-            var inp_url = interaction.fields.getTextInputValue('add_url_str').toString();
-            var GD_ID = inp_url.split("/")[5];
-            try {
-
-                //fetch video
-
-                if (ytpl.validateID(inp_url)) {
-                    const playlist = await ytpl(inp_url, { pages: this.ytpl_limit });
-                    if (playlist.continuation) {
-
-                        interaction.channel.send({ embeds: [output_embed], components: [row1] });
-
-                        interaction.reply((this.ytpl_limit * 100) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
-                        for (let index = 0; index < this.ytpl_limit * 100; index++) {
-                            this.queue.push(playlist.items[index].shortUrl);
-                        }
-                        this.ytpl_continuation = playlist;
-                    } else {
-                        interaction.reply((playlist.items.length) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
-                        for (let index = 0; index < playlist.items.length; index++) {
-                            this.queue.push(playlist.items[index].shortUrl);
-                        }
-                    }
-                } else if (ytdl.validateURL(inp_url)) {
-                    await this.queue.push(inp_url);
-                    interaction.reply('1 song adding to list' + `\`\`\`${inp_url}\`\`\``)
-                } else if ((await this.is_GD_url(inp_url))) {
-                    inp_url = "https://drive.google.com/file/d/" + GD_ID;
-                    await this.queue.push(inp_url);
-                    interaction.reply('adding GD link to list' + `\`\`\`${inp_url}\`\`\``)
-                } else if ((await this.is_local_url_avaliabe(inp_url)) &&
-                    this.search_file_in_url_array(authed_user_id, interaction.user.id).length != 0) {
-                    this.fetch_cache_files(this.format_local_absolute_url(inp_url), true)
-                    interaction.reply('adding local link to list')
-                } else if (this.search_file_in_url_array(this.cached_file, inp_url).length != 0) {
-                    interaction.reply('adding local cache to list' + `\`\`\`${inp_url}\`\`\``)
-                    this.fetch_cache_files(this.search_file_in_url_array(this.cached_file, inp_url)[0], true);
-                } else {
-                    interaction.reply('link not avaliable' + `\`\`\`${inp_url}\`\`\``)
-                }
-                this.join_channel();
-            } catch (error) {
-                interaction.channel.send('Something went wrong' + `\`\`\`${inp_url}\`\`\``)
-                console.log(error);
-            }
-
-            //fetch resauce and play songs if not playing
-
-            this.send_control_panel(interaction);
+        if (interaction) {
+            this.last_at_vc_channel = interaction.member.voice.channelId;
+            this.last_at_channel = interaction.channel;
+            this.last_interaction = interaction;
         }
-        //play yt stuff,modified using fluent ffmpeg,might call join_channel function
+        const row1 = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                .setCustomId('ytpl_toomuch_but')
+                .setLabel('Add anyway')
+                .setStyle(ButtonStyle.Primary),
+
+            );
+
+        const output_embed = new EmbedBuilder()
+            .setColor('#831341')
+            .setTitle('Detected too much song in playlist')
+            .setDescription('keep adding into queue?')
+            .setTimestamp();
+        var inp_url = interaction.fields.getTextInputValue('add_url_str').toString();
+        var GD_ID = inp_url.split("/")[5];
+        try {
+
+            //fetch video
+
+            if (ytpl.validateID(inp_url)) {
+                const playlist = await ytpl(inp_url, { pages: this.ytpl_limit });
+                if (playlist.continuation) {
+
+                    interaction.channel.send({ embeds: [output_embed], components: [row1] });
+
+                    interaction.reply((this.ytpl_limit * 100) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
+                    for (let index = 0; index < this.ytpl_limit * 100; index++) {
+                        this.queue.push(playlist.items[index].shortUrl);
+                    }
+                    this.ytpl_continuation = playlist;
+                } else {
+                    interaction.reply((playlist.items.length) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
+                    for (let index = 0; index < playlist.items.length; index++) {
+                        this.queue.push(playlist.items[index].shortUrl);
+                    }
+                }
+            } else if (ytdl.validateURL(inp_url)) {
+                await this.queue.push(inp_url);
+                interaction.reply('1 song adding to list' + `\`\`\`${inp_url}\`\`\``)
+            } else if ((await this.is_GD_url(inp_url))) {
+                inp_url = "https://drive.google.com/file/d/" + GD_ID;
+                await this.queue.push(inp_url);
+                interaction.reply('adding GD link to list' + `\`\`\`${inp_url}\`\`\``)
+            } else if ((await this.is_local_url_avaliabe(inp_url)) &&
+                this.search_file_in_url_array(authed_user_id, interaction.user.id).length != 0) {
+                this.fetch_cache_files(this.format_local_absolute_url(inp_url), true)
+                interaction.reply('adding local link to list')
+            } else if (this.search_file_in_url_array(this.cached_file, inp_url).length != 0) {
+                interaction.reply('adding local cache to list' + `\`\`\`${inp_url}\`\`\``)
+                this.fetch_cache_files(this.search_file_in_url_array(this.cached_file, inp_url)[0], true);
+            } else {
+                interaction.reply('link not avaliable' + `\`\`\`${inp_url}\`\`\``)
+            }
+            this.join_channel();
+        } catch (error) {
+            console.log("FUQ Err");
+            interaction.channel.send('Something went wrong' + `\`\`\`${inp_url}\`\`\``);
+        }
+
+        //fetch resauce and play songs if not playing
+
+        this.send_control_panel(interaction);
+    }
+
+    //play yt stuff,modified using fluent ffmpeg,might call join_channel function
     async play_url(url, begin_t, args) {
         if (this.audio_stream) {
             this.audio_stream.destroy();
@@ -655,7 +659,6 @@ class discord_music {
         this.audio_stream = null;
         this.audio_resauce = null;
         this.ffmpeg_audio_stream = null;
-
         if (ytdl.validateURL(url)) {
             this.play_YT_url(url, begin_t);
         } else if (await (this.is_GD_url(url))) {
@@ -675,7 +678,6 @@ class discord_music {
             },
         });
         var isLIVE = data.videoDetails.liveBroadcastDetails && data.videoDetails.liveBroadcastDetails.isLiveNow;
-
         if (isLIVE) {
             console.log("YT Live video");
             this.audio_stream = ytdl.downloadFromInfo(data, {
@@ -684,7 +686,7 @@ class discord_music {
                 //highWaterMark: 1024,
                 //dlChunkSize: 65536,
                 //quality: 'highestaudio',
-                //begin: begin_t,
+                //begin: BT,
                 requestOptions: {
                     headers: {
                         cookie: YT_COOKIE,
@@ -702,7 +704,7 @@ class discord_music {
                 //highWaterMark: 1024,
                 dlChunkSize: 65536,
                 quality: 'highestaudio',
-                //begin: begin_t,
+                //begin: BT,
                 requestOptions: {
                     headers: {
                         cookie: YT_COOKIE,
@@ -716,87 +718,93 @@ class discord_music {
         }
 
         try {
-            this.play_stream(begin_t);
-            if (this.play_stream.destroyed) {
-                throw "YTDL ERR";
+            if (!isLIVE) {
+                if (begin_t && data.videoDetails.lengthSeconds <= Math.ceil(begin_t / 1000)) {
+                    this.next_song(true);
+                } else {
+                    this.play_stream(begin_t);
+                }
+            } else {
+                this.play_stream();
             }
         } catch (error) {
             console.log("[Skipping]Can't play YT stream")
             console.log(error);
-            this.next_song();
+            this.next_song(true);
         }
         return;
     }
 
     async play_GD_url(url, begin_t, force_download = false) {
-            var GD_ID = url.split("/")[5];
-            var file_name = (await Meta.parser(url)).og.title.toString();
-            var file_url = this.format_local_absolute_url(path.join(music_temp_dir, file_name))
-            var search_cache = this.search_file_in_url_array(this.cached_file, file_name);
-            //if file is not in cache or there's need to redownload
-            if (search_cache.length == 0 || force_download) {
-                const page_req = https.get(("https://drive.google.com/uc?export=open&confirm=yTib&id=" + GD_ID).toString(), (page_response) => {
-                    const f_req = https.get(page_response.headers.location, (response) => {
-                        var total_bytes = parseInt(response.headers['content-length']);
-                        const bar1 = new cliProgress.SingleBar({
-                            format: ('|{bar}|{percentage}% | ETA: {eta}s | {value} KB/{total} KB')
-                        }, cliProgress.Presets.shades_grey);
-                        console.clear();
-                        console.log('Downloading [' + file_name + ']')
-                        bar1.start((total_bytes / 1024).toFixed(2), 0);
-                        var received_bytes = 0;
-                        // 'readable' may be triggered multiple times as data is buffered in
-                        var download_f = fs.createWriteStream(file_url)
-                        response.on('readable', () => {
-                            let chunk;
-                            // Use a loop to make sure we read all currently available data
-                            if (!this.handling_chunk) {
-                                this.handling_chunk = true;
-                                while (null !== (chunk = response.read(download_chunk_size))) {
-                                    download_f.write(chunk);
-                                    //  console.log(`Read ${chunk.length} bytes of data...`);
-                                    received_bytes = received_bytes + chunk.length;
-                                    bar1.update(received_bytes / 1024);
-                                }
-                                this.handling_chunk = false;
+        var GD_ID = url.split("/")[5];
+        var file_name = (await Meta.parser(url)).og.title.toString();
+        var file_url = this.format_local_absolute_url(path.join(music_temp_dir, file_name))
+        var search_cache = this.search_file_in_url_array(this.cached_file, file_name);
+        //if file is not in cache or there's need to redownload
+        if (search_cache.length == 0 || force_download) {
+            const page_req = https.get(("https://drive.google.com/uc?export=open&confirm=yTib&id=" + GD_ID).toString(), (page_response) => {
+                const f_req = https.get(page_response.headers.location, (response) => {
+                    var total_bytes = parseInt(response.headers['content-length']);
+                    const bar1 = new cliProgress.SingleBar({
+                        format: ('|{bar}|{percentage}% | ETA: {eta}s | {value} KB/{total} KB')
+                    }, cliProgress.Presets.shades_grey);
+                    console.clear();
+                    console.log('Downloading [' + file_name + ']')
+                    bar1.start((total_bytes / 1024).toFixed(2), 0);
+                    var received_bytes = 0;
+                    // 'readable' may be triggered multiple times as data is buffered in
+                    var download_f = fs.createWriteStream(file_url)
+                    response.on('readable', () => {
+                        let chunk;
+                        // Use a loop to make sure we read all currently available data
+                        if (!this.handling_chunk) {
+                            this.handling_chunk = true;
+                            while (null !== (chunk = response.read(download_chunk_size))) {
+                                download_f.write(chunk);
+                                //  console.log(`Read ${chunk.length} bytes of data...`);
+                                received_bytes = received_bytes + chunk.length;
+                                bar1.update(received_bytes / 1024);
                             }
-                        });
-                        response.on("error", () => {
-                            bar1.stop();
-                            console.log("[Skipping]can't download the song")
-                            this.clear_status();
-                            this.next_song();
-                        });
-                        // 'end' will be triggered once when there is no more data available
-                        response.on("end", () => {
-                            bar1.stop();
-                            console.log('Reached end of stream.');
-                            this.cached_file.push(file_url);
-                            try {
-                                this.play_local_stream(file_url, begin_t);
-                            } catch (error) {
-                                console.log("[Skipping]playing local stream err", error)
-                                this.next_song();
-                            }
-                        });
-
-
+                            this.handling_chunk = false;
+                        }
                     });
+                    response.on("error", () => {
+                        bar1.stop();
+                        console.log("[Skipping]can't download the song")
+                        this.clear_status();
+                        this.next_song(true);
+                    });
+                    // 'end' will be triggered once when there is no more data available
+                    response.on("end", () => {
+                        bar1.stop();
+                        console.log('Reached end of stream.');
+                        this.cached_file.push(file_url);
+                        try {
+                            this.play_local_stream(file_url, begin_t);
+                        } catch (error) {
+                            console.log("[Skipping]playing local stream err", error)
+                            this.next_song(true);
+                        }
+                    });
+
+
                 });
-            } else {
-                console.log("Cache searched when trying to play GD url" + search_cache);
-                if (this.is_local_url_avaliabe(file_url)) {
-                    try {
-                        this.play_local_stream_array(search_cache);
-                    } catch (error) {
-                        this.play_GD_url(url, begin_t, true);
-                    }
-                } else {
+            });
+        } else {
+            console.log("Cache searched when trying to play GD url" + search_cache);
+            if (this.is_local_url_avaliabe(file_url)) {
+                try {
+                    this.play_local_stream_array(search_cache);
+                } catch (error) {
                     this.play_GD_url(url, begin_t, true);
                 }
+            } else {
+                this.play_GD_url(url, begin_t, true);
             }
         }
-        //#endregion
+    }
+
+    //#endregion
 
     //#region local url and stream
 
@@ -807,7 +815,7 @@ class discord_music {
             console.log("[Skipping]Can't play local url")
             console.log(error);
             this.queue = this.remove_item_in_array(this.queue, url);
-            this.next_song();
+            this.next_song(true);
         }
     }
 
@@ -857,13 +865,16 @@ class discord_music {
 
 
         try {
-            this.ffmpeg_audio_stream = fluentffmpeg({ source: this.audio_stream }).toFormat('wav')
+            if (this.audio_stream.destroyed) {
+                throw "AS ERR";
+            }
+            this.ffmpeg_audio_stream = fluentffmpeg({ source: this.audio_stream }).toFormat('wav');
         } catch (error) {
             throw "CFFF_ERR";
         }
         if (begin_t) {
-
-            this.ffmpeg_audio_stream.setStartTime(Math.ceil(begin_t / 1000)) // set the song start time
+            console.log("Set BT:" + Math.ceil(begin_t / 1000));
+            this.ffmpeg_audio_stream.setStartTime(Math.ceil(begin_t / 1000)); // set the song start time
         }
         try {
             this.audio_resauce = createAudioResource(this.ffmpeg_audio_stream, { inputType: StreamType.Arbitrary });
@@ -876,7 +887,7 @@ class discord_music {
             //this.send_log();
         } catch (error) {
             this.send_log();
-            console.log(error);
+            console.log("PSP_ERR" + error);
             this.init_player(true);
             this.play_stream(begin_t);
         }
@@ -905,31 +916,46 @@ class discord_music {
             });
 
             //player,resource error handle
-            this.player.on('error', (error) => {
-                this.handling_vc_err = true;
-                console.log("AP_err");
-                console.error(error);
-                this.clear_status();
-                this.init_player(true);
+            this.player.once('error', (error) => {
+                try {
+                    this.handling_vc_err = true;
+                    this.PBD = this.PBD + error.resource.playbackDuration;
+                    console.log("AP_err" + error);
+                    //console.error(error);
+                    this.clear_status(false,
+                        () => {
+                            console.log("AP err handled URL:%s\nTime:%d TS:%s", this.queue[this.nowplaying], this.PBD, Date.now());
+                            if (this.PBD) {
+                                this.play_url(this.queue[this.nowplaying], this.PBD);
+                            } else {
+                                this.play_url(this.queue[this.nowplaying]);
+                            }
+                        });
 
-                this.join_channel();
-                this.play_url(this.queue[this.nowplaying], error.resource.playbackDuration);
-                console.log("AP_err_handled");
-                this.handling_vc_err = false;
+                } catch (error) {
+                    console.log("Error handling AP_ERR" + error);
+                    this.next_song(true);
+                }
             });
 
             //get next song automatically
             this.player.on(AudioPlayerStatus.Idle, () => {
+                console.log("Idle");
                 setTimeout(() => {
                     if (this.player.state.status === AudioPlayerStatus.Idle && !this.handling_vc_err && !this.processing_next_song) {
-                        this.next_song();
+                        this.next_song(true);
                     } else {
                         console.log('Player already playing', this.handling_vc_err, this.processing_next_song);
                     }
                 }, 1500);
 
             });
-            console.log("inited");
+            this.player.on(AudioPlayerStatus.Playing, () => {
+                console.log("Player playing");
+                this.handling_vc_err = false;
+                this.send_control_panel();
+            });
+            console.log("Player inited");
         }
         return;
     }
@@ -959,7 +985,6 @@ class discord_music {
                 } else {
                     console.log("sub exsist");
                 }
-                this.send_control_panel(args);
             } catch (error) {
                 this.connection_self_destruct(args);
                 console.log("can't subscribe");

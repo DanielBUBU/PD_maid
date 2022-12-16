@@ -24,8 +24,6 @@ const { show_queue_len } = require('../config.json');
 function setDmobjChannel(client, dmobj, interaction) {
     dmobj.set_client(client);
     dmobj.set_last_at_channel(interaction.channel);
-
-    dmobj.last_at_channel = interaction.channel;
 }
 
 module.exports = {

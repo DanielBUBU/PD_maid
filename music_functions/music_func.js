@@ -179,6 +179,7 @@ class discord_music {
 
             //var connection;
             if (!this.connection) {
+                this.clear_status(false);
                 console.log('No connection found');
                 if (this.last_at_vc_channel) {
                     console.log('Connecting...');
@@ -192,7 +193,6 @@ class discord_music {
                             this.connection_self_destruct();
                             this.join_channel();
                         });
-
 
 
                     //try to reconnect if disconnect
@@ -226,9 +226,16 @@ class discord_music {
                 this.init_player();
             }
             setTimeout(() => {
-                this.init_sub(false, args);
-                if (this.nowplaying == -1 && this.queue.length >= 1) {
-                    this.next_song(true);
+                var sendingFlag = true;
+                if (this.connection && this.player) {
+                    this.init_sub(false);
+                    if (this.nowplaying == -1 && this.queue.length >= 1) {
+                        this.next_song(true);
+                        sendingFlag = false;
+                    }
+                }
+                if (sendingFlag) {
+                    this.send_control_panel(args);
                 }
             }, 1000)
 
@@ -238,20 +245,21 @@ class discord_music {
 
     //#region reset,clear functions
     //kill sub and connection
-    connection_self_destruct() {
+    connection_self_destruct(args) {
         console.log('self destruction in 1 second');
         if (this.connection) {
             console.log('Connection detected, leaving');
             this.connection.destroy();
             this.connection = undefined;
         }
-        this.send_control_panel();
+        this.send_control_panel(args);
         return
     }
 
     //reset all stuff except loop mode,player,client,last at (vc) channels,queue,nowplaying
     //it will call connection_self_destruct
     clear_status(connectionSD = false, callbackF) {
+        console.log("Cleaning dirty stuff");
         this.delete_np_embed();
         try {
             this.player.stop();
@@ -297,27 +305,30 @@ class discord_music {
         }
         this.is_sending_panel = true;
 
-        if (args) {
-            this.last_at_channel = args.channel;
-            try {
-                //generated panel cliked, must delete it
-                args.message.delete();
-            } catch (error) {
-                console.log("DelOLDCP ERR");
-            }
-        }
+        var oldCPID = -1;
         if (this.control_panel) {
             try {
                 //when stored panel is not the one clicked, delete the stored panel too
                 //or it's request from program in order to refresh the panel
-                if ((args && args.message.id != this.control_panel.id) || !args) {
-                    this.control_panel.delete();
-                }
+                oldCPID = this.control_panel.id;
+                this.control_panel.delete();
+
             } catch (error) {
-                console.log("DelCP ERR");
+                console.log("DelOLDCP ERR" + error);
             }
 
             this.control_panel = undefined;
+        }
+        if (args) {
+            this.last_at_channel = args.channel;
+            try {
+                //generated panel cliked, must delete it
+                if (args.message.id != oldCPID) {
+                    args.message.delete();
+                }
+            } catch (error) {
+                console.log("DelCP ERR" + error);
+            }
         }
         let row2 = new ActionRowBuilder();
 

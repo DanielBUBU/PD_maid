@@ -1,5 +1,8 @@
 # change log
 
+## Mein メイド v1.5.9 Stable
+- Improve control panel sending logic
+
 ## Mein メイド v1.5.8 Stable
 - optimize error handle
 - ID for errors

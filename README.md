@@ -1,6 +1,6 @@
 # PD_maid
 
-## v1.5.8 Stable is out!!
+## v1.5.9 Stable is out!!
 ![Banner](./readme_assets/banner.png)
 
 

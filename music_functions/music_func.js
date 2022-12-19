@@ -14,7 +14,6 @@ var path = require('path');
 const fs = require('fs');
 const probe = require('node-ffprobe');
 const https = require('https');
-
 const cliProgress = require('cli-progress');
 var Meta = require('html-metadata-parser');
 
@@ -271,8 +270,23 @@ class discord_music {
         } catch (error) {
             console.log("CSASD Err");
         }
+        try {
+            this.ffmpeg_audio_stream.destroy();
+        } catch (error) {
+            console.log("CSFFMPEGSD Err");
+        }
+        try {
+            this.audio_resauce.playstream.destroy();
+        } catch (error) {
+            console.log("CSARPSD Err");
+        }
+        try {
+            this.ffmpeg_audio_stream.kill();
+        } catch (error) {
+            console.log("Kill ERR");
+        }
+
         this.ffmpeg_audio_stream = null;
-        //this.audio_resauce.playstream.destroy();
         this.audio_stream = null;
         this.audio_resauce = null;
         this.init_player(true);
@@ -881,11 +895,12 @@ class discord_music {
             }
             this.ffmpeg_audio_stream = fluentffmpeg({ source: this.audio_stream }).toFormat('wav');
         } catch (error) {
+
             throw "CFFF_ERR";
         }
         if (begin_t) {
             console.log("Set BT:" + Math.ceil(begin_t / 1000));
-            this.ffmpeg_audio_stream.setStartTime(Math.ceil(begin_t / 1000)); // set the song start time
+            this.ffmpeg_audio_stream.seekInput(Math.ceil(begin_t / 1000)); // set the song start time
         }
         try {
             this.audio_resauce = createAudioResource(this.ffmpeg_audio_stream, { inputType: StreamType.Arbitrary });
@@ -902,9 +917,6 @@ class discord_music {
             this.init_player(true);
             this.play_stream(begin_t);
         }
-        this.audio_stream = null;
-        this.ffmpeg_audio_stream = null;
-        this.audio_resauce = null;
         return;
     }
 

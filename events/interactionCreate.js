@@ -103,7 +103,7 @@ module.exports = {
                     {
                         setDmobjChannel(client, dmobj, interaction);
                         interaction.reply({ content: 'skip clicked', ephemeral: true });
-                        dmobj.next_song(interaction, force = true);
+                        dmobj.next_song(force = true);
                         return
                     }
                 case 'add':

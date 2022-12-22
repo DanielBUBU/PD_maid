@@ -40,17 +40,20 @@ const {
         clear_console = true
 } = require('../config.json');
 
+const player = createAudioPlayer({
+    behaviors: {
+        noSubscriber: NoSubscriberBehavior.Pause,
+    },
+});
+var subscribe;
+var connection;
+
 class discord_music {
     //#region variables
     control_panel = undefined;
     queue = [];
     isloop = 2;
     ytpl_continuation = undefined;
-    audio_stream = undefined;
-    ffmpeg_audio_stream = undefined;
-    audio_resauce = undefined;
-    audio_sub = undefined;
-    connection = undefined;
     ytpl_limit = 2;
     last_at_channel = null;
     last_at_vc_channel = null;
@@ -58,7 +61,6 @@ class discord_music {
     nowplaying = -1;
     handling_vc_err = false;
     PBD = 0;
-    player = undefined;
     np_embed = undefined;
     processing_next_song = false;
     is_sending_panel = false;
@@ -166,90 +168,85 @@ class discord_music {
 
     //make sure bot is connected,having player,and subscribed
     join_channel(args) {
-            if (args) {
-                //this.last_at_vc_channel = args.member.voice.channelId;
-                //this.last_at_channel = args.channel;
-                this.last_interaction = args;
-                if (args.member.voice.channelId) {
-                    this.last_at_vc_channel = args.member.voice.channelId;
-                }
+        if (args) {
+            //this.last_at_vc_channel = args.member.voice.channelId;
+            //this.last_at_channel = args.channel;
+            this.last_interaction = args;
+            if (args.member.voice.channelId) {
+                this.last_at_vc_channel = args.member.voice.channelId;
             }
-
-
-            //var connection;
-            if (!this.connection) {
-                this.clear_status(false);
-                console.log('No connection found');
-                if (this.last_at_vc_channel) {
-                    console.log('Connecting...');
-                    this.connection = joinVoiceChannel({
-                            channelId: this.last_at_vc_channel,
-                            guildId: this.last_interaction.guild.id,
-                            adapterCreator: this.last_interaction.guild.voiceAdapterCreator,
-                        })
-                        .once("error", (err) => {
-                            console.log("CON ERR" + err);
-                            this.connection_self_destruct();
-                            this.join_channel();
-                        });
-
-
-                    //try to reconnect if disconnect
-                    this.connection.on(VoiceConnectionStatus.Disconnected, async(oldState, newState) => {
-                        try {
-                            await Promise.race([
-                                entersState(this.connection, VoiceConnectionStatus.Signalling, 10000),
-                                entersState(this.connection, VoiceConnectionStatus.Connecting, 10000),
-                            ]);
-                            // Seems to be reconnecting to a new channel - ignore disconnect
-                        } catch (error) {
-                            // Seems to be a real disconnect which SHOULDN'T be recovered from
-                            console.log("connection error!!");
-                            try {
-                                this.connection.destroy();
-                            } catch (error) {
-
-                            }
-                            this.connection = undefined;
-                            this.join_channel();
-                        }
-                    });
-
-                } else {
-                    this.last_at_channel.send('Plese join a voice channel first');
-                }
-            }
-
-
-            if (!this.player) {
-                this.init_player();
-            }
-            setTimeout(() => {
-                var sendingFlag = true;
-                if (this.connection && this.player) {
-                    this.init_sub(false);
-                    if (this.nowplaying == -1 && this.queue.length >= 1) {
-                        this.next_song(true);
-                        sendingFlag = false;
-                    }
-                }
-                if (sendingFlag) {
-                    this.send_control_panel(args);
-                }
-            }, 1000)
-
-            return
         }
-        //#endregion
+
+
+        if (this.last_at_vc_channel) {
+
+            connection = joinVoiceChannel({
+                channelId: this.last_at_vc_channel,
+                guildId: this.last_interaction.guild.id,
+                adapterCreator: this.last_interaction.guild.voiceAdapterCreator,
+            }).on("error", (err) => {
+                console.log("CON ERR" + err);
+                this.join_channel();
+            });
+
+            subscribe = connection.subscribe(player);
+            console.log('Connecting...');
+
+
+
+            //try to reconnect if disconnect
+            connection.on(VoiceConnectionStatus.Disconnected, async(oldState, newState) => {
+                try {
+                    await Promise.race([
+                        entersState(connection, VoiceConnectionStatus.Signalling, 10000),
+                        entersState(connection, VoiceConnectionStatus.Connecting, 10000),
+                    ]);
+                    // Seems to be reconnecting to a new channel - ignore disconnect
+                } catch (error) {
+                    // Seems to be a real disconnect which SHOULDN'T be recovered from
+                    console.log("connection error!!");
+                    try {
+                        connection.destroy();
+                        connection = undefined;
+                    } catch (error) {
+                        console.log("Connection Destroy ERR" + error);
+                    }
+                    connection = undefined;
+                    this.join_channel();
+                }
+            });
+
+        } else {
+            this.last_at_channel.send('Plese join a voice channel first');
+        }
+
+
+
+        setTimeout(() => {
+            var sendingFlag = true;
+            if (this.nowplaying == -1 && this.queue.length >= 1) {
+                this.next_song(true);
+                sendingFlag = false;
+            }
+
+            if (sendingFlag) {
+                this.send_control_panel(args);
+            }
+        }, 1000)
+
+        return
+    }
+
+    //#endregion
 
     //#region reset,clear functions
     //kill sub and connection
     connection_self_destruct(args) {
         console.log('self destruction in 1 second');
-        if (this.connection) {
+        if (connection) {
             console.log('Connection detected, leaving');
-            this.connection.destroy();
-            this.connection = undefined;
+            connection.destroy();
+            connection = undefined;
         }
         this.send_control_panel(args);
         return
@@ -260,39 +257,9 @@ class discord_music {
     clear_status(connectionSD = false, callbackF) {
         console.log("Cleaning dirty stuff");
         this.delete_np_embed();
-        try {
-            this.player.stop();
-        } catch (error) {
-            console.log("CSPS Err");
-        }
-        try {
-            this.audio_stream.destroy();
-        } catch (error) {
-            console.log("CSASD Err");
-        }
-        try {
-            this.ffmpeg_audio_stream.destroy();
-        } catch (error) {
-            console.log("CSFFMPEGSD Err");
-        }
-        try {
-            this.audio_resauce.playstream.destroy();
-        } catch (error) {
-            console.log("CSARPSD Err");
-        }
-        try {
-            this.ffmpeg_audio_stream.kill();
-        } catch (error) {
-            console.log("Kill ERR");
-        }
-
-        this.ffmpeg_audio_stream = null;
-        this.audio_stream = null;
-        this.audio_resauce = null;
-        this.init_player(true);
-        if (this.subscribe) {
-            this.subscribe.unsubscribe();
-            this.subscribe = undefined;
+        if (subscribe) {
+            subscribe.unsubscribe();
+            subscribe = undefined;
         }
         if (connectionSD) {
             this.connection_self_destruct();
@@ -346,7 +313,7 @@ class discord_music {
         }
         let row2 = new ActionRowBuilder();
 
-        if (!this.connection) {
+        if (!connection) {
             //this.last_at_channel.send({ content: 'No connection detected' });
             row2.addComponents(
                 new ButtonBuilder()
@@ -673,17 +640,11 @@ class discord_music {
 
     //play yt stuff,modified using fluent ffmpeg,might call join_channel function
     async play_url(url, begin_t, args) {
-        if (this.audio_stream) {
-            this.audio_stream.destroy();
-        }
-        if (!this.connection || !this.player || !this.audio_sub) {
+
+        if (!connection || !subscribe) {
             this.join_channel(args);
         }
 
-        this.player.stop();
-        this.audio_stream = null;
-        this.audio_resauce = null;
-        this.ffmpeg_audio_stream = null;
         if (ytdl.validateURL(url)) {
             this.play_YT_url(url, begin_t);
         } else if (await (this.is_GD_url(url))) {
@@ -695,65 +656,66 @@ class discord_music {
 
     //#region web urls
     async play_YT_url(url, begin_t) {
-        var data = await ytdl.getInfo(url, {
-            requestOptions: {
-                headers: {
-                    cookie: YT_COOKIE,
-                },
-            },
-        });
-        var isLIVE = data.videoDetails.liveBroadcastDetails && data.videoDetails.liveBroadcastDetails.isLiveNow;
-        if (isLIVE) {
-            console.log("YT Live video");
-            this.audio_stream = ytdl.downloadFromInfo(data, {
-                filter: "audio",
-                liveBuffer: 2000,
-                //highWaterMark: 1024,
-                //dlChunkSize: 65536,
-                //quality: 'highestaudio',
-                //begin: BT,
-                requestOptions: {
-                    headers: {
-                        cookie: YT_COOKIE,
-                        // Optional. If not given, ytdl-core will try to find it.
-                        // You can find this by going to a video's watch page, viewing the source,
-                        // and searching for "ID_TOKEN".
-                        // 'x-youtube-identity-token': 1324,
-                    },
-                },
-            });
-        } else {
-            this.audio_stream = ytdl.downloadFromInfo(data, {
-                filter: 'audioonly',
-                //liveBuffer: 4000,
-                //highWaterMark: 1024,
-                dlChunkSize: 65536,
-                quality: 'highestaudio',
-                //begin: BT,
-                requestOptions: {
-                    headers: {
-                        cookie: YT_COOKIE,
-                        // Optional. If not given, ytdl-core will try to find it.
-                        // You can find this by going to a video's watch page, viewing the source,
-                        // and searching for "ID_TOKEN".
-                        // 'x-youtube-identity-token': 1324,
-                    },
-                },
-            });
-        }
 
         try {
-            if (!isLIVE) {
+            var data = await ytdl.getInfo(url, {
+                requestOptions: {
+                    headers: {
+                        cookie: YT_COOKIE,
+                    },
+                },
+            });
+            var isLIVE = data.videoDetails.liveBroadcastDetails && data.videoDetails.liveBroadcastDetails.isLiveNow;
+            if (isLIVE) {
+                console.log("YT Live video");
+                const audio_streamLV = ytdl.downloadFromInfo(data, {
+                    filter: "audio",
+                    // liveBuffer: 2000,
+                    //highWaterMark: 1024,
+                    //dlChunkSize: 65536,
+                    //quality: 'highestaudio',
+                    //begin: BT,
+                    requestOptions: {
+                        headers: {
+                            cookie: YT_COOKIE,
+                            // Optional. If not given, ytdl-core will try to find it.
+                            // You can find this by going to a video's watch page, viewing the source,
+                            // and searching for "ID_TOKEN".
+                            // 'x-youtube-identity-token': 1324,
+                        },
+                    },
+                });
+                this.playAudioResauce(warpStreamToResauce(audio_streamLV));
+            } else {
+                const audio_stream = ytdl.downloadFromInfo(data, {
+                    filter: 'audioonly',
+                    //liveBuffer: 4000,
+                    //highWaterMark: 1024,
+                    //dlChunkSize: 65536,
+                    quality: 'highestaudio',
+                    //begin: BT,
+                    requestOptions: {
+                        headers: {
+                            cookie: YT_COOKIE,
+                            // Optional. If not given, ytdl-core will try to find it.
+                            // You can find this by going to a video's watch page, viewing the source,
+                            // and searching for "ID_TOKEN".
+                            // 'x-youtube-identity-token': 1324,
+                        },
+                    },
+                });
                 if (begin_t && data.videoDetails.lengthSeconds <= Math.ceil(begin_t / 1000)) {
                     this.next_song(true);
                 } else {
-                    this.play_stream(begin_t);
+                    if (begin_t) {
+                        this.playAudioResauce(warpStreamToResauce(audio_stream, begin_t));
+                    } else {
+                        this.playAudioResauce(warpStreamToResauce(audio_stream));
+                    }
                 }
-            } else {
-                this.play_stream();
             }
         } catch (error) {
-            console.log("[Skipping]Can't play YT stream")
+            console.log("[Skipping]Can't play YT URL")
             console.log(error);
             this.next_song(true);
         }
@@ -879,43 +841,23 @@ class discord_music {
         console.log("tring to play local url:", res);
         var pathToSourceFile = res;
         try {
-            this.audio_stream = fs.createReadStream(pathToSourceFile);
-            this.play_stream(begin_t);
+            const audio_stream = fs.createReadStream(pathToSourceFile);
+
+            this.playAudioResauce(warpStreamToResauce(audio_stream, begin_t));
         } catch (error) {
             throw error;
         }
     }
 
-    play_stream(begin_t) {
+    playAudioResauce(audioResauce) {
 
 
         try {
-            if (this.audio_stream.destroyed) {
-                throw "AS ERR";
-            }
-            this.ffmpeg_audio_stream = fluentffmpeg({ source: this.audio_stream }).toFormat('wav');
-        } catch (error) {
-
-            throw "CFFF_ERR";
-        }
-        if (begin_t) {
-            console.log("Set BT:" + Math.ceil(begin_t / 1000));
-            this.ffmpeg_audio_stream.seekInput(Math.ceil(begin_t / 1000)); // set the song start time
-        }
-        try {
-            this.audio_resauce = createAudioResource(this.ffmpeg_audio_stream, { inputType: StreamType.Arbitrary });
-        } catch (error) {
-            throw "CAR_ERR";
-        }
-        try {
-            this.player.play(this.audio_resauce);
+            player.play(audioResauce);
             this.processing_next_song = false;
-            //this.send_log();
         } catch (error) {
-            this.send_log();
             console.log("PSP_ERR" + error);
-            this.init_player(true);
-            this.play_stream(begin_t);
+            this.playAudioResauce(audioResauce);
         }
         return;
     }
@@ -931,90 +873,56 @@ class discord_music {
 
         //player
         console.log("Initializing player...");
-        if (!this.player || force) {
-            this.player = createAudioPlayer({
-                behaviors: {
-                    noSubscriber: NoSubscriberBehavior.Pause,
-                },
-            });
 
-            //player,resource error handle
-            this.player.once('error', (error) => {
-                try {
-                    this.handling_vc_err = true;
-                    this.PBD = this.PBD + error.resource.playbackDuration;
-                    console.log("AP_err" + error);
-                    //console.error(error);
-                    this.clear_status(false,
-                        () => {
-                            console.log("AP err handled URL:%s\nTime:%d TS:%s", this.queue[this.nowplaying], this.PBD, Date.now());
-                            if (this.PBD) {
-                                this.play_url(this.queue[this.nowplaying], this.PBD);
-                            } else {
-                                this.play_url(this.queue[this.nowplaying]);
-                            }
-                        });
 
-                } catch (error) {
-                    console.log("Error handling AP_ERR" + error);
-                    this.next_song(true);
-                }
-            });
-
-            //get next song automatically
-            this.player.on(AudioPlayerStatus.Idle, () => {
-                console.log("Idle");
-                setTimeout(() => {
-                    if (this.player.state.status === AudioPlayerStatus.Idle && !this.handling_vc_err && !this.processing_next_song) {
-                        this.next_song(true);
-                    } else {
-                        console.log('Player already playing', this.handling_vc_err, this.processing_next_song);
-                    }
-                }, 1500);
-
-            });
-            this.player.on(AudioPlayerStatus.Playing, () => {
-                console.log("Player playing");
-                this.handling_vc_err = false;
-                this.send_control_panel();
-            });
-            console.log("Player inited");
-        }
-        return;
-    }
-
-    //(re)create subscription when subscription not match/exsist
-    init_sub(force, args) {
-        //player
-        console.log("Initializing subscribe...");
-        if (!this.subscribe || force) {
-
+        //player,resource error handle
+        player.on('error', (error) => {
             try {
-                if (this.subscribe) {
-                    if (this.subscribe.connection != this.connection || this.subscribe.player != this.player) {
-
-                        this.subscribe.unsubscribe();
-                        this.subscribe = undefined;
-                    }
+                this.handling_vc_err = true;
+                this.PBD = this.PBD + error.resource.playbackDuration;
+                console.log("AP_err" + error);
+                if (error == "Error: write after end") {
+                    this.PBD = this.PBD + 1000;
+                    error.resource.playStream.destroy();
+                    console.log(error.resource);
+                    return;
                 }
-            } catch (error) {
-                console.error(error);
-            }
-
-            try {
-                if (this.connection && this.player && !this.subscribe) {
-                    this.subscribe = this.connection.subscribe(this.player);
-                    console.log("subed");
+                console.log("AP err handled URL:%s\nTime:%d TS:%s", this.queue[this.nowplaying], this.PBD, Date.now());
+                if (this.PBD) {
+                    this.play_url(this.queue[this.nowplaying], this.PBD);
                 } else {
-                    console.log("sub exsist");
+                    this.play_url(this.queue[this.nowplaying]);
                 }
+
+                //console.error(error);
+
+
             } catch (error) {
-                this.connection_self_destruct(args);
-                console.log("can't subscribe");
+                console.log("Error handling AP_ERR" + error);
+                this.next_song(true);
             }
-        }
+        });
+
+        //get next song automatically
+        player.on(AudioPlayerStatus.Idle, () => {
+            console.log("Idle");
+            if (player.state.status === AudioPlayerStatus.Idle && !this.handling_vc_err && !this.processing_next_song) {
+                this.next_song(true);
+            } else {
+                console.log('Player already playing', this.handling_vc_err, this.processing_next_song);
+            }
+
+        });
+        player.on(AudioPlayerStatus.Playing, () => {
+            console.log("Player playing");
+            this.handling_vc_err = false;
+            this.send_control_panel();
+        });
+        console.log("Player inited");
+
         return;
     }
+
 
     //#endregion 
 
@@ -1174,14 +1082,24 @@ class discord_music {
             return url;
         }
         //#endregion format things
-
-    send_log() {
-        console.log('aus', this.audio_stream);
-        console.log('ffaus', this.ffmpeg_audio_stream);
-        //console.log("dd");
-    }
 }
 
+function warpStreamToResauce(stream, BT) {
+
+    var ffmpeg_audio_stream;
+    if (BT) {
+        console.log("Set BT:" + Math.ceil(BT / 1000));
+        ffmpeg_audio_stream = fluentffmpeg({ source: stream }).seekOutput(Math.ceil(BT / 1000)).toFormat('wav');
+    } else {
+        ffmpeg_audio_stream = fluentffmpeg({ source: stream }).toFormat('wav');
+
+    }
+    stream.on("error", (error) => { console.log("streamerr" + error) });
+    ffmpeg_audio_stream.on("error", (error) => { console.log("ffmpegerr" + error) });
+    const audio_resauce = createAudioResource(ffmpeg_audio_stream, { inputType: StreamType.Arbitrary });
+
+    return audio_resauce
+}
 
 module.exports = {
     //name: 'music_func.js',

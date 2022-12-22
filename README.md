@@ -1,6 +1,7 @@
 # PD_maid
 
 ## v1.5.9 Stable is out!!
+- warning,the YTDL `write after end` error will cause memory leak, I am replacing it using other packages
 ![Banner](./readme_assets/banner.png)
 
 

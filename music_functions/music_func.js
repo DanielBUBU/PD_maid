@@ -883,7 +883,6 @@ class discord_music {
                 console.log("AP_err" + error);
                 if (error == "Error: write after end") {
                     this.PBD = this.PBD + 1000;
-                    error.resource.playStream.destroy();
                     console.log(error.resource);
                     return;
                 }
@@ -1086,17 +1085,19 @@ class discord_music {
 
 function warpStreamToResauce(stream, BT) {
 
-    var ffmpeg_audio_stream;
+    var ffmpeg_audio_stream = fluentffmpeg().addInput(stream);
     if (BT) {
         console.log("Set BT:" + Math.ceil(BT / 1000));
-        ffmpeg_audio_stream = fluentffmpeg({ source: stream }).seekOutput(Math.ceil(BT / 1000)).toFormat('wav');
+        ffmpeg_audio_stream.seekInput(Math.ceil(BT / 1000)).toFormat('wav');
     } else {
-        ffmpeg_audio_stream = fluentffmpeg({ source: stream }).toFormat('wav');
+        ffmpeg_audio_stream.toFormat('wav');
 
     }
     stream.on("error", (error) => { console.log("streamerr" + error) });
     ffmpeg_audio_stream.on("error", (error) => { console.log("ffmpegerr" + error) });
-    const audio_resauce = createAudioResource(ffmpeg_audio_stream, { inputType: StreamType.Arbitrary });
+    const audio_resauce = createAudioResource(
+        ffmpeg_audio_stream //, { inputType: StreamType.Arbitrary }
+    );
 
     return audio_resauce
 }

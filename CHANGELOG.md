@@ -1,7 +1,7 @@
 # change log
 
-## Mein メイド v1.5.9 Stable #hotfix2
-- Fix memory leak problem after handling error(still leaking)
+## Mein メイド v1.5.9 Stable #hotfix3
+- Fix memory leak problem after handling error
 
 ## Mein メイド v1.5.9 Stable
 - Improve control panel sending logic

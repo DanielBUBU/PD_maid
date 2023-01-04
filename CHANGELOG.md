@@ -1,5 +1,9 @@
 # change log
 
+
+## Mein メイド v1.6.0 Stable
+- cache for YT video
+
 ## Mein メイド v1.5.9 Stable #hotfix3
 - Fix memory leak problem after handling error
 

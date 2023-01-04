@@ -3,6 +3,7 @@ config.json
 .data/youtube.data
 !node_modules/
 node_modules/*
+music_temp/YTTemp/*
 test.js
 t.js
 music_temp/maitetsulr-vocalalbum1.flac

@@ -1,5 +1,6 @@
 //#region packages
 
+
 const {
     StreamType,
     createAudioResource,
@@ -16,9 +17,8 @@ const probe = require('node-ffprobe');
 const https = require('https');
 const cliProgress = require('cli-progress');
 var Meta = require('html-metadata-parser');
-
+const youtubedl = require('youtube-dl-exec');
 const ytdl = require('ytdl-core');
-
 const fluentffmpeg = require('fluent-ffmpeg');
 const ytpl = require('ytpl');
 
@@ -39,6 +39,7 @@ const {
         download_chunk_size = 4194304,
         clear_console = true
 } = require('../config.json');
+const { error } = require('console');
 
 const player = createAudioPlayer({
     behaviors: {
@@ -639,23 +640,23 @@ class discord_music {
     }
 
     //play yt stuff,modified using fluent ffmpeg,might call join_channel function
-    async play_url(url, begin_t, args) {
+    async play_url(url, begin_t, args, forceD) {
 
-        if (!connection || !subscribe) {
+        if ((!connection || !subscribe) && args) {
             this.join_channel(args);
         }
 
         if (ytdl.validateURL(url)) {
-            this.play_YT_url(url, begin_t);
+            this.play_YT_url(url, begin_t, forceD);
         } else if (await (this.is_GD_url(url))) {
-            this.play_GD_url(url, begin_t);
+            this.play_GD_url(url, begin_t, forceD);
         } else {
             this.play_local_url(url, begin_t);
         }
     }
 
     //#region web urls
-    async play_YT_url(url, begin_t) {
+    async play_YT_url(url, begin_t, force_download) {
 
         try {
             var data = await ytdl.getInfo(url, {
@@ -668,10 +669,10 @@ class discord_music {
             var isLIVE = data.videoDetails.liveBroadcastDetails && data.videoDetails.liveBroadcastDetails.isLiveNow;
             if (isLIVE) {
                 console.log("YT Live video");
-                const audio_streamLV = ytdl.downloadFromInfo(data, {
+                var audio_streamLV = ytdl.downloadFromInfo(data, {
                     filter: "audio",
-                    // liveBuffer: 2000,
-                    //highWaterMark: 1024,
+                    liveBuffer: 2000,
+                    highWaterMark: 16384,
                     //dlChunkSize: 65536,
                     //quality: 'highestaudio',
                     //begin: BT,
@@ -687,30 +688,45 @@ class discord_music {
                 });
                 this.playAudioResauce(warpStreamToResauce(audio_streamLV));
             } else {
-                const audio_stream = ytdl.downloadFromInfo(data, {
-                    filter: 'audioonly',
-                    //liveBuffer: 4000,
-                    //highWaterMark: 1024,
-                    //dlChunkSize: 65536,
-                    quality: 'highestaudio',
-                    //begin: BT,
-                    requestOptions: {
-                        headers: {
-                            cookie: YT_COOKIE,
-                            // Optional. If not given, ytdl-core will try to find it.
-                            // You can find this by going to a video's watch page, viewing the source,
-                            // and searching for "ID_TOKEN".
-                            // 'x-youtube-identity-token': 1324,
-                        },
-                    },
-                });
+
                 if (begin_t && data.videoDetails.lengthSeconds <= Math.ceil(begin_t / 1000)) {
                     this.next_song(true);
                 } else {
-                    if (begin_t) {
-                        this.playAudioResauce(warpStreamToResauce(audio_stream, begin_t));
+                    var file_name = data.videoDetails.title + ".webm";
+                    var YTTempUrl = this.format_local_absolute_url(path.join(music_temp_dir, "YTTemp/"))
+                    var file_url = this.format_local_absolute_url(path.join(YTTempUrl, file_name))
+
+                    this.fileUrlCreateIfNotExist(YTTempUrl);
+                    var search_cache = this.search_file_in_url_array(this.cached_file, file_name);
+
+                    if (search_cache.length == 0 || force_download) {
+
+
+                        const subprocess = youtubedl.exec(url, {
+                            //dumpSingleJson: true
+                            addHeader: [
+                                'referer:youtube.com',
+                                'user-agent:googlebot'
+                            ],
+                            output: file_url
+                        }).on('error', (error) => {
+                            throw error;
+                        }).on('close', () => {
+                            this.cached_file.push(file_url);
+                            console.log("Download Complete");
+                            if (begin_t) {
+                                this.play_local_stream(file_url, begin_t);
+                            } else {
+                                this.play_local_stream(file_url);
+                            }
+                        });
                     } else {
-                        this.playAudioResauce(warpStreamToResauce(audio_stream));
+                        console.log("Cache searched when trying to play YT url" + search_cache);
+                        try {
+                            this.play_local_stream_array(search_cache);
+                        } catch (error) {
+                            this.play_YT_url(url, begin_t, true);
+                        }
                     }
                 }
             }
@@ -725,7 +741,8 @@ class discord_music {
     async play_GD_url(url, begin_t, force_download = false) {
         var GD_ID = url.split("/")[5];
         var file_name = (await Meta.parser(url)).og.title.toString();
-        var file_url = this.format_local_absolute_url(path.join(music_temp_dir, file_name))
+        var file_url = this.format_local_absolute_url(path.join(music_temp_dir, file_name));
+        this.fileUrlCreateIfNotExist(music_temp_dir);
         var search_cache = this.search_file_in_url_array(this.cached_file, file_name);
         //if file is not in cache or there's need to redownload
         if (search_cache.length == 0 || force_download) {
@@ -736,7 +753,7 @@ class discord_music {
                         format: ('|{bar}|{percentage}% | ETA: {eta}s | {value} KB/{total} KB')
                     }, cliProgress.Presets.shades_grey);
                     console.clear();
-                    console.log('Downloading [' + file_name + ']')
+                    console.log('Downloading [' + file_name + ']');
                     bar1.start((total_bytes / 1024).toFixed(2), 0);
                     var received_bytes = 0;
                     // 'readable' may be triggered multiple times as data is buffered in
@@ -779,13 +796,9 @@ class discord_music {
             });
         } else {
             console.log("Cache searched when trying to play GD url" + search_cache);
-            if (this.is_local_url_avaliabe(file_url)) {
-                try {
-                    this.play_local_stream_array(search_cache);
-                } catch (error) {
-                    this.play_GD_url(url, begin_t, true);
-                }
-            } else {
+            try {
+                this.play_local_stream_array(search_cache);
+            } catch (error) {
                 this.play_GD_url(url, begin_t, true);
             }
         }
@@ -883,14 +896,14 @@ class discord_music {
                 console.log("AP_err" + error);
                 if (error == "Error: write after end") {
                     this.PBD = this.PBD + 1000;
-                    console.log(error.resource);
+                    console.log(error.resource.audioPlayer._state.resource);
                     return;
                 }
                 console.log("AP err handled URL:%s\nTime:%d TS:%s", this.queue[this.nowplaying], this.PBD, Date.now());
                 if (this.PBD) {
-                    this.play_url(this.queue[this.nowplaying], this.PBD);
+                    this.play_url(this.queue[this.nowplaying], this.PBD, false, true);
                 } else {
-                    this.play_url(this.queue[this.nowplaying]);
+                    this.play_url(this.queue[this.nowplaying], false, false, true);
                 }
 
                 //console.error(error);
@@ -906,7 +919,7 @@ class discord_music {
         player.on(AudioPlayerStatus.Idle, () => {
             console.log("Idle");
             if (player.state.status === AudioPlayerStatus.Idle && !this.handling_vc_err && !this.processing_next_song) {
-                this.next_song(true);
+                this.next_song();
             } else {
                 console.log('Player already playing', this.handling_vc_err, this.processing_next_song);
             }
@@ -958,7 +971,7 @@ class discord_music {
 
     is_file_type_avaliable(str) {
         var type = str.split(".").pop()
-        var searched_fromat = this.search_file_in_url_array(["mp3", "wav", "flac"], type);
+        var searched_fromat = this.search_file_in_url_array(["mp3", "wav", "flac", "webm", "mp4"], type);
         if (searched_fromat.length != 0) {
             return true;
         }
@@ -1059,47 +1072,57 @@ class discord_music {
     //#region format things
     format_local_absolute_url(url) {
 
-            url = path.resolve(url);
+        url = path.resolve(url);
 
-            var url_element = url.split(":");
-            if (url_element.length > 1) {
-                url_element[0] = url_element[0].toLowerCase();
-                url = url_element.shift();
-                url_element.forEach(element => {
-                    url = url + ":" + element;
-                });
-            } else {
-                url = url_element.shift();
-            }
-
-
-            url_element = url.split("\\");
+        var url_element = url.split(":");
+        if (url_element.length > 1) {
+            url_element[0] = url_element[0].toLowerCase();
             url = url_element.shift();
             url_element.forEach(element => {
-                url = url + "/" + element;
+                url = url + ":" + element;
             });
-            return url;
+        } else {
+            url = url_element.shift();
         }
-        //#endregion format things
+
+
+        url_element = url.split("\\");
+        url = url_element.shift();
+        url_element.forEach(element => {
+            url = url + "/" + element;
+        });
+        return url;
+    }
+
+    fileUrlCreateIfNotExist(dir) {
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+    }
+
+    //#endregion format things
 }
 
 function warpStreamToResauce(stream, BT) {
+    try {
 
-    var ffmpeg_audio_stream = fluentffmpeg().addInput(stream);
-    if (BT) {
-        console.log("Set BT:" + Math.ceil(BT / 1000));
-        ffmpeg_audio_stream.seekInput(Math.ceil(BT / 1000)).toFormat('wav');
-    } else {
-        ffmpeg_audio_stream.toFormat('wav');
+        var ffmpeg_audio_stream_C = fluentffmpeg().addInput(stream).on("error", (error) => { console.log("ffmpegErr" + error) });
+        if (BT) {
+            console.log("Set BT:" + Math.ceil(BT / 1000));
+            ffmpeg_audio_stream_C.seekInput(Math.ceil(BT / 1000)).toFormat('wav');
+        } else {
+            ffmpeg_audio_stream_C.toFormat('wav');
 
+        }
+        var streamOpt = ffmpeg_audio_stream_C.pipe();
+        var audio_resauce = createAudioResource(
+            streamOpt, { inputType: StreamType.Arbitrary, silencePaddingFrames: 10 }
+        );
+
+        return audio_resauce;
+    } catch (error) {
+        throw error;
     }
-    stream.on("error", (error) => { console.log("streamerr" + error) });
-    ffmpeg_audio_stream.on("error", (error) => { console.log("ffmpegerr" + error) });
-    const audio_resauce = createAudioResource(
-        ffmpeg_audio_stream //, { inputType: StreamType.Arbitrary }
-    );
-
-    return audio_resauce
 }
 
 module.exports = {

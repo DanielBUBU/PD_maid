@@ -1,6 +1,11 @@
 # change log
 
 
+## Mein メイド v1.6.1 Stable
+- YT video cache file name processing
+- cache push logic improvement
+- fix single loop when empty queue
+
 ## Mein メイド v1.6.0 Stable
 - cache for YT video
 

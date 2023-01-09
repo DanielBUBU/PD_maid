@@ -104,7 +104,7 @@ class discord_music {
         } else {
             switch (this.isloop) {
                 case 1:
-                    if (this.nowplaying === -1 && this.length > 0) {
+                    if (this.nowplaying == -1 && this.queue.length > 0) {
                         this.nowplaying = 0;
                     }
                     next_song_url = this.queue[this.nowplaying];
@@ -693,8 +693,18 @@ class discord_music {
                     this.next_song(true);
                 } else {
                     var file_name = data.videoDetails.title + ".webm";
+                    file_name = file_name
+                        .replace("?", "")
+                        .replace(":", "")
+                        .replace("/", "")
+                        .replace("\\", "")
+                        .replace('|', "")
+                        .replace('"', "")
+                        .replace("*", "")
+                        .replace("<", "")
+                        .replace(">", "");
                     var YTTempUrl = this.format_local_absolute_url(path.join(music_temp_dir, "YTTemp/"))
-                    var file_url = this.format_local_absolute_url(path.join(YTTempUrl, file_name))
+                    var file_url = this.format_local_absolute_url(path.join(YTTempUrl, file_name));
 
                     this.fileUrlCreateIfNotExist(YTTempUrl);
                     var search_cache = this.search_file_in_url_array(this.cached_file, file_name);
@@ -706,13 +716,16 @@ class discord_music {
                             //dumpSingleJson: true
                             addHeader: [
                                 'referer:youtube.com',
-                                'user-agent:googlebot'
+                                'user-agent:googlebot',
+                                'cookie:' + YT_COOKIE,
                             ],
                             output: file_url
                         }).on('error', (error) => {
                             throw error;
                         }).on('close', () => {
-                            this.cached_file.push(file_url);
+                            if (!this.cached_file.find(funcUrl => funcUrl == file_url)) {
+                                this.cached_file.push(file_url);
+                            }
                             console.log("Download Complete");
                             if (begin_t) {
                                 this.play_local_stream(file_url, begin_t);
@@ -1121,6 +1134,7 @@ function warpStreamToResauce(stream, BT) {
 
         return audio_resauce;
     } catch (error) {
+        console.log("ERRwhenwarp");
         throw error;
     }
 }

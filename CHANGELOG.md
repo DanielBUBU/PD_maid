@@ -1,6 +1,10 @@
 # change log
 
 
+## Mein メイド v1.6.2 Stable
+- disable YT video cache option
+- Personal lock (authed users)
+
 ## Mein メイド v1.6.1 Stable
 - YT video cache file name processing
 - cache push logic improvement

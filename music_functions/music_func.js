@@ -37,9 +37,9 @@ const {
         music_temp_dir = "music_temp/",
         authed_user_id = [],
         download_chunk_size = 4194304,
-        clear_console = true
+        clear_console = true,
+        YTCache = true
 } = require('../config.json');
-const { error } = require('console');
 
 const player = createAudioPlayer({
     behaviors: {
@@ -313,53 +313,54 @@ class discord_music {
             }
         }
         let row2 = new ActionRowBuilder();
+        /*
+                if (!connection) {
+                    //this.last_at_channel.send({ content: 'No connection detected' });
+                    row2.addComponents(
+                        new ButtonBuilder()
+                        .setCustomId('add')
+                        .setLabel('Add')
+                        .setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder()
+                        .setCustomId('join')
+                        .setLabel('Join')
+                        .setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder()
+                        .setCustomId('leave')
+                        .setLabel('Leave')
+                        .setStyle(ButtonStyle.Danger)
+                        .setDisabled(true),
+                        new ButtonBuilder()
+                        .setCustomId('queue')
+                        .setLabel('Queue')
+                        .setStyle(ButtonStyle.Primary),
+                    );
 
-        if (!connection) {
-            //this.last_at_channel.send({ content: 'No connection detected' });
-            row2.addComponents(
-                new ButtonBuilder()
-                .setCustomId('add')
-                .setLabel('Add')
-                .setStyle(ButtonStyle.Primary),
-                new ButtonBuilder()
-                .setCustomId('join')
-                .setLabel('Join')
-                .setStyle(ButtonStyle.Primary),
-                new ButtonBuilder()
-                .setCustomId('leave')
-                .setLabel('Leave')
-                .setStyle(ButtonStyle.Danger)
-                .setDisabled(true),
-                new ButtonBuilder()
-                .setCustomId('queue')
-                .setLabel('Queue')
-                .setStyle(ButtonStyle.Primary),
-            );
+                } else {
+                    console.log('connection detected');
+        */
+        row2.addComponents(
+            new ButtonBuilder()
+            .setCustomId('add')
+            .setLabel('Add')
+            .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+            .setCustomId('join')
+            .setLabel('Join')
+            .setStyle(ButtonStyle.Primary)
+            //                .setDisabled(true)
+            ,
+            new ButtonBuilder()
+            .setCustomId('leave')
+            .setLabel('Leave')
+            .setStyle(ButtonStyle.Danger),
+            new ButtonBuilder()
+            .setCustomId('queue')
+            .setLabel('Queue')
+            .setStyle(ButtonStyle.Primary),
+        );
 
-        } else {
-            console.log('connection detected');
-
-            row2.addComponents(
-                new ButtonBuilder()
-                .setCustomId('add')
-                .setLabel('Add')
-                .setStyle(ButtonStyle.Primary),
-                new ButtonBuilder()
-                .setCustomId('join')
-                .setLabel('Join')
-                .setStyle(ButtonStyle.Primary)
-                .setDisabled(true),
-                new ButtonBuilder()
-                .setCustomId('leave')
-                .setLabel('Leave')
-                .setStyle(ButtonStyle.Danger),
-                new ButtonBuilder()
-                .setCustomId('queue')
-                .setLabel('Queue')
-                .setStyle(ButtonStyle.Primary),
-            );
-
-        }
+        //        }
 
 
 
@@ -692,54 +693,76 @@ class discord_music {
                 if (begin_t && data.videoDetails.lengthSeconds <= Math.ceil(begin_t / 1000)) {
                     this.next_song(true);
                 } else {
-                    var file_name = data.videoDetails.title + ".webm";
-                    file_name = file_name
-                        .replace("?", "")
-                        .replace(":", "")
-                        .replace("/", "")
-                        .replace("\\", "")
-                        .replace('|', "")
-                        .replace('"', "")
-                        .replace("*", "")
-                        .replace("<", "")
-                        .replace(">", "");
-                    var YTTempUrl = this.format_local_absolute_url(path.join(music_temp_dir, "YTTemp/"))
-                    var file_url = this.format_local_absolute_url(path.join(YTTempUrl, file_name));
+                    if (YTCache) {
+                        var file_name = data.videoDetails.title + ".webm";
+                        file_name = file_name
+                            .replace("?", "")
+                            .replace(":", "")
+                            .replace("/", "")
+                            .replace("\\", "")
+                            .replace('|', "")
+                            .replace('"', "")
+                            .replace("*", "")
+                            .replace("<", "")
+                            .replace(">", "");
+                        var YTTempUrl = this.format_local_absolute_url(path.join(music_temp_dir, "YTTemp/"))
+                        var file_url = this.format_local_absolute_url(path.join(YTTempUrl, file_name));
 
-                    this.fileUrlCreateIfNotExist(YTTempUrl);
-                    var search_cache = this.search_file_in_url_array(this.cached_file, file_name);
+                        this.fileUrlCreateIfNotExist(YTTempUrl);
+                        var search_cache = this.search_file_in_url_array(this.cached_file, file_name);
 
-                    if (search_cache.length == 0 || force_download) {
+                        if (search_cache.length == 0 || force_download) {
 
 
-                        const subprocess = youtubedl.exec(url, {
-                            //dumpSingleJson: true
-                            addHeader: [
-                                'referer:youtube.com',
-                                'user-agent:googlebot',
-                                'cookie:' + YT_COOKIE,
-                            ],
-                            output: file_url
-                        }).on('error', (error) => {
-                            throw error;
-                        }).on('close', () => {
-                            if (!this.cached_file.find(funcUrl => funcUrl == file_url)) {
-                                this.cached_file.push(file_url);
+                            const subprocess = youtubedl.exec(url, {
+                                //dumpSingleJson: true
+                                addHeader: [
+                                    'referer:youtube.com',
+                                    'user-agent:googlebot',
+                                    'cookie:' + YT_COOKIE,
+                                ],
+                                output: file_url
+                            }).on('error', (error) => {
+                                throw error;
+                            }).on('close', () => {
+                                if (!this.cached_file.find(funcUrl => funcUrl == file_url)) {
+                                    this.cached_file.push(file_url);
+                                }
+                                console.log("Download Complete");
+                                if (begin_t) {
+                                    this.play_local_stream(file_url, begin_t);
+                                } else {
+                                    this.play_local_stream(file_url);
+                                }
+                            });
+                        } else {
+                            console.log("Cache searched when trying to play YT url" + search_cache);
+                            try {
+                                this.play_local_stream_array(search_cache);
+                            } catch (error) {
+                                this.play_YT_url(url, begin_t, true);
                             }
-                            console.log("Download Complete");
-                            if (begin_t) {
-                                this.play_local_stream(file_url, begin_t);
-                            } else {
-                                this.play_local_stream(file_url);
-                            }
-                        });
-                    } else {
-                        console.log("Cache searched when trying to play YT url" + search_cache);
-                        try {
-                            this.play_local_stream_array(search_cache);
-                        } catch (error) {
-                            this.play_YT_url(url, begin_t, true);
                         }
+                    } else {
+
+                        var audio_streamLV = ytdl.downloadFromInfo(data, {
+                            filter: "audioonly",
+                            //liveBuffer: 2000,
+                            highWaterMark: 16384,
+                            dlChunkSize: 65536,
+                            quality: 'highestaudio',
+                            //begin: BT,
+                            requestOptions: {
+                                headers: {
+                                    cookie: YT_COOKIE,
+                                    // Optional. If not given, ytdl-core will try to find it.
+                                    // You can find this by going to a video's watch page, viewing the source,
+                                    // and searching for "ID_TOKEN".
+                                    // 'x-youtube-identity-token': 1324,
+                                },
+                            },
+                        });
+                        this.playAudioResauce(warpStreamToResauce(audio_streamLV));
                     }
                 }
             }
@@ -909,6 +932,8 @@ class discord_music {
                 console.log("AP_err" + error);
                 if (error == "Error: write after end") {
                     this.PBD = this.PBD + 1000;
+                    console.log("The error might cause memory leak, please restart the program or enable YTCache;\nif already done,please call support")
+                    console.log("click SKIP to skip the song");
                     console.log(error.resource.audioPlayer._state.resource);
                     return;
                 }

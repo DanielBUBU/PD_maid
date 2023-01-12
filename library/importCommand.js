@@ -1,5 +1,9 @@
 const fs = require('fs');
 const { Collection } = require('discord.js');
+const {
+    authed_user_id = [],
+        personalLock = false,
+} = require('../config.json');
 
 
 function load_events(client, dmobj, cmdobj) {
@@ -12,9 +16,22 @@ function load_events(client, dmobj, cmdobj) {
         const event = require(`../events/${file}`);
         console.log("Loading events (%d/%d):%s", loaded_event_counter, eventFiles.length, event.name);
         if (event.once) {
-            client.once(event.name, (...args) => event.execute(...args));
+            client.once(event.name, (...args) => {
+                event.execute(...args)
+            });
         } else {
-            client.on(event.name, (...args) => event.execute(client, dmobj, cmdobj, ...args));
+            client.on(event.name, (...args) => {
+                if (personalLock && args[0].user && !authed_user_id.find(element => element == args[0].user.id)) {
+
+                    try {
+                        args[0].reply("You shall no pass");
+                    } catch (error) {
+
+                    }
+                    return;
+                }
+                event.execute(client, dmobj, cmdobj, ...args)
+            });
         }
     }
     return client;
@@ -45,7 +62,6 @@ class commands {
     executeDiscordCommand(commandStr, args, argsStr) {
         const command = this.commands.get(commandStr);
         if (command) {
-
             try {
                 if (commandStr === "music") {
                     command.execute(this.client, this.dmobj, args);

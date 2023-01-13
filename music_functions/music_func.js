@@ -41,16 +41,17 @@ const {
         YTCache = true
 } = require('../config.json');
 
-const player = createAudioPlayer({
-    behaviors: {
-        noSubscriber: NoSubscriberBehavior.Pause,
-    },
-});
-var subscribe;
-var connection;
+
 
 class discord_music {
     //#region variables
+    player = createAudioPlayer({
+        behaviors: {
+            noSubscriber: NoSubscriberBehavior.Pause,
+        },
+    });
+    subscribe;
+    connection;
     control_panel = undefined;
     queue = [];
     isloop = 2;
@@ -181,7 +182,7 @@ class discord_music {
 
         if (this.last_at_vc_channel) {
 
-            connection = joinVoiceChannel({
+            this.connection = joinVoiceChannel({
                 channelId: this.last_at_vc_channel,
                 guildId: this.last_interaction.guild.id,
                 adapterCreator: this.last_interaction.guild.voiceAdapterCreator,
@@ -190,29 +191,29 @@ class discord_music {
                 this.join_channel();
             });
 
-            subscribe = connection.subscribe(player);
+            this.subscribe = this.connection.subscribe(this.player);
             console.log('Connecting...');
 
 
 
             //try to reconnect if disconnect
-            connection.on(VoiceConnectionStatus.Disconnected, async(oldState, newState) => {
+            this.connection.on(VoiceConnectionStatus.Disconnected, async(oldState, newState) => {
                 try {
                     await Promise.race([
-                        entersState(connection, VoiceConnectionStatus.Signalling, 10000),
-                        entersState(connection, VoiceConnectionStatus.Connecting, 10000),
+                        entersState(this.connection, VoiceConnectionStatus.Signalling, 10000),
+                        entersState(this.connection, VoiceConnectionStatus.Connecting, 10000),
                     ]);
                     // Seems to be reconnecting to a new channel - ignore disconnect
                 } catch (error) {
                     // Seems to be a real disconnect which SHOULDN'T be recovered from
                     console.log("connection error!!");
                     try {
-                        connection.destroy();
-                        connection = undefined;
+                        this.connection.destroy();
+                        this.connection = undefined;
                     } catch (error) {
                         console.log("Connection Destroy ERR" + error);
                     }
-                    connection = undefined;
+                    this.connection = undefined;
                     this.join_channel();
                 }
             });
@@ -244,10 +245,10 @@ class discord_music {
     //kill sub and connection
     connection_self_destruct(args) {
         console.log('self destruction in 1 second');
-        if (connection) {
+        if (this.connection) {
             console.log('Connection detected, leaving');
-            connection.destroy();
-            connection = undefined;
+            this.connection.destroy();
+            this.connection = undefined;
         }
         this.send_control_panel(args);
         return
@@ -258,9 +259,9 @@ class discord_music {
     clear_status(connectionSD = false, callbackF) {
         console.log("Cleaning dirty stuff");
         this.delete_np_embed();
-        if (subscribe) {
-            subscribe.unsubscribe();
-            subscribe = undefined;
+        if (this.subscribe) {
+            this.subscribe.unsubscribe();
+            this.subscribe = undefined;
         }
         if (connectionSD) {
             this.connection_self_destruct();
@@ -643,7 +644,7 @@ class discord_music {
     //play yt stuff,modified using fluent ffmpeg,might call join_channel function
     async play_url(url, begin_t, args, forceD) {
 
-        if ((!connection || !subscribe) && args) {
+        if ((!this.connection || !this.subscribe) && args) {
             this.join_channel(args);
         }
 
@@ -902,7 +903,7 @@ class discord_music {
 
 
         try {
-            player.play(audioResauce);
+            this.player.play(audioResauce);
             this.processing_next_song = false;
         } catch (error) {
             console.log("PSP_ERR" + error);
@@ -925,7 +926,7 @@ class discord_music {
 
 
         //player,resource error handle
-        player.on('error', (error) => {
+        this.player.on('error', (error) => {
             try {
                 this.handling_vc_err = true;
                 this.PBD = this.PBD + error.resource.playbackDuration;
@@ -954,16 +955,16 @@ class discord_music {
         });
 
         //get next song automatically
-        player.on(AudioPlayerStatus.Idle, () => {
+        this.player.on(AudioPlayerStatus.Idle, () => {
             console.log("Idle");
-            if (player.state.status === AudioPlayerStatus.Idle && !this.handling_vc_err && !this.processing_next_song) {
+            if (this.player.state.status === AudioPlayerStatus.Idle && !this.handling_vc_err && !this.processing_next_song) {
                 this.next_song();
             } else {
                 console.log('Player already playing', this.handling_vc_err, this.processing_next_song);
             }
 
         });
-        player.on(AudioPlayerStatus.Playing, () => {
+        this.player.on(AudioPlayerStatus.Playing, () => {
             console.log("Player playing");
             this.handling_vc_err = false;
             this.send_control_panel();
@@ -1029,7 +1030,7 @@ class discord_music {
     //#endregion
 
     //#region fetching cache,queue
-    fetch_cache_files(dir, is_add_to_pl = false) {
+    fetch_cache_files(dir, is_add_to_pl) {
         fs.readdir(dir, (err, files) => {
             if (!err) {
                 // Print folder name
@@ -1043,7 +1044,7 @@ class discord_music {
                         fs.stat(file_full_path, (err, stats) => {
                             if (!err) {
                                 if (stats.isDirectory()) {
-                                    this.fetch_cache_files(file_full_path);
+                                    this.fetch_cache_files(file_full_path, is_add_to_pl);
                                 } else {
                                     //is file
                                     this.cache_queue_io(file_full_path, is_add_to_pl);
@@ -1064,7 +1065,7 @@ class discord_music {
     }
 
     //input url to fetch file into cache or queue
-    cache_queue_io(file_full_path, is_add_to_pl = false) {
+    cache_queue_io(file_full_path, is_add_to_pl) {
         file_full_path = this.format_local_absolute_url(file_full_path);
         fs.stat(file_full_path, (err, stats) => {
             if (!err && stats.isFile() && this.is_file_type_avaliable(file_full_path)) {

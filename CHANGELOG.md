@@ -1,5 +1,8 @@
 # change log
 
+## Mein メイド v1.6.5 Stable
+- muti-process for different guilds
+- fix pause
 
 ## Mein メイド v1.6.2 Stable
 - disable YT video cache option

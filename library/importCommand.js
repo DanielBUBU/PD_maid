@@ -6,7 +6,7 @@ const {
 } = require('../config.json');
 
 
-function load_events(client, dmobj, cmdobj) {
+function load_events(client, dmobj, cmdobj, authedGuildIDs) {
     console.log("---Start loading events---");
     var loaded_event_counter = 0;
     const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
@@ -21,10 +21,14 @@ function load_events(client, dmobj, cmdobj) {
             });
         } else {
             client.on(event.name, (...args) => {
+                if (args[0].guild && !authedGuildIDs.find(element => element == args[0].guild)) {
+                    //has guild param and it's not in authed ID's
+                    return;
+                }
                 if (personalLock && args[0].user && !authed_user_id.find(element => element == args[0].user.id)) {
 
                     try {
-                        args[0].reply("You shall no pass");
+                        args[0].reply({ content: "You shall no pass" });
                     } catch (error) {
 
                     }

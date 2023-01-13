@@ -14,12 +14,15 @@ const rest = new REST({ version: '9' }).setToken(token);
 
 function deployCommands() {
 
-    guildId.forEach(element => {
-        console.log('Deploying commands to guild:' + element)
-        rest.put(Routes.applicationGuildCommands(clientId, element), { body: commands })
-            .then(() => console.log('Successfully registered application commands to guild:' + element))
-            .catch(console.error);
+    guildId.forEach(guildGroups => {
+        guildGroups.forEach(element => {
 
+            console.log('Deploying commands to guild:' + element)
+            rest.put(Routes.applicationGuildCommands(clientId, element), { body: commands })
+                .then(() => console.log('Successfully registered application commands to guild:' + element))
+                .catch(console.error);
+
+        })
     });
 }
 

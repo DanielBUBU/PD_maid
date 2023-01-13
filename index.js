@@ -1,17 +1,23 @@
 console.log("Loading packages...");
 const {
-    discord_music,
-} = require('./music_functions/music_func.js');
-const {
-    commands,
-    load_events,
-} = require('./library/importCommand');
-const {
     deployCommands
 } = require('./library/deploy-commands');
 
+const { login_client } = require("./library/loginFunction");
+const child_process = require('child_process');
+const {
+    buildSlashCommandOnStartup = false,
+        clientId = undefined,
+        rpc = false,
+        guildId = [
+            []
+        ]
+} = require('./config.json');
+
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
-const { token, buildSlashCommandOnStartup = false, clientId = undefined, rpc = false } = require('./config.json');
+const {
+    token
+} = require('./config.json');
 var rpc_client;
 
 var rpcRetryFlag = true;
@@ -67,18 +73,7 @@ async function rpc_login(params) {
     process.on('unhandledRejection', console.error);
 }
 
-async function login_client() {
-    if (clientId && rpc) {
-        rpc_login();
-    }
-
-    if (buildSlashCommandOnStartup) {
-        try {
-            deployCommands();
-        } catch (error) {
-            console.error(error);
-        }
-    }
+async function fetchAndLogin(takenGuilds) {
 
     var client = new Client({
         intents: [GatewayIntentBits.Guilds,
@@ -91,19 +86,45 @@ async function login_client() {
 
         disableMentions: 'everyone',
     });
-    console.log("Loading variables...");
-    const dmobj = (new discord_music(client));
-    const cmdobj = (new commands(client, dmobj));
-    client = load_events(client, dmobj, cmdobj);
-
-    //login
-    try {
-        client.login(token);
-    } catch {
-        console.log("Login failed, retrying");
-        login_client();
-    }
+    client.login(token);
+    console.log("fetching...");
+    var allGuild = await client.guilds.fetch().then(client.destroy());
+    var allGuildId = [];
+    allGuild.forEach(
+        element => {
+            if (!takenGuilds.includes(element.id)) {
+                allGuildId.push(element.id)
+            }
+        }
+    );
+    console.log("Fetched and login on:" + allGuildId);
+    login_client(allGuildId);
 }
 
+if (buildSlashCommandOnStartup) {
+    try {
+        deployCommands();
+    } catch (error) {
+        console.error(error);
+    }
+}
+if (clientId && rpc) {
+    rpc_login();
+}
+var usedGuildId = [];
+var childCount = 0;
+guildId.forEach(element => {
+    if (element.length != 0) {
+        usedGuildId = usedGuildId.concat(element);
+        console.log("Login guilds group" + element);
 
-login_client();
+        var workerProcess = child_process.spawn('node', ['./login.js', JSON.stringify(element)]);
+        workerProcess.stdout.on('data', function(data) { console.log(childCount + ')stdout: ' + data); });
+        workerProcess.stderr.on('data', function(data) { console.log(childCount + ')stderr: ' + data); });
+        workerProcess.on('close', function(code) { console.log(childCount + ')Child killed,Code: ' + code); });
+        childCount++;
+    }
+});
+fetchAndLogin(usedGuildId);
+console.log("Main executed");
+//for guilds that are not on the lists

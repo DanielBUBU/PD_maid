@@ -1,6 +1,6 @@
 # PD_maid
 
-## v1.6.2 Stable is out!!
+## v1.6.5 Stable is out!!
 ![Banner](./readme_assets/banner.png)
 
 
@@ -40,7 +40,7 @@ or simply follow the instruction here(https://discordjs.guide/preparations/addin
 ![biscuit](./readme_assets/Intents.png)</br>
 ![biscuit](./readme_assets/Permission.png)</br>
 
-- install ffmpeg(https://www.wikihow.com/Install-FFmpeg-on-Windows) and Node.js(https://nodejs.org/en/) on your system 
+- install ffmpeg(https://www.wikihow.com/Install-FFmpeg-on-Windows),Python 3.x,and Node.js(https://nodejs.org/en/) on your system and add then into the system path if they don't add automatically(windows)
 
 - create config.json in root</br>
 Format example can be found in `config.example.json`</br>
@@ -54,6 +54,13 @@ double click, copy and paste all stuff like `"YT_COOKIE":"HSID=xxx;SSID=xxx...__
 - Click PD_Maid_link_start.bat (or just run using `node .` in cmd),PD_Maid_link_start_admin.bat will ask for admin permission</br>
 - Once it's ready, it will output a console log</br>
 
+- config below will create a child process for two guilds,no second child because the array is empty, and the parent will handle the rest of joined guilds</br>
+````
+    "guildId": [
+        ["421290789868666881","994034761020493888"],
+        []
+    ]
+````
 ## Future
 
 - tag or auto reply picture function

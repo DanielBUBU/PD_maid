@@ -1,1 +1,1 @@
-node ./library/deploy-commands.js
+node ./deployCommands.js

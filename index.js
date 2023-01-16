@@ -3,7 +3,7 @@ const {
     deployCommands
 } = require('./library/deploy-commands');
 
-const { login_client } = require("./library/loginFunction");
+const { login_client } = require("./library/loginFunction.js");
 const child_process = require('child_process');
 const {
     buildSlashCommandOnStartup = false,
@@ -112,17 +112,17 @@ if (clientId && rpc) {
     rpc_login();
 }
 var usedGuildId = [];
-var childCount = 0;
-guildId.forEach(element => {
+var childs = [];
+guildId.forEach((element, index) => {
     if (element.length != 0) {
         usedGuildId = usedGuildId.concat(element);
         console.log("Login guilds group" + element);
 
-        var workerProcess = child_process.spawn('node', ['./login.js', JSON.stringify(element)]);
-        workerProcess.stdout.on('data', function(data) { console.log(childCount + ')stdout: ' + data); });
-        workerProcess.stderr.on('data', function(data) { console.log(childCount + ')stderr: ' + data); });
-        workerProcess.on('close', function(code) { console.log(childCount + ')Child killed,Code: ' + code); });
-        childCount++;
+        var workerProcess = child_process.spawn('node', ['./library/login.js', JSON.stringify(element)]);
+        workerProcess.stdout.on('data', function(data) { console.log(index + ')stdout: ' + data); });
+        workerProcess.stderr.on('data', function(data) { console.log(index + ')stderr: ' + data); });
+        workerProcess.on('close', function(code) { console.log(index + ')Child killed,Code: ' + code); });
+        childs.push(workerProcess);
     }
 });
 fetchAndLogin(usedGuildId);

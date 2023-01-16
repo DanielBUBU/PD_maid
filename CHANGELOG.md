@@ -1,5 +1,9 @@
 # change log
 
+## Mein メイド v1.6.5 Stable hotfix#1
+- muti-process index correction
+- fix commands deploy
+
 ## Mein メイド v1.6.5 Stable
 - muti-process for different guilds
 - fix pause

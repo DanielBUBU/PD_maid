@@ -1158,7 +1158,13 @@ function warpStreamToResauce(stream, BT) {
             streamOpt, { inputType: StreamType.Arbitrary, silencePaddingFrames: 10 }
         );
 
-        return audio_resauce;
+        return new Proxy(audio_resauce, {
+            set: function(target, key, value) {
+                //console.log(`${key} set to ${value}`);
+                target[key] = value;
+                return true;
+            }
+        });
     } catch (error) {
         console.log("ERRwhenwarp");
         throw error;

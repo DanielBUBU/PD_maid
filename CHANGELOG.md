@@ -1,5 +1,9 @@
 # change log
 
+## Mein メイド v1.6.6 Stable
+- handling for rest channels are child process too now
+- code recycle for playing error handling
+
 ## Mein メイド v1.6.5 Stable hotfix#1
 - muti-process index correction
 - fix commands deploy

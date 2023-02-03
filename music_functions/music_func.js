@@ -146,8 +146,6 @@ class discord_music {
             if (clear_console) {
                 console.clear();
             }
-            console.log(next_song_url + " TS:" + Date.now());
-
             try {
                 this.play_url(next_song_url, 0);
             } catch (error) {
@@ -644,6 +642,8 @@ class discord_music {
     //play yt stuff,modified using fluent ffmpeg,might call join_channel function
     async play_url(url, begin_t, args, forceD) {
 
+        console.log(url + " TS:" + Date.now() + "\nBT:" + begin_t + "\nForce:" + forceD);
+
         if ((!this.connection || !this.subscribe) && args) {
             this.join_channel(args);
         }
@@ -688,7 +688,7 @@ class discord_music {
                         },
                     },
                 });
-                this.playAudioResauce(warpStreamToResauce(audio_streamLV));
+                this.playAudioResauce(this.warpStreamToResauce(audio_streamLV));
             } else {
 
                 if (begin_t && data.videoDetails.lengthSeconds <= Math.ceil(begin_t / 1000)) {
@@ -763,7 +763,7 @@ class discord_music {
                                 },
                             },
                         });
-                        this.playAudioResauce(warpStreamToResauce(audio_streamLV));
+                        this.playAudioResauce(this.warpStreamToResauce(audio_streamLV, begin_t));
                     }
                 }
             }
@@ -893,7 +893,7 @@ class discord_music {
         try {
             const audio_stream = fs.createReadStream(pathToSourceFile);
 
-            this.playAudioResauce(warpStreamToResauce(audio_stream, begin_t));
+            this.playAudioResauce(this.warpStreamToResauce(audio_stream, begin_t));
         } catch (error) {
             throw error;
         }
@@ -927,31 +927,8 @@ class discord_music {
 
         //player,resource error handle
         this.player.on('error', (error) => {
-            try {
-                this.handling_vc_err = true;
-                this.PBD = this.PBD + error.resource.playbackDuration;
-                console.log("AP_err" + error);
-                if (error == "Error: write after end") {
-                    this.PBD = this.PBD + 1000;
-                    console.log("The error might cause memory leak, please restart the program or enable YTCache;\nif already done,please call support")
-                    console.log("click SKIP to skip the song");
-                    console.log(error.resource.audioPlayer._state.resource);
-                    return;
-                }
-                console.log("AP err handled URL:%s\nTime:%d TS:%s", this.queue[this.nowplaying], this.PBD, Date.now());
-                if (this.PBD) {
-                    this.play_url(this.queue[this.nowplaying], this.PBD, false, true);
-                } else {
-                    this.play_url(this.queue[this.nowplaying], false, false, true);
-                }
-
-                //console.error(error);
-
-
-            } catch (error) {
-                console.log("Error handling AP_ERR" + error);
-                this.next_song(true);
-            }
+            console.log("AP_err" + error);
+            this.playingErrorHandling(error.resource.playbackDuration, error);
         });
 
         //get next song automatically
@@ -1140,37 +1117,68 @@ class discord_music {
     }
 
     //#endregion format things
-}
 
-function warpStreamToResauce(stream, BT) {
-    try {
 
-        var ffmpeg_audio_stream_C = fluentffmpeg().addInput(stream).on("error", (error) => { console.log("ffmpegErr" + error) });
-        if (BT) {
-            console.log("Set BT:" + Math.ceil(BT / 1000));
-            ffmpeg_audio_stream_C.seekInput(Math.ceil(BT / 1000)).toFormat('wav');
-        } else {
-            ffmpeg_audio_stream_C.toFormat('wav');
+    warpStreamToResauce(stream, BT) {
+        try {
 
-        }
-        var streamOpt = ffmpeg_audio_stream_C.pipe();
-        var audio_resauce = createAudioResource(
-            streamOpt, { inputType: StreamType.Arbitrary, silencePaddingFrames: 10 }
-        );
+            var ffmpeg_audio_stream_C = fluentffmpeg().addInput(stream);
+            if (BT) {
+                console.log("Set BT:" + Math.ceil(BT / 1000));
+                ffmpeg_audio_stream_C.seekInput(Math.ceil(BT / 1000)).toFormat('wav');
+            } else {
+                ffmpeg_audio_stream_C.toFormat('wav');
 
-        return new Proxy(audio_resauce, {
-            set: function(target, key, value) {
-                //console.log(`${key} set to ${value}`);
-                target[key] = value;
-                return true;
             }
-        });
-    } catch (error) {
-        console.log("ERRwhenwarp");
-        throw error;
+            var streamOpt = ffmpeg_audio_stream_C.pipe();
+            var audio_resauce = createAudioResource(
+                streamOpt, { inputType: StreamType.Arbitrary, silencePaddingFrames: 10 }
+            );
+            ffmpeg_audio_stream_C.on("error", (error) => {
+                console.log("ffmpegErr" + error);
+                this.playingErrorHandling(audio_resauce.playbackDuration, error);
+            });
+            return new Proxy(audio_resauce, {
+                set: function(target, key, value) {
+                    //console.log(`${key} set to ${value}`);
+                    target[key] = value;
+                    return true;
+                }
+            });
+        } catch (error) {
+            console.log("ERRwhenwarp");
+            throw error;
+        }
+    }
+
+    playingErrorHandling(playbackDuration, errorInp) {
+        if (!this.handling_vc_err) {
+            try {
+                this.handling_vc_err = true;
+                this.PBD = this.PBD + playbackDuration;
+                if (errorInp == "Error: write after end") {
+                    this.PBD = this.PBD + 1000;
+                    console.log("The error might cause memory leak, please restart the program or enable YTCache;\nif already done,please call support")
+                    console.log("click SKIP to skip the song");
+                    return;
+                }
+                console.log("err handled URL:%s\nTime:%d TS:%s", this.queue[this.nowplaying], this.PBD, Date.now());
+                if (this.PBD) {
+                    this.play_url(this.queue[this.nowplaying], this.PBD, false, true);
+                } else {
+                    this.play_url(this.queue[this.nowplaying], false, false, true);
+                }
+
+                //console.error(error);
+
+
+            } catch (error) {
+                console.log("Error handling playingERR:" + error);
+                this.next_song(true);
+            }
+        }
     }
 }
-
 module.exports = {
     //name: 'music_func.js',
     discord_music

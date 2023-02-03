@@ -98,7 +98,9 @@ async function fetchAndLogin(takenGuilds) {
         }
     );
     console.log("Fetched and login on:" + allGuildId);
-    login_client(allGuildId);
+
+    var newProcess = createProcess(allGuildId, childs.length);
+    childs.push(newProcess);
 }
 
 if (buildSlashCommandOnStartup) {
@@ -113,18 +115,36 @@ if (clientId && rpc) {
 }
 var usedGuildId = [];
 var childs = [];
+
+function createProcess(guilds, index) {
+    var workerProcess = child_process.spawn('node', ['./library/login.js', JSON.stringify(guilds)]);
+    workerProcess.stdout.on('data', function(data) { console.log(index + ')stdout: ' + data); });
+    workerProcess.stderr.on('data', function(data) { console.log(index + ')stderr: ' + data); });
+    workerProcess.on('close', function(code) {
+        console.log(index + ')Child killed,Code: ' + code);
+        workerProcess.emit("error");
+    }).on("error", () => {
+        childs[index] = createProcess(guilds, index);
+    });
+    return workerProcess;
+}
+
+function timerWorkload() {
+    console.clear();
+    return;
+}
+
 guildId.forEach((element, index) => {
     if (element.length != 0) {
         usedGuildId = usedGuildId.concat(element);
         console.log("Login guilds group" + element);
-
-        var workerProcess = child_process.spawn('node', ['./library/login.js', JSON.stringify(element)]);
-        workerProcess.stdout.on('data', function(data) { console.log(index + ')stdout: ' + data); });
-        workerProcess.stderr.on('data', function(data) { console.log(index + ')stderr: ' + data); });
-        workerProcess.on('close', function(code) { console.log(index + ')Child killed,Code: ' + code); });
-        childs.push(workerProcess);
+        var newProcess = createProcess(element, childs.length);
+        childs.push(newProcess);
     }
 });
+setInterval(() => {
+    timerWorkload();
+}, 3600 * 1000);
 fetchAndLogin(usedGuildId);
 console.log("Main executed");
 //for guilds that are not on the lists

@@ -1,5 +1,8 @@
 # change log
 
+## Mein メイド v1.6.7 Stable
+- Improve YT cache logic to fit multiprocess
+
 ## Mein メイド v1.6.6 Stable
 - handling for rest channels are child process too now
 - code recycle for playing error handling

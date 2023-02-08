@@ -11,7 +11,8 @@ const {
         rpc = false,
         guildId = [
             []
-        ]
+        ],
+        clear_console = true
 } = require('./config.json');
 
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
@@ -142,9 +143,11 @@ guildId.forEach((element, index) => {
         childs.push(newProcess);
     }
 });
-setInterval(() => {
-    timerWorkload();
-}, 3600 * 1000);
+if (clear_console) {
+    setInterval(() => {
+        timerWorkload();
+    }, 3600000);
+}
 fetchAndLogin(usedGuildId);
 console.log("Main executed");
 //for guilds that are not on the lists

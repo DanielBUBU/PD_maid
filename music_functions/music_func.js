@@ -713,29 +713,29 @@ class discord_music {
                         var search_cache = this.search_file_in_url_array(this.cached_file, file_name);
 
                         if (search_cache.length == 0 || force_download) {
+                            fs.stat(file_url, (err, stats) => {
+                                if (err || !stats.isFile()) {
+                                    const subprocess = youtubedl.exec(url, {
+                                        //dumpSingleJson: true
+                                        addHeader: [
+                                            'referer:youtube.com',
+                                            'user-agent:googlebot',
+                                            'cookie:' + YT_COOKIE,
+                                        ],
+                                        output: file_url
+                                    }).on('error', (error) => {
+                                        console.log("Can't download YT Video:" + error);
+                                        this.next_song(true);
+                                    }).on('close', () => {
+                                        this.playNewCachedYTLocalFile(file_url, begin_t);
+                                    });
 
-
-                            const subprocess = youtubedl.exec(url, {
-                                //dumpSingleJson: true
-                                addHeader: [
-                                    'referer:youtube.com',
-                                    'user-agent:googlebot',
-                                    'cookie:' + YT_COOKIE,
-                                ],
-                                output: file_url
-                            }).on('error', (error) => {
-                                throw error;
-                            }).on('close', () => {
-                                if (!this.cached_file.find(funcUrl => funcUrl == file_url)) {
-                                    this.cached_file.push(file_url);
-                                }
-                                console.log("Download Complete");
-                                if (begin_t) {
-                                    this.play_local_stream(file_url, begin_t);
                                 } else {
-                                    this.play_local_stream(file_url);
+                                    this.playNewCachedYTLocalFile(file_url, begin_t);
                                 }
                             });
+
+
                         } else {
                             console.log("Cache searched when trying to play YT url" + search_cache);
                             try {
@@ -773,6 +773,17 @@ class discord_music {
             this.next_song(true);
         }
         return;
+    }
+
+    playNewCachedYTLocalFile(file_url, begin_t) {
+        if (!this.cached_file.find(funcUrl => funcUrl == file_url)) {
+            this.cached_file.push(file_url);
+        }
+        if (begin_t) {
+            this.play_local_stream(file_url, begin_t);
+        } else {
+            this.play_local_stream(file_url);
+        }
     }
 
     async play_GD_url(url, begin_t, force_download = false) {
@@ -1178,6 +1189,8 @@ class discord_music {
             }
         }
     }
+
+
 }
 module.exports = {
     //name: 'music_func.js',

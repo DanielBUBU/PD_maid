@@ -40,6 +40,7 @@ const {
         clear_console = true,
         YTCache = true
 } = require('../config.json');
+const { randomInt } = require('crypto');
 
 
 
@@ -658,7 +659,7 @@ class discord_music {
     }
 
     //#region web urls
-    async play_YT_url(url, begin_t, force_download) {
+    async play_YT_url(url, begin_t, force_download, fileDead) {
 
         try {
             var data = await ytdl.getInfo(url, {
@@ -696,16 +697,7 @@ class discord_music {
                 } else {
                     if (YTCache) {
                         var file_name = data.videoDetails.title + ".webm";
-                        file_name = file_name
-                            .replace("?", "")
-                            .replace(":", "")
-                            .replace("/", "")
-                            .replace("\\", "")
-                            .replace('|', "")
-                            .replace('"', "")
-                            .replace("*", "")
-                            .replace("<", "")
-                            .replace(">", "");
+                        file_name = file_name.replace(/\:|\/|\\|\||\"|\*|\<|\>|\?/g, "");
                         var YTTempUrl = this.format_local_absolute_url(path.join(music_temp_dir, "YTTemp/"))
                         var file_url = this.format_local_absolute_url(path.join(YTTempUrl, file_name));
 
@@ -713,27 +705,33 @@ class discord_music {
                         var search_cache = this.search_file_in_url_array(this.cached_file, file_name);
 
                         if (search_cache.length == 0 || force_download) {
-                            fs.stat(file_url, (err, stats) => {
-                                if (err || !stats.isFile()) {
-                                    const subprocess = youtubedl.exec(url, {
-                                        //dumpSingleJson: true
-                                        addHeader: [
-                                            'referer:youtube.com',
-                                            'user-agent:googlebot',
-                                            'cookie:' + YT_COOKIE,
-                                        ],
-                                        output: file_url
-                                    }).on('error', (error) => {
-                                        console.log("Can't download YT Video:" + error);
-                                        this.next_song(true);
-                                    }).on('close', () => {
+                            if (fileDead || !this.is_local_url_avaliabe(file_url)) {
+                                const subprocess = youtubedl.exec(url, {
+                                    //dumpSingleJson: true
+                                    addHeader: [
+                                        'referer:youtube.com',
+                                        'user-agent:googlebot',
+                                        'cookie:' + YT_COOKIE,
+                                    ],
+                                    output: file_url
+                                }).on('error', (error) => {
+                                    console.log("Can't download YT Video:" + error);
+                                    this.next_song(true);
+                                }).on('close', () => {
+                                    try {
                                         this.playNewCachedYTLocalFile(file_url, begin_t);
-                                    });
+                                    } catch (error) {
+                                        //don't need it because player will handle it
+                                    }
+                                });
 
-                                } else {
+                            } else {
+                                try {
                                     this.playNewCachedYTLocalFile(file_url, begin_t);
+                                } catch (error) {
+                                    this.play_YT_url(url, begin_t, true, true);
                                 }
-                            });
+                            }
 
 
                         } else {
@@ -741,7 +739,8 @@ class discord_music {
                             try {
                                 this.play_local_stream_array(search_cache);
                             } catch (error) {
-                                this.play_YT_url(url, begin_t, true);
+                                console.log(error);
+                                this.play_YT_url(url, begin_t, true, true);
                             }
                         }
                     } else {
@@ -772,23 +771,27 @@ class discord_music {
             console.log(error);
             this.next_song(true);
         }
-        return;
     }
 
     playNewCachedYTLocalFile(file_url, begin_t) {
-        if (!this.cached_file.find(funcUrl => funcUrl == file_url)) {
-            this.cached_file.push(file_url);
-        }
-        if (begin_t) {
-            this.play_local_stream(file_url, begin_t);
-        } else {
-            this.play_local_stream(file_url);
+        try {
+            if (!this.cached_file.find(funcUrl => funcUrl == file_url)) {
+                this.cached_file.push(file_url);
+            }
+            if (begin_t) {
+                this.play_local_stream(file_url, begin_t);
+            } else {
+                this.play_local_stream(file_url);
+            }
+
+        } catch (error) {
+            throw error;
         }
     }
 
-    async play_GD_url(url, begin_t, force_download = false) {
+    async play_GD_url(url, begin_t, force_download) {
         var GD_ID = url.split("/")[5];
-        var file_name = (await Meta.parser(url)).og.title.toString();
+        var file_name = (await Meta.parser(url)).og.title.toString().replace(/\:|\/|\\|\||\"|\*|\<|\>|\?/g, "");
         var file_url = this.format_local_absolute_url(path.join(music_temp_dir, file_name));
         this.fileUrlCreateIfNotExist(music_temp_dir);
         var search_cache = this.search_file_in_url_array(this.cached_file, file_name);
@@ -872,7 +875,7 @@ class discord_music {
         if (file_array.length == 0) {
             throw "PLSA_ERR";
         } else {
-            var target = file_array.pop()
+            var target = file_array.pop();
             try {
                 this.play_local_stream(target);
             } catch (error) {
@@ -885,8 +888,7 @@ class discord_music {
                 try {
                     fs.unlinkSync(target);
                 } catch (error) {
-                    console.log("Error when delete:", target);
-                    console.log(error);
+                    console.log("Error when delete:", target, error);
                 }
                 //try to fetch remain urls
                 try {
@@ -900,19 +902,18 @@ class discord_music {
 
     play_local_stream(res, begin_t) {
         console.log("tring to play local url:", res);
-        var pathToSourceFile = res;
         try {
-            const audio_stream = fs.createReadStream(pathToSourceFile);
-
-            this.playAudioResauce(this.warpStreamToResauce(audio_stream, begin_t));
+            if (!this.is_local_url_avaliabe(res)) {
+                throw "File is dead";
+            }
+            this.playAudioResauce(this.warpStreamToResauce(res, begin_t));
         } catch (error) {
             throw error;
         }
     }
 
     playAudioResauce(audioResauce) {
-
-
+        console.log("Inserting sauce disk");
         try {
             this.player.play(audioResauce);
             this.processing_next_song = false;
@@ -1162,7 +1163,8 @@ class discord_music {
         }
     }
 
-    playingErrorHandling(playbackDuration, errorInp) {
+    playingErrorHandling(playbackDuration, errorInp, forceD) {
+
         if (!this.handling_vc_err) {
             try {
                 this.handling_vc_err = true;
@@ -1175,9 +1177,9 @@ class discord_music {
                 }
                 console.log("err handled URL:%s\nTime:%d TS:%s", this.queue[this.nowplaying], this.PBD, Date.now());
                 if (this.PBD) {
-                    this.play_url(this.queue[this.nowplaying], this.PBD, false, true);
+                    this.play_url(this.queue[this.nowplaying], this.PBD, false, forceD);
                 } else {
-                    this.play_url(this.queue[this.nowplaying], false, false, true);
+                    this.play_url(this.queue[this.nowplaying], false, false, forceD);
                 }
 
                 //console.error(error);

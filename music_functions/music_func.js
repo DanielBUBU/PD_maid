@@ -704,7 +704,7 @@ class discord_music {
                         this.fileUrlCreateIfNotExist(YTTempUrl);
                         var search_cache = this.search_file_in_url_array(this.cached_file, file_name);
 
-                        if (search_cache.length == 0 || force_download) {
+                        if (force_download || search_cache.length == 0) {
                             if (fileDead || !this.is_local_url_avaliabe(file_url)) {
                                 const subprocess = youtubedl.exec(url, {
                                     //dumpSingleJson: true
@@ -721,7 +721,8 @@ class discord_music {
                                     try {
                                         this.playNewCachedYTLocalFile(file_url, begin_t);
                                     } catch (error) {
-                                        //don't need it because player will handle it
+                                        console.log(error)
+                                            //don't need it because player will handle it
                                     }
                                 });
 
@@ -785,7 +786,11 @@ class discord_music {
             }
 
         } catch (error) {
-            throw error;
+            try {
+                this.play_local_stream(file_url + ".mkv", begin_t);
+            } catch (error2) {
+                throw error + error2
+            }
         }
     }
 
@@ -871,7 +876,7 @@ class discord_music {
     }
 
     //It will try to play the file(s) in the array until success
-    play_local_stream_array(file_array = []) {
+    play_local_stream_array(file_array) {
         if (file_array.length == 0) {
             throw "PLSA_ERR";
         } else {
@@ -999,7 +1004,7 @@ class discord_music {
 
     is_file_type_avaliable(str) {
         var type = str.split(".").pop()
-        var searched_fromat = this.search_file_in_url_array(["mp3", "wav", "flac", "webm", "mp4"], type);
+        var searched_fromat = this.search_file_in_url_array(["mp3", "wav", "flac", "webm", "mp4", "mkv"], type);
         if (searched_fromat.length != 0) {
             return true;
         }

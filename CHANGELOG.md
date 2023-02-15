@@ -1,5 +1,8 @@
 # change log
 
+## Mein メイド v1.6.8 Stable
+- support for YT videos that having lower views(will download as .mkv files)
+
 ## Mein メイド v1.6.7 Stable
 - Improve YT cache logic to fit multiprocess
 

@@ -1,5 +1,9 @@
 # change log
 
+## Mein メイド v1.6.9 Stable
+- Self update from github
+- using YTDLP when `YTCache` option is set to `true`
+
 ## Mein メイド v1.6.8 Stable
 - support for YT videos that having lower views(will download as .mkv files)
 

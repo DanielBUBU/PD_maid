@@ -176,8 +176,9 @@ module.exports = {
                     }
                 case 'ytpl_toomuch_but':
                     {
-                        setDmobjChannel(client, dmobj, interaction);
-                        interaction.message.delete();
+                        try {
+                            interaction.message.delete();
+                        } catch (error) {}
                         let playlist = dmobj.ytpl_continuation;
                         let go_flag = true;
                         //interaction.channel.reply("Processing...")
@@ -200,11 +201,8 @@ module.exports = {
                                     go_flag = false;
                                 }
                             }
-                        } else {
-                            dmobj.ytpl_continuation;
                         }
-
-
+                        return;
 
                     }
                 case 'cache_list':

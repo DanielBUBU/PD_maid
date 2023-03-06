@@ -5,7 +5,7 @@
         ["Your guild ID", "Your second guild ID(optional)"],
         ["Your third guild ID(optional)"]
     ],
-    "buildSlashCommandOnStartup": true,
+    "buildSlashCommandOnStartup": false,
     "authed_user_id": ["Users' ID for those who can input local url"],
     "download_chunk_size": 4194304,
     "globalPrefix": "??",
@@ -15,5 +15,6 @@
     "music_temp_dir": "d:\\somewhere\\store\\PD_maid\\music_temp\\files",
     "clear_console": true,
     "YTCache": true,
-    "personalLock": false
+    "personalLock": false,
+    "handleRequestFromJoinedGuild": false
 }

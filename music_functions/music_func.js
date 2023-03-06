@@ -188,7 +188,27 @@ class discord_music {
                 console.log("CON ERR" + err);
                 this.join_channel();
             });
+            //tempFix
+            //https://github.com/discordjs/discord.js/issues/9185#issuecomment-1453535500
+            //https://github.com/discordjs/discord.js/issues/9185#issuecomment-1459083216
+            const networkStateChangeHandler = (oldNetworkState, newNetworkState) => {
+                const newUdp = Reflect.get(newNetworkState, 'udp');
+                try {
+                    clearInterval(newUdp.keepAliveInterval);
+                } catch (error) {
 
+                }
+            }
+            this.connection.on('stateChange', (oldState, newState) => {
+                try {
+                    Reflect.get(oldState, 'networking').off('stateChange', networkStateChangeHandler);
+                } catch (error) {
+
+                }
+                try {
+                    Reflect.get(newState, 'networking').on('stateChange', networkStateChangeHandler);
+                } catch (error) {}
+            });
             this.subscribe = this.connection.subscribe(this.player);
             console.log('Connecting...');
 
@@ -227,10 +247,6 @@ class discord_music {
             if (this.nowplaying == -1 && this.queue.length >= 1) {
                 this.next_song(true);
                 sendingFlag = false;
-            }
-
-            if (sendingFlag) {
-                this.send_control_panel(args);
             }
         }, 1000)
 
@@ -556,7 +572,7 @@ class discord_music {
         }
         //#endregion
 
-    //#region all urls,adding things to queue
+    //#region all urls play funcs,adding things to queue
 
     async fetch_url_to_queue(interaction) {
         if (interaction) {
@@ -626,7 +642,9 @@ class discord_music {
 
         //fetch resauce and play songs if not playing
 
-        this.send_control_panel(interaction);
+        if (this.player.state == AudioPlayerStatus.Playing) {
+            this.send_control_panel(interaction);
+        }
     }
 
     //play yt stuff,modified using fluent ffmpeg,might call join_channel function
@@ -1130,9 +1148,12 @@ class discord_music {
                 this.playingErrorHandling(audio_resauce.playbackDuration, error);
             });
             return new Proxy(audio_resauce, {
-                set: function(target, key, value) {
+                set: (target, key, value) => {
                     //console.log(`${key} set to ${value}`);
                     target[key] = value;
+                    if (key == "playbackDuration" && process.send) {
+                        process.send(value);
+                    }
                     return true;
                 }
             });

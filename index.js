@@ -3,7 +3,6 @@ const {
     deployCommands
 } = require('./library/deploy-commands');
 
-const { login_client } = require("./library/loginFunction.js");
 const child_process = require('child_process');
 const {
     buildSlashCommandOnStartup = false,
@@ -12,13 +11,14 @@ const {
         guildId = [
             []
         ],
-        clear_console = true
+        clear_console = true,
+        handleRequestFromJoinedGuild = true,
+        token
 } = require('./config.json');
 
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
-const {
-    token
-} = require('./config.json');
+
+//#region Login
 var rpc_client;
 
 var rpcRetryFlag = true;
@@ -57,9 +57,11 @@ async function rpc_login(params) {
 
     rpc_client.on("error", () => {
         if (rpcRetryFlag && rpcRetryCount < 3) {
-            rpc_login();
-            rpcRetryCount++;
-            console.log(rpcRetryCount + "rpc login failed");
+            setTimeout(() => {
+                rpc_login();
+                rpcRetryCount++;
+                console.log(rpcRetryCount + "rpc login failed");
+            }, 10000)
         }
         setTimeout(() => {
             if (rpcRetryCount >= 3) {
@@ -118,9 +120,12 @@ var usedGuildId = [];
 var childs = [];
 
 function createProcess(guilds, index) {
-    var workerProcess = child_process.spawn('node', ['./library/login.js', JSON.stringify(guilds)]);
-    workerProcess.stdout.on('data', function(data) { console.log(index + ')stdout: ' + data); });
-    workerProcess.stderr.on('data', function(data) { console.log(index + ')stderr: ' + data); });
+    var workerProcess = child_process.fork('./library/login.js', [JSON.stringify(guilds)]);
+    //workerProcess.stdout.on('data', function(data) { console.log(index + ')stdout: ' + data); });
+    //workerProcess.stderr.on('data', function(data) { console.log(index + ')stderr: ' + data); });
+    workerProcess.on("message", (data) => {
+        //console.log(index + ")" + data);
+    });
     workerProcess.on('close', function(code) {
         console.log(index + ')Child killed,Code: ' + code);
         workerProcess.emit("error");
@@ -148,6 +153,12 @@ if (clear_console) {
         timerWorkload();
     }, 3600000);
 }
-fetchAndLogin(usedGuildId);
+if (handleRequestFromJoinedGuild) {
+    fetchAndLogin(usedGuildId);
+}
 console.log("Main executed");
 //for guilds that are not on the lists
+//#endregion Login
+
+//#region ProcessEvents
+//#endregion ProcessEvents

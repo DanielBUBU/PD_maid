@@ -1,6 +1,6 @@
 # PD_maid
 
-## Version `1.6.9 Stable` is out!!
+## Version `1.6.10 Stable` is out!!
 ![Banner](./readme_assets/banner.png)
 
 
@@ -21,6 +21,7 @@ https://github.com/DanielBUBU/PD_maid
 - Free and easy to build
 - Open sauce and readable codes
 - Appendable commends
+- Self update from github
 - RPC functions
 - Support mutiple platforms
 - Support Youtube,GD,and local file

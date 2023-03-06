@@ -1,5 +1,10 @@
 # change log
 
+## Mein メイド v1.6.10 Stable
+- Sending less GUI
+- fix the bug for discordjs:https://github.com/discordjs/discord.js/issues/9185#issuecomment-1453535500
+- prepare for the web GUI
+
 ## Mein メイド v1.6.9 Stable
 - Self update from github
 - using YTDLP when `YTCache` option is set to `true`

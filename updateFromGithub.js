@@ -8,7 +8,7 @@ const updater = new AutoGitUpdate({
     branch: 'main',
     //ignoreFiles: ['util/config.js'],
     executeOnComplete: './updatePackages.bat',
-    exitOnComplete: true
+    exitOnComplete: false
 });
 
 updater.autoUpdate();

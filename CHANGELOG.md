@@ -1,5 +1,9 @@
 # change log
 
+## Mein メイド v1.6.11 Stable
+- Sending less message
+- control panel logic improve
+
 ## Mein メイド v1.6.10 Stable
 - Sending less GUI
 - fix the bug for discordjs:https://github.com/discordjs/discord.js/issues/9185#issuecomment-1453535500

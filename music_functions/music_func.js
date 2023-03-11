@@ -301,32 +301,8 @@ class discord_music {
             return;
         }
         this.is_sending_panel = true;
+        this.deleteOldPanel(args);
 
-        var oldCPID = -1;
-        if (this.control_panel) {
-            try {
-                //when stored panel is not the one clicked, delete the stored panel too
-                //or it's request from program in order to refresh the panel
-                oldCPID = this.control_panel.id;
-                this.control_panel.delete();
-
-            } catch (error) {
-                console.log("DelOLDCP ERR" + error);
-            }
-
-            this.control_panel = undefined;
-        }
-        if (args) {
-            this.last_at_channel = args.channel;
-            try {
-                //generated panel cliked, must delete it
-                if (args.message.id != oldCPID) {
-                    args.message.delete();
-                }
-            } catch (error) {
-                console.log("DelCP ERR" + error);
-            }
-        }
         let row2 = new ActionRowBuilder();
         /*
                 if (!connection) {
@@ -559,25 +535,52 @@ class discord_music {
 
     //delete nowplaying info
     delete_np_embed() {
-            if (this.np_embed) {
-                try {
-                    this.np_embed.delete();
-                } catch (error) {
-                    console.log("DelNPE ERR");
-                }
-                this.np_embed = null;
+        if (this.np_embed) {
+            try {
+                this.np_embed.delete();
+            } catch (error) {
+                console.log("DelNPE ERR");
+            }
+            this.np_embed = null;
+        }
+
+        return
+    }
+
+    deleteOldPanel(args) {
+        var oldCPID = -1;
+        if (this.control_panel) {
+            try {
+                //when stored panel is not the one clicked, delete the stored panel too
+                //or it's request from program in order to refresh the panel
+                oldCPID = this.control_panel.id;
+                this.control_panel.delete();
+
+            } catch (error) {
+                console.log("DelOLDCP ERR" + error);
             }
 
-            return
+            this.control_panel = undefined;
         }
-        //#endregion
+        if (args) {
+            this.set_last_at_channel(args.channel);
+            try {
+                //generated panel cliked, must delete it
+                if (args.message.id != oldCPID) {
+                    args.message.delete();
+                }
+            } catch (error) {
+                console.log("DelCP ERR" + error);
+            }
+        }
+    }
+
+    //#endregion
 
     //#region all urls play funcs,adding things to queue
 
     async fetch_url_to_queue(interaction) {
         if (interaction) {
-            this.last_at_vc_channel = interaction.member.voice.channelId;
-            this.last_at_channel = interaction.channel;
             this.last_interaction = interaction;
         }
         const row1 = new ActionRowBuilder()
@@ -634,9 +637,9 @@ class discord_music {
             } else {
                 interaction.reply('link not avaliable' + `\`\`\`${inp_url}\`\`\``)
             }
-            this.join_channel();
+            this.join_channel(interaction);
         } catch (error) {
-            console.log("FUQ Err");
+            console.log("FUQ Err:" + error);
             interaction.channel.send('Something went wrong' + `\`\`\`${inp_url}\`\`\``);
         }
 
@@ -644,6 +647,8 @@ class discord_music {
 
         if (this.player.state == AudioPlayerStatus.Playing) {
             this.send_control_panel(interaction);
+        } else {
+            this.deleteOldPanel(interaction);
         }
     }
 
@@ -688,62 +693,49 @@ class discord_music {
                         var file_url = this.format_local_absolute_url(path.join(YTTempUrl, file_name));
 
                         this.fileUrlCreateIfNotExist(YTTempUrl);
-                        var search_cache = this.search_file_in_url_array(this.cached_file, file_name);
+                        if (fileDead || !this.is_local_url_avaliabe(file_url)) {
+                            console.log("Downloading:" + file_name)
+                            var ytDlpEventEmitter = ytDlpWrap
+                                .exec([
+                                    url,
+                                    '-f',
+                                    'best',
+                                    '-o',
+                                    file_url,
+                                ])
+                                .on('progress', (progress) => {
+                                        console.log(
+                                            progress.percent,
+                                            progress.totalSize,
+                                            progress.currentSpeed,
+                                            progress.eta
+                                        )
+                                    }
 
-                        if (force_download || search_cache.length == 0) {
-                            if (fileDead || !this.is_local_url_avaliabe(file_url)) {
-                                console.log("Downloading:" + file_name)
-                                var ytDlpEventEmitter = ytDlpWrap
-                                    .exec([
-                                        url,
-                                        '-f',
-                                        'best',
-                                        '-o',
-                                        file_url,
-                                    ])
-                                    .on('progress', (progress) => {
-                                            console.log(
-                                                progress.percent,
-                                                progress.totalSize,
-                                                progress.currentSpeed,
-                                                progress.eta
-                                            )
-                                        }
-
-                                    )
-                                    .on('ytDlpEvent', (eventType, eventData) => {
-                                        //    console.log(eventType, eventData)
-                                    })
-                                    .on('error', (error) => {
-                                        console.log("Can't download YT Video:" + error);
-                                        this.next_song(true);
-                                    }).on('close', () => {
-                                        try {
-                                            this.playNewCachedYTLocalFile(file_url, begin_t);
-                                        } catch (error) {
-                                            console.log(error)
-                                                //don't need it because player will handle it
-                                        }
-                                    });
-
-                            } else {
-                                try {
-                                    this.playNewCachedYTLocalFile(file_url, begin_t);
-                                } catch (error) {
-                                    this.play_YT_url(url, begin_t, true, true);
-                                }
-                            }
-
+                                )
+                                .on('ytDlpEvent', (eventType, eventData) => {
+                                    //    console.log(eventType, eventData)
+                                })
+                                .on('error', (error) => {
+                                    console.log("Can't download YT Video:" + error);
+                                    this.next_song(true);
+                                }).on('close', () => {
+                                    try {
+                                        this.playNewCachedYTLocalFile(file_url, begin_t);
+                                    } catch (error) {
+                                        console.log(error)
+                                            //don't need it because player will handle it
+                                    }
+                                });
 
                         } else {
-                            console.log("Cache searched when trying to play YT url" + search_cache);
                             try {
-                                this.play_local_stream_array(search_cache);
+                                this.playNewCachedYTLocalFile(file_url, begin_t);
                             } catch (error) {
-                                console.log(error);
                                 this.play_YT_url(url, begin_t, true, true);
                             }
                         }
+
                     } else {
 
                         var audio_stream = ytdl(url, {
@@ -1145,7 +1137,10 @@ class discord_music {
             );
             ffmpeg_audio_stream_C.on("error", (error) => {
                 console.log("ffmpegErr" + error);
-                this.playingErrorHandling(audio_resauce.playbackDuration, error);
+                if (error.outputStreamError.code != "ERR_STREAM_PREMATURE_CLOSE") {
+                    this.playingErrorHandling(audio_resauce.playbackDuration, error);
+                }
+
             });
             return new Proxy(audio_resauce, {
                 set: (target, key, value) => {
@@ -1165,7 +1160,7 @@ class discord_music {
 
     playingErrorHandling(playbackDuration, errorInp, forceD) {
 
-        if (!this.handling_vc_err) {
+        if (!this.handling_vc_err && this.player.state.status != AudioPlayerStatus.Playing) {
             try {
                 this.handling_vc_err = true;
                 this.PBD = this.PBD + playbackDuration;

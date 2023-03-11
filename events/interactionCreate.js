@@ -7,24 +7,8 @@ const {
 } = require('discord.js');
 const ytpl = require('ytpl');
 
-
-
-
-const {
-    AttachmentBuilder,
-    MessageEmbed,
-    MessageActionRow,
-    MessageButton
-} = require('discord.js');
-
-const file = new AttachmentBuilder('./assets/disgust.png');
-
 const { show_queue_len } = require('../config.json');
 
-function setDmobjChannel(client, dmobj, interaction) {
-    dmobj.set_client(client);
-    dmobj.set_last_at_channel(interaction.channel);
-}
 
 module.exports = {
     name: 'interactionCreate',
@@ -39,8 +23,6 @@ module.exports = {
                     {
                         dmobj.set_client(client);
 
-
-                        dmobj.set_last_at_channel(interaction.channel);
                         // const vc_channel = modal.member.voice.channelId;
                         dmobj.fetch_url_to_queue(interaction);
                         return;
@@ -49,11 +31,14 @@ module.exports = {
         }
 
         if (interaction.isButton()) {
+            try {
+                //interaction.channel.send({ content: interaction.customId + ' clicked', ephemeral: true });
+            } catch (error) {
+
+            }
             switch (interaction.customId) {
                 case 'loop':
                     {
-                        setDmobjChannel(client, dmobj, interaction);
-                        interaction.reply({ content: 'loop clicked', ephemeral: true });
                         if (dmobj.isloop === 2) {
                             dmobj.isloop = 0;
                             interaction.channel.send({ content: 'Set loop to false' });
@@ -69,8 +54,6 @@ module.exports = {
                     }
                 case 'pause':
                     {
-                        setDmobjChannel(client, dmobj, interaction);
-                        interaction.reply({ content: 'pause clicked', ephemeral: true });
                         if (dmobj.connection) {
                             if (dmobj.player.pause()) {
                                 interaction.channel.send({ content: 'Paused' });
@@ -85,8 +68,6 @@ module.exports = {
                     }
                 case 'resume':
                     {
-                        setDmobjChannel(client, dmobj, interaction);
-                        interaction.reply({ content: 'resume clicked', ephemeral: true });
                         if (dmobj.connection) {
                             if (dmobj.player.unpause()) {
                                 interaction.channel.send({ content: 'Resumed' });
@@ -101,15 +82,12 @@ module.exports = {
                     }
                 case 'skip':
                     {
-                        setDmobjChannel(client, dmobj, interaction);
-                        interaction.reply({ content: 'skip clicked', ephemeral: true });
+                        dmobj.deleteOldPanel(interaction);
                         dmobj.next_song(force = true);
                         return
                     }
                 case 'add':
                     {
-                        setDmobjChannel(client, dmobj, interaction);
-                        //await interaction.reply({ content: 'add clicked', ephemeral: true });
                         const ytInpModal = new ModalBuilder()
                             .setCustomId('add_inp')
                             .setTitle('Add song or list into queue!')
@@ -132,18 +110,12 @@ module.exports = {
                     }
                 case 'join':
                     {
-                        setDmobjChannel(client, dmobj, interaction);
-                        interaction.reply({ content: 'join clicked', ephemeral: true });
-
                         dmobj.join_channel(interaction);
                         return
                     }
                 case 'leave':
                     {
-                        setDmobjChannel(client, dmobj, interaction);
-                        interaction.reply({ content: 'leave clicked', ephemeral: true });
                         try {
-
                             dmobj.connection_self_destruct(interaction);
                         } catch (error) {
                             console.log(error);
@@ -153,8 +125,6 @@ module.exports = {
                     }
                 case 'queue':
                     {
-                        setDmobjChannel(client, dmobj, interaction);
-                        interaction.reply({ content: 'queue clicked' });
                         if (dmobj.nowplaying != -1) {
                             await dmobj.send_info_embed(dmobj.queue[dmobj.nowplaying], "Nowplaying is No." + dmobj.nowplaying);
                             if ((dmobj.nowplaying + show_queue_len) <= dmobj.queue.length) {
@@ -207,16 +177,19 @@ module.exports = {
                     }
                 case 'cache_list':
                     {
-                        setDmobjChannel(client, dmobj, interaction);
-                        interaction.reply({ content: 'Fetching cache list', ephemeral: true });
                         dmobj.send_cache_list(interaction);
                         return;
                     }
             }
 
         } else {
-            commands.executeDiscordCommand(interaction.commandName, interaction);
-            //interaction.reply({ content: '給我回去用"??"', ephemeral: true });
+            try {
+
+                commands.executeDiscordCommand(interaction.commandName, interaction);
+
+            } catch (error) {
+
+            } //interaction.reply({ content: '給我回去用"??"', ephemeral: true });
         }
 
         return

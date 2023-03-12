@@ -1137,10 +1137,12 @@ class discord_music {
             );
             ffmpeg_audio_stream_C.on("error", (error) => {
                 console.log("ffmpegErr" + error);
-                if (error.outputStreamError.code != "ERR_STREAM_PREMATURE_CLOSE") {
-                    this.playingErrorHandling(audio_resauce.playbackDuration, error);
+                if (error.outputStreamError) {
+                    if (error.outputStreamError.code == "ERR_STREAM_PREMATURE_CLOSE") {
+                        return;
+                    }
                 }
-
+                this.playingErrorHandling(audio_resauce.playbackDuration, error);
             });
             return new Proxy(audio_resauce, {
                 set: (target, key, value) => {
@@ -1160,30 +1162,31 @@ class discord_music {
 
     playingErrorHandling(playbackDuration, errorInp, forceD) {
 
-        if (!this.handling_vc_err && this.player.state.status != AudioPlayerStatus.Playing) {
-            try {
-                this.handling_vc_err = true;
-                this.PBD = this.PBD + playbackDuration;
-                if (errorInp == "Error: write after end") {
-                    this.PBD = this.PBD + 1000;
-                    console.log("The error might cause memory leak, please restart the program or enable YTCache;\nif already done,please call support")
-                    console.log("click SKIP to skip the song");
-                    return;
-                }
-                console.log("err handled URL:%s\nTime:%d TS:%s", this.queue[this.nowplaying], this.PBD, Date.now());
-                if (this.PBD) {
-                    this.play_url(this.queue[this.nowplaying], this.PBD, false, forceD);
-                } else {
-                    this.play_url(this.queue[this.nowplaying], false, false, forceD);
-                }
-
-                //console.error(error);
-
-
-            } catch (error) {
-                console.log("Error handling playingERR:" + error);
-                this.next_song(true);
+        if (this.handling_vc_err || this.player.state.status === AudioPlayerStatus.Playing) {
+            return;
+        }
+        try {
+            this.handling_vc_err = true;
+            this.PBD = this.PBD + playbackDuration;
+            if (errorInp == "Error: write after end") {
+                this.PBD = this.PBD + 1000;
+                console.log("The error might cause memory leak, please restart the program or enable YTCache;\nif already done,please call support")
+                console.log("click SKIP to skip the song");
+                return;
             }
+            console.log("err handled URL:%s\nTime:%d TS:%s", this.queue[this.nowplaying], this.PBD, Date.now());
+            if (this.PBD) {
+                this.play_url(this.queue[this.nowplaying], this.PBD, false, forceD);
+            } else {
+                this.play_url(this.queue[this.nowplaying], false, false, forceD);
+            }
+
+            //console.error(error);
+
+
+        } catch (error) {
+            console.log("Error handling playingERR:" + error);
+            this.next_song(true);
         }
     }
 

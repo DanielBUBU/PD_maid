@@ -1,5 +1,8 @@
 # change log
 
+## Mein メイド v1.6.12 Stable
+- improve error handling logic
+
 ## Mein メイド v1.6.11 Stable
 - Sending less message
 - control panel logic improve

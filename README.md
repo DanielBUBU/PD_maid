@@ -1,6 +1,6 @@
 # PD_maid
 
-## Version `1.6.13 Stable` is out!!
+## Version `1.6.14 Stable` is out!!
 ![Banner](./readme_assets/banner.png)
 
 
@@ -41,7 +41,7 @@ or simply follow the instruction here(https://discordjs.guide/preparations/addin
 ![biscuit](./readme_assets/Intents.png)</br>
 ![biscuit](./readme_assets/Permission.png)</br>
 
-- install ffmpeg(https://www.wikihow.com/Install-FFmpeg-on-Windows) ,Python 3.x,and Node.js LTS(https://nodejs.org/en/) on your system and add then into the system path if they don't add automatically(windows)
+- install ffmpeg(https://www.wikihow.com/Install-FFmpeg-on-Windows) ,Python 3.x,git(https://git-scm.com/download/win),and Node.js LTS(https://nodejs.org/en/) on your system and add then into the system path if they don't add automatically(windows)
 
 - create config.json in root</br>
 Format example can be found in `config.example.json`</br>

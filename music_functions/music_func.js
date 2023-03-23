@@ -1,7 +1,7 @@
 //#region packages
 
-const YTDlpWrap = require('yt-dlp-wrap').default;
-const ytDlpWrap = new YTDlpWrap();
+const YTDlpWrapType = require('yt-dlp-wrap').default;
+const ytDlpWrap = new YTDlpWrapType();
 const {
     StreamType,
     createAudioResource,
@@ -11,6 +11,7 @@ const {
     joinVoiceChannel,
     VoiceConnectionStatus,
     entersState,
+    AudioResource,
 } = require('@discordjs/voice');
 var path = require('path');
 const fs = require('fs');
@@ -27,7 +28,10 @@ const {
     EmbedBuilder,
     ActionRowBuilder,
     ButtonBuilder,
-    ButtonStyle
+    ButtonStyle,
+    Message,
+    Client,
+    ClientUser
 } = require('discord.js');
 
 //#endregion
@@ -45,11 +49,24 @@ const {
 
 class discord_music {
     //#region variables
+
+    /**
+     * @type {Client}
+     */
+    client;
     player = createAudioPlayer({
         behaviors: {
             noSubscriber: NoSubscriberBehavior.Pause,
         },
     });
+    /**
+     * @type {import('yt-dlp-wrap').YTDlpReadable|undefined}
+     */
+    audio_streamLV;
+    /**
+     * @type {AbortController|undefined}
+     */
+    YTDLPAbortController;
     subscribe;
     connection;
     control_panel = undefined;
@@ -72,12 +89,20 @@ class discord_music {
 
     //#region constructor & set functions
 
+    /**
+     * 
+     * @param {Client} client 
+     */
     constructor(client) {
         this.set_client(client);
         this.fetch_cache_files(music_temp_dir);
         this.init_player();
     }
 
+    /**
+     * 
+     * @param {Client} client 
+     */
     //update client info
     set_client(client) {
         this.client = client;
@@ -91,9 +116,13 @@ class discord_music {
     //#endregion
 
     //#region playlist maintain,connection
+
     //fetching queue and call functions to play song
+    /**
+     * 
+     * @param {Boolean|undefined} force 
+     */
     async next_song(force = false) {
-        this.handling_vc_err = false;
         this.PBD = 0;
         this.processing_next_song = true;
         this.delete_np_embed();
@@ -167,6 +196,11 @@ class discord_music {
     }
 
     //make sure bot is connected,having player,and subscribed
+    /**
+     * 
+     * @param {import('discord.js').Interaction|Message} args 
+     * @returns {void}
+     */
     join_channel(args) {
         if (args) {
             //this.last_at_vc_channel = args.member.voice.channelId;
@@ -244,20 +278,26 @@ class discord_music {
 
 
         setTimeout(() => {
-            var sendingFlag = true;
             if (this.nowplaying == -1 && this.queue.length >= 1) {
                 this.next_song(true);
-                sendingFlag = false;
+            } else {
+                this.send_control_panel();
             }
         }, 1000)
 
-        return
+        return;
     }
 
     //#endregion
 
     //#region reset,clear functions
+
     //kill sub and connection
+    /**
+     * 
+     * @param {import('discord.js').Interaction|Message} args 
+     * @returns {void}
+     */
     connection_self_destruct(args) {
         console.log('self destruction in 1 second');
         if (this.connection) {
@@ -266,17 +306,24 @@ class discord_music {
             this.connection = undefined;
         }
         this.send_control_panel(args);
-        return
+        return;
     }
 
     //reset all stuff except loop mode,player,client,last at (vc) channels,queue,nowplaying
     //it will call connection_self_destruct
+    /**
+     * 
+     * @param {Boolean} connectionSD 
+     * @param {undefined|Function} callbackF 
+     * @returns {void}
+     */
     clear_status(connectionSD = false, callbackF) {
         console.log("Cleaning dirty stuff");
         this.delete_np_embed();
         if (this.subscribe) {
             this.subscribe.unsubscribe();
             this.subscribe = undefined;
+            this.connection.subscribe(this.player);
         }
         if (connectionSD) {
             this.connection_self_destruct();
@@ -284,18 +331,28 @@ class discord_music {
         if (callbackF) {
             callbackF();
         }
-        return
+        return;
     }
 
     //reset queue and nowplaying
+    /**
+     * 
+     */
     reset_music_parms() {
-            this.queue = [];
-            this.nowplaying = -1;
-        }
-        //#endregion
+        this.queue = [];
+        this.nowplaying = -1;
+    }
+
+    //#endregion
 
     //#region discord GUI
+
     //send control panel
+    /**
+     * 
+     * @param {import('discord.js').Interaction|Message} args 
+     * @returns {void}
+     */
     async send_control_panel(args) {
 
         if (this.is_sending_panel || this.handling_vc_err) {
@@ -436,6 +493,11 @@ class discord_music {
     }
 
     //send info using url,has special input "Nowplaying"
+    /**
+     * 
+     * @param {String} inp_url 
+     * @param {String} embed_author_str 
+     */
     async send_info_embed(inp_url, embed_author_str) {
         var video_sec = 0,
             embed_thumbnail,
@@ -541,6 +603,11 @@ class discord_music {
 
     }
 
+    /**
+     * 
+     * @param {import('discord.js').Interaction|Message} args 
+     * @returns {void}
+     */
     async send_cache_list(args) {
         var out_str = "--------Local cache list--------\n";
         if (this.cached_file.length == 0) {
@@ -548,15 +615,32 @@ class discord_music {
             return;
         } else {
             this.cached_file.forEach(element => {
+                //max len 2000
+                if (out_str.length + element.length >= 1750) {
+                    try {
+                        this.last_at_channel.send({ content: out_str });
+                    } catch (error) {
+                        console.log(error);
+                    }
+                    out_str = "";
+                }
                 out_str = out_str + element.split("/").pop() + "\n"
             });
         }
         out_str = out_str + "---------------------------------"
-        this.last_at_channel.send({ content: out_str });
+        try {
+            this.last_at_channel.send({ content: out_str });
+        } catch (error) {
+            console.log(error);
+        }
         this.send_control_panel(args);
     }
 
     //delete nowplaying info
+    /**
+     * 
+     * @returns {void}
+     */
     delete_np_embed() {
         if (this.np_embed) {
             try {
@@ -567,9 +651,13 @@ class discord_music {
             this.np_embed = null;
         }
 
-        return
+        return;
     }
 
+    /**
+     * 
+     * @param {import('discord.js').Interaction|Message} args 
+     */
     deleteOldPanel(args) {
         var oldCPID = -1;
         if (this.control_panel) {
@@ -602,6 +690,10 @@ class discord_music {
 
     //#region all urls play funcs,adding things to queue
 
+    /**
+     * 
+     * @param {import('discord.js').Interaction} interaction 
+     */
     async fetch_url_to_queue(interaction) {
         if (interaction) {
             this.last_interaction = interaction;
@@ -651,19 +743,20 @@ class discord_music {
                 await this.queue.push(inp_url);
                 interaction.reply('adding GD link to list' + `\`\`\`${inp_url}\`\`\``)
             } else if ((await this.is_local_url_avaliabe(inp_url)) &&
-                this.search_file_in_url_array(authed_user_id, interaction.user.id).length != 0) {
+                this.urlFilterByFileName(authed_user_id, interaction.user.id).length != 0) {
                 this.fetch_cache_files(this.format_local_absolute_url(inp_url), true)
                 interaction.reply('adding local link to list')
-            } else if (this.search_file_in_url_array(this.cached_file, inp_url).length != 0) {
+            } else if (this.urlFilterByFileName(this.cached_file, inp_url).length != 0) {
                 interaction.reply('adding local cache to list' + `\`\`\`${inp_url}\`\`\``)
-                this.fetch_cache_files(this.search_file_in_url_array(this.cached_file, inp_url)[0], true);
+                this.fetch_cache_files(this.urlFilterByFileName(this.cached_file, inp_url)[0], true);
             } else {
                 interaction.reply('link not avaliable' + `\`\`\`${inp_url}\`\`\``)
             }
             this.join_channel(interaction);
         } catch (error) {
             console.log("FUQ Err:" + error);
-            interaction.channel.send('Something went wrong' + `\`\`\`${inp_url}\`\`\``);
+            interaction.channel.send('Something went wrong,bot might not joined channel before' +
+                `\`\`\`${inp_url}\`\`\``);
         }
 
         //fetch resauce and play songs if not playing
@@ -676,8 +769,23 @@ class discord_music {
     }
 
     //play yt stuff,modified using fluent ffmpeg,might call join_channel function
+    /**
+     * 
+     * @param {String} url 
+     * @param {Boolean|Number} begin_t 
+     * @param {import('discord.js').Interaction|Message} args 
+     * @param {Boolean} forceD 
+     */
     async play_url(url, begin_t, args, forceD) {
 
+        //preprocessing
+        if (this.audio_streamLV) {
+            this.YTDLPAbortController.abort();
+            this.audio_streamLV = undefined;
+        }
+        if (!this.player.stop(true)) {
+            console.log("Can't stop player");
+        }
         console.log(url + " TS:" + Date.now() + "\nBT:" + begin_t + "\nForce:" + forceD);
 
         if ((!this.connection || !this.subscribe) && args) {
@@ -717,9 +825,13 @@ class discord_music {
             if (isLIVE) {
                 console.log("YT Live video");
                 //YTDLP are more stable for live videos
-                var audio_streamLV = ytDlpWrap.execStream([url]);
+                this.YTDLPAbortController = new AbortController();
+                this.audio_streamLV = ytDlpWrap.execStream(
+                    [url], {},
+                    this.YTDLPAbortController.signal
+                );
 
-                this.playAudioResauce(this.wrapStreamToResauce(audio_streamLV));
+                this.playAudioResauce(this.wrapStreamToResauce(this.audio_streamLV, false));
             } else {
 
                 if (begin_t && duration <= Math.ceil(begin_t / 1000)) {
@@ -830,7 +942,7 @@ class discord_music {
         var file_name = (await Meta.parser(url)).og.title.toString().replace(/\:|\/|\\|\||\"|\*|\<|\>|\?/g, "");
         var file_url = this.format_local_absolute_url(path.join(music_temp_dir, file_name));
         this.fileUrlCreateIfNotExist(music_temp_dir);
-        var search_cache = this.search_file_in_url_array(this.cached_file, file_name);
+        var search_cache = this.urlFilterByFileName(this.cached_file, file_name);
         //if file is not in cache or there's need to redownload
         if (search_cache.length == 0 || force_download) {
             const page_req = https.get(("https://drive.google.com/uc?export=open&confirm=yTib&id=" + GD_ID).toString(), (page_response) => {
@@ -862,7 +974,6 @@ class discord_music {
                     response.on("error", () => {
                         bar1.stop();
                         console.log("[Skipping]can't download the song")
-                        this.clear_status();
                         this.next_song(true);
                     });
                     // 'end' will be triggered once when there is no more data available
@@ -967,21 +1078,23 @@ class discord_music {
     //#region Initializers
 
     //(re)create audio player
-    init_player(force) {
+    /**
+     * 
+     * @returns {void}
+     */
+    init_player() {
 
         //player
         console.log("Initializing player...");
 
-
         //player,resource error handle
         this.player.on('error', (error) => {
             console.log("AP_err" + error);
-            this.playingErrorHandling(error.resource.playbackDuration, error);
+            this.playingErrorHandling(error.resource, error);
         });
 
         //get next song automatically
         this.player.on(AudioPlayerStatus.Idle, () => {
-            console.log("Idle");
             if (this.player.state.status === AudioPlayerStatus.Idle && !this.handling_vc_err && !this.processing_next_song) {
                 this.next_song();
             } else {
@@ -990,9 +1103,11 @@ class discord_music {
 
         });
         this.player.on(AudioPlayerStatus.Playing, () => {
-            console.log("Player playing");
             this.handling_vc_err = false;
             this.send_control_panel();
+        });
+        this.player.on("stateChange", (oldState, newState) => {
+            console.log("Player " + newState.status);
         });
         console.log("Player inited");
 
@@ -1004,6 +1119,11 @@ class discord_music {
 
     //#region is functions
 
+    /**
+     * 
+     * @param {String} url 
+     * @returns {Boolean}
+     */
     is_YT_live_url(url) {
         return new Promise(async(resolve, reject) => {
             if (ytdl.validateURL(url)) {
@@ -1025,6 +1145,11 @@ class discord_music {
         });
     }
 
+    /**
+     * 
+     * @param {Strin} url 
+     * @returns {Boolean}
+     */
     async is_GD_url(url = "") {
         if (url.startsWith("https://drive.google.com/file/d/")) {
             var result = await Meta.parser(url);
@@ -1036,15 +1161,25 @@ class discord_music {
         return false;
     }
 
+    /**
+     * 
+     * @param {String} str 
+     * @returns {Boolean}
+     */
     is_file_type_avaliable(str) {
         var type = str.split(".").pop()
-        var searched_fromat = this.search_file_in_url_array(["mp3", "wav", "flac", "webm", "mp4", "mkv"], type);
+        var searched_fromat = this.urlFilterByFileName(["mp3", "wav", "flac", "webm", "mp4", "mkv"], type);
         if (searched_fromat.length != 0) {
             return true;
         }
         return false;
     }
 
+    /**
+     * 
+     * @param {String} url 
+     * @returns {Boolean}
+     */
     is_local_url_avaliabe(url) {
         try {
             fs.statSync(url);
@@ -1058,7 +1193,13 @@ class discord_music {
     //#endregion
 
     //#region fetching cache,queue
-    fetch_cache_files(dir, is_add_to_pl) {
+
+    /**
+     * 
+     * @param {String} dir 
+     * @param {Boolean} is_add_to_pl 
+     */
+    fetch_cache_files(dir, is_add_to_pl = false) {
         fs.readdir(dir, (err, files) => {
             if (!err) {
                 // Print folder name
@@ -1093,14 +1234,19 @@ class discord_music {
     }
 
     //input url to fetch file into cache or queue
-    cache_queue_io(file_full_path, is_add_to_pl) {
+    /**
+     * 
+     * @param {String} file_full_path 
+     * @param {Boolean} is_add_to_pl 
+     */
+    cache_queue_io(file_full_path, is_add_to_pl = false) {
         file_full_path = this.format_local_absolute_url(file_full_path);
         fs.stat(file_full_path, (err, stats) => {
             if (!err && stats.isFile() && this.is_file_type_avaliable(file_full_path)) {
                 //if file not in cache and absolute url not in the list
-                if (this.search_file_in_url_array(this.cached_file, file_full_path).length == 0 &&
+                if (this.urlFilterByFileName(this.cached_file, file_full_path).length == 0 &&
                     this.remove_item_in_array(this.cached_file, file_full_path).length == this.cached_file.length) {
-                    console.log("file fetched:", file_full_path);
+                    //console.log("file fetched:", file_full_path);
                     this.cached_file.push(this.format_local_absolute_url(file_full_path));
                 }
                 if (is_add_to_pl) {
@@ -1116,6 +1262,13 @@ class discord_music {
     //#endregion fetching cache,queue
 
     //#region array functions
+
+    /**
+     * 
+     * @param {Array<String>} array 
+     * @param {String} toRemove 
+     * @returns {Array<String>}
+     */
     remove_item_in_array(array = [], toRemove) {
 
         array = array.filter(function(item) {
@@ -1125,7 +1278,13 @@ class discord_music {
         return array;
     }
 
-    search_file_in_url_array(array, target_str) {
+    /**
+     * 
+     * @param {Array<String>} array 
+     * @param {String} target_str 
+     * @returns {Array<String>}
+     */
+    urlFilterByFileName(array, target_str) {
         array = array.filter(function(item) {
             if (item.split("/").pop() == target_str) {
                 return true;
@@ -1137,6 +1296,12 @@ class discord_music {
     //#endregion
 
     //#region format things
+
+    /**
+     * 
+     * @param {String} url 
+     * @returns {String}
+     */
     format_local_absolute_url(url) {
 
         url = path.resolve(url);
@@ -1161,6 +1326,11 @@ class discord_music {
         return url;
     }
 
+    /**
+     * 
+     * @param {String} dir 
+     */
+
     fileUrlCreateIfNotExist(dir) {
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
@@ -1169,31 +1339,47 @@ class discord_music {
 
     //#endregion format things
 
-
-    wrapStreamToResauce(stream, BT) {
+    /**
+     * 
+     * @param {Stream}stream
+     * @param {Number|Boolean}BT
+     * @returns {AudioResource}
+     */
+    wrapStreamToResauce(stream, BT = false) {
         try {
-
-            var ffmpeg_audio_stream_C = fluentffmpeg().addInput(stream);
+            var streamOpt;
+            var ffmpeg_audio_stream_C;
+            var audio_resauce;
             if (BT) {
+                ffmpeg_audio_stream_C = fluentffmpeg().addInput(stream);
                 console.log("Set BT:" + Math.ceil(BT / 1000));
                 ffmpeg_audio_stream_C.seekInput(Math.ceil(BT / 1000)).toFormat('wav');
-            } else {
-                ffmpeg_audio_stream_C.toFormat('wav');
 
+                ffmpeg_audio_stream_C.on("error", (error) => {
+                    this.handling_vc_err = true;
+                    console.log("ffmpegErr" + error);
+                    if (error.outputStreamError) {
+                        if (error.outputStreamError.code == "ERR_STREAM_PREMATURE_CLOSE") {
+                            this.clear_status(false, () => {
+                                try {
+                                    //stream.destroy();
+                                } catch (error) {
+                                    console.log(error);
+                                }
+                                this.playingErrorHandling(audio_resauce, error)
+                            })
+                            return;
+                        }
+                    }
+                    this.playingErrorHandling(audio_resauce, error);
+                });
+                streamOpt = ffmpeg_audio_stream_C.pipe();
+            } else {
+                streamOpt = stream;
             }
-            var streamOpt = ffmpeg_audio_stream_C.pipe();
-            var audio_resauce = createAudioResource(
+            audio_resauce = createAudioResource(
                 streamOpt, { inputType: StreamType.Arbitrary, silencePaddingFrames: 10 }
             );
-            ffmpeg_audio_stream_C.on("error", (error) => {
-                console.log("ffmpegErr" + error);
-                if (error.outputStreamError) {
-                    if (error.outputStreamError.code == "ERR_STREAM_PREMATURE_CLOSE") {
-                        return;
-                    }
-                }
-                this.playingErrorHandling(audio_resauce.playbackDuration, error);
-            });
             return new Proxy(audio_resauce, {
                 set: (target, key, value) => {
                     //console.log(`${key} set to ${value}`);
@@ -1210,14 +1396,31 @@ class discord_music {
         }
     }
 
-    playingErrorHandling(playbackDuration, errorInp, forceD) {
+    /**
+     * 
+     * @param {AudioResource} resauce 
+     * @param {*} errorInp 
+     * @param {Boolean} forceD 
+     * @returns {void} 
+     */
+    playingErrorHandling(resauce, errorInp, forceD = false) {
 
         if (this.handling_vc_err || this.player.state.status === AudioPlayerStatus.Playing) {
             return;
         }
         try {
             this.handling_vc_err = true;
-            this.PBD = this.PBD + playbackDuration;
+            if (this.player.checkPlayable()) {
+                this.player.unpause();
+                return;
+            }
+            this.PBD = this.PBD + resauce.playbackDuration;
+            try {
+                resauce.playStream.destroy();
+            } catch (error) {
+                console.log(error);
+            }
+            console.log("Error Name:" + errorInp.name)
             if (errorInp == "Error: write after end") {
                 this.PBD = this.PBD + 1000;
                 console.log("The error might cause memory leak, please restart the program or enable YTCache;\nif already done,please call support")

@@ -70,7 +70,7 @@ async function rpc_login(params) {
             } else {
                 rpcRetryCount = 0;
             }
-        }, 600000);
+        }, 60 * 60 * 1000);
     });
 
     process.on('unhandledRejection', console.error);

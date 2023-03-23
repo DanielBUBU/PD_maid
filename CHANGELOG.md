@@ -1,5 +1,10 @@
 # change log
 
+
+## Mein メイド v1.6.14 Stable
+- types for functions
+- fix ytdlp live video memory leak
+
 ## Mein メイド v1.6.13 Stable
 - comment most YTDLP codes because of the performance issue
 

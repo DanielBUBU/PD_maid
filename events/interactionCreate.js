@@ -3,15 +3,26 @@ const {
     Events,
     ModalBuilder,
     TextInputBuilder,
-    TextInputStyle
+    TextInputStyle,
+    Client
 } = require('discord.js');
 const ytpl = require('ytpl');
 
 const { show_queue_len } = require('../config.json');
+const { commands } = require('../library/importCommand');
+const { discord_music } = require('../music_functions/music_func');
 
 
 module.exports = {
     name: 'interactionCreate',
+    /**
+     * 
+     * @param {Client} client 
+     * @param {discord_music} dmobj 
+     * @param {commands} commands 
+     * @param {import('discord.js').Interaction} interaction 
+     * @returns 
+     */
     async execute(client, dmobj, commands, interaction) {
 
 

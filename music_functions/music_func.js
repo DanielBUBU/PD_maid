@@ -12,6 +12,8 @@ const {
     VoiceConnectionStatus,
     entersState,
     AudioResource,
+    PlayerSubscription,
+    AudioPlayer,
 } = require('@discordjs/voice');
 var path = require('path');
 const fs = require('fs');
@@ -45,7 +47,11 @@ const {
         YTCache = true
 } = require('../config.json');
 
-
+var player = createAudioPlayer({
+    behaviors: {
+        noSubscriber: NoSubscriberBehavior.Pause,
+    },
+});
 
 class discord_music {
     //#region variables
@@ -54,20 +60,20 @@ class discord_music {
      * @type {Client}
      */
     client;
-    player = createAudioPlayer({
-        behaviors: {
-            noSubscriber: NoSubscriberBehavior.Pause,
-        },
-    });
     /**
-     * @type {import('yt-dlp-wrap').YTDlpReadable|undefined}
+     * @type {import('yt-dlp-wrap').YTDlpReadable}
      */
     audio_streamLV;
     /**
      * @type {AbortController|undefined}
      */
     YTDLPAbortController;
+    /**
+     * @type {PlayerSubscription}
+     */
     subscribe;
+    player = player;
+    currentPlayerID = 0;
     connection;
     control_panel = undefined;
     queue = [];
@@ -244,7 +250,7 @@ class discord_music {
                 } catch (error) {}
             });
             ///#endregion
-            this.subscribe = this.connection.subscribe(this.player);
+            this.subscribe = this.connection.subscribe(player);
             console.log('Connecting...');
 
 
@@ -323,7 +329,7 @@ class discord_music {
         if (this.subscribe) {
             this.subscribe.unsubscribe();
             this.subscribe = undefined;
-            this.connection.subscribe(this.player);
+            this.connection.subscribe(player);
         }
         if (connectionSD) {
             this.connection_self_destruct();
@@ -761,7 +767,7 @@ class discord_music {
 
         //fetch resauce and play songs if not playing
 
-        if (this.player.state == AudioPlayerStatus.Playing) {
+        if (player.state == AudioPlayerStatus.Playing) {
             this.send_control_panel(interaction);
         } else {
             this.deleteOldPanel(interaction);
@@ -780,15 +786,13 @@ class discord_music {
 
         //preprocessing
         if (this.audio_streamLV) {
-            this.YTDLPAbortController.abort();
+            this.YTDLPAbortController.abort("STOP");
+            player.stop(true);
             this.audio_streamLV = undefined;
-        }
-        if (!this.player.stop(true)) {
-            console.log("Can't stop player");
         }
         console.log(url + " TS:" + Date.now() + "\nBT:" + begin_t + "\nForce:" + forceD);
 
-        if ((!this.connection || !this.subscribe) && args) {
+        if ((!this.connection || !this.subscribe)) {
             this.join_channel(args);
         }
 
@@ -798,6 +802,9 @@ class discord_music {
             this.play_GD_url(url, begin_t, forceD);
         } else {
             this.play_local_url(url, begin_t);
+        }
+        if ((!this.connection || !this.subscribe)) {
+            this.join_channel(args);
         }
     }
 
@@ -829,7 +836,7 @@ class discord_music {
                 this.audio_streamLV = ytDlpWrap.execStream(
                     [url], {},
                     this.YTDLPAbortController.signal
-                );
+                ).on("error", (e) => { console.log("YTDLPLiveErr") });
 
                 this.playAudioResauce(this.wrapStreamToResauce(this.audio_streamLV, false));
             } else {
@@ -1053,7 +1060,7 @@ class discord_music {
             if (!this.is_local_url_avaliabe(res)) {
                 throw "File is dead";
             }
-            this.playAudioResauce(this.wrapStreamToResauce(res, begin_t));
+            this.playAudioResauce(this.wrapStreamToResauce(fs.createReadStream(res), begin_t));
         } catch (error) {
             throw error;
         }
@@ -1062,7 +1069,7 @@ class discord_music {
     playAudioResauce(audioResauce) {
         console.log("Inserting sauce disk");
         try {
-            this.player.play(audioResauce);
+            player.play(audioResauce);
             this.processing_next_song = false;
         } catch (error) {
             console.log("PSP_ERR" + error);
@@ -1084,38 +1091,31 @@ class discord_music {
      */
     init_player() {
 
-        //player
-        console.log("Initializing player...");
-
-        //player,resource error handle
-        this.player.on('error', (error) => {
+        player.on('error', (error) => {
             console.log("AP_err" + error);
             this.playingErrorHandling(error.resource, error);
-        });
-
-        //get next song automatically
-        this.player.on(AudioPlayerStatus.Idle, () => {
-            if (this.player.state.status === AudioPlayerStatus.Idle && !this.handling_vc_err && !this.processing_next_song) {
+        }).on(AudioPlayerStatus.Idle, () => {
+            if (player.state.status === AudioPlayerStatus.Idle && !this.handling_vc_err && !this.processing_next_song) {
                 this.next_song();
             } else {
-                console.log('Player already playing', this.handling_vc_err, this.processing_next_song);
+                console.log('Player already playing',
+                    this.handling_vc_err, this.processing_next_song);
             }
 
-        });
-        this.player.on(AudioPlayerStatus.Playing, () => {
+        }).on(AudioPlayerStatus.Playing, () => {
             this.handling_vc_err = false;
+            this.processing_next_song = false;
             this.send_control_panel();
-        });
-        this.player.on("stateChange", (oldState, newState) => {
+        }).on("stateChange", (oldState, newState) => {
             console.log("Player " + newState.status);
         });
         console.log("Player inited");
-
+        this.player = player;
         return;
     }
 
 
-    //#endregion 
+    //#endregion
 
     //#region is functions
 
@@ -1380,6 +1380,7 @@ class discord_music {
             audio_resauce = createAudioResource(
                 streamOpt, { inputType: StreamType.Arbitrary, silencePaddingFrames: 10 }
             );
+            audio_resauce.metadata = this.queue[this.nowplaying];
             return new Proxy(audio_resauce, {
                 set: (target, key, value) => {
                     //console.log(`${key} set to ${value}`);
@@ -1405,13 +1406,15 @@ class discord_music {
      */
     playingErrorHandling(resauce, errorInp, forceD = false) {
 
-        if (this.handling_vc_err || this.player.state.status === AudioPlayerStatus.Playing) {
+        if (this.handling_vc_err ||
+            player.state.status === AudioPlayerStatus.Playing ||
+            this.queue[this.nowplaying] != resauce.metadata) {
             return;
         }
         try {
             this.handling_vc_err = true;
-            if (this.player.checkPlayable()) {
-                this.player.unpause();
+            if (player.checkPlayable()) {
+                player.unpause();
                 return;
             }
             this.PBD = this.PBD + resauce.playbackDuration;

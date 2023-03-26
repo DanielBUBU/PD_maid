@@ -1,6 +1,6 @@
 # PD_maid
 
-## Version `1.6.14 Stable` is out!!
+## Version `1.6.15 Stable` is out!!
 ![Banner](./readme_assets/banner.png)
 
 
@@ -10,6 +10,8 @@ https://github.com/DanielBUBU/PD_maid
 
 - Main GUI
 ![Main UI](./readme_assets/main_UI.png)
+- Auto update
+![Auto update](./readme_assets/auto-git-update.png)
 - The GUI when too much songs in the YT playlist
 ![YTPL too much](./readme_assets/ytpl_toomuch.png)
 - How console logs looks like when loading
@@ -32,7 +34,8 @@ https://github.com/DanielBUBU/PD_maid
 
 ## How to use
 
-- Startup video tutorial:https://www.youtube.com/watch?v=BbDmGMcapAY
+- Step-bystep video tutorial:https://www.youtube.com/watch?v=BbDmGMcapAY
+- Installation for Git:https://youtu.be/eGNcXpXxh9U
 
 - create a bot application here(https://discord.com/developers/applications)
 or simply follow the instruction here(https://discordjs.guide/preparations/adding-your-bot-to-servers.html#bot-invite-links)</br>
@@ -41,7 +44,7 @@ or simply follow the instruction here(https://discordjs.guide/preparations/addin
 ![biscuit](./readme_assets/Intents.png)</br>
 ![biscuit](./readme_assets/Permission.png)</br>
 
-- install ffmpeg(https://www.wikihow.com/Install-FFmpeg-on-Windows) ,Python 3.x,git(https://git-scm.com/download/win),and Node.js LTS(https://nodejs.org/en/) on your system and add then into the system path if they don't add automatically(windows)
+- install ffmpeg(https://www.wikihow.com/Install-FFmpeg-on-Windows) ,Python 3.x,git(https://git-scm.com/download/win) ,and Node.js LTS(https://nodejs.org/en/) on your system and add then into the system path if they don't add automatically(windows)
 
 - create config.json in root</br>
 Format example can be found in `config.example.json`</br>

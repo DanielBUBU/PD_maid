@@ -1,5 +1,7 @@
 # change log
 
+## Mein メイド v1.6.15 Stable
+- fix ytdlp live video abort error
 
 ## Mein メイド v1.6.14 Stable
 - types for functions

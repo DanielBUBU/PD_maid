@@ -4,6 +4,7 @@ package-lock.json
 .data/youtube.data
 !node_modules/
 node_modules/*
+chatGPT/*
 music_temp/YTTemp/*
 test.js
 t.js

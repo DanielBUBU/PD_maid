@@ -1,12 +1,30 @@
+const { Message, Client } = require('discord.js');
 const { globalPrefix } = require('../config.json');
+const { commands } = require('../library/importCommand');
+const { discord_music } = require('../music_functions/music_func');
 //var memwatch = require('memwatch-next');
 //var heapdump = require('heapdump');
 
 module.exports = {
     name: 'messageCreate',
+    /**
+     * 
+     * @param {Client} client 
+     * @param {discord_music} dmobj 
+     * @param {commands} commands 
+     * @param {Message} message 
+     * @returns 
+     */
     async execute(client, dmobj, commands, message) {
-        //console.log(message);
 
+        var str = message.content;
+        message.mentions.users.forEach(element => {
+            //new RegExp("<@"+"\\d{18}"+">","g");
+            const regex = new RegExp(element.id, "g");
+            str = str.replaceAll(regex, element.username);
+        });
+
+        //console.log(str);
         let is_command = false;
 
 

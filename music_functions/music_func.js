@@ -207,7 +207,7 @@ class discord_music {
      * @param {import('discord.js').Interaction|Message} args 
      * @returns {void}
      */
-    join_channel(args) {
+    async join_channel(args) {
         if (args) {
             //this.last_at_vc_channel = args.member.voice.channelId;
             //this.last_at_channel = args.channel;
@@ -278,7 +278,11 @@ class discord_music {
             });
 
         } else {
-            this.last_at_channel.send('Plese join a voice channel first');
+            try {
+                this.last_at_channel.send('Plese join a voice channel first');
+            } catch (error) {
+
+            }
         }
 
 

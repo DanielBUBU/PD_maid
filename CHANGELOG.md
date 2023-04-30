@@ -1,5 +1,12 @@
 # change log
 
+
+## Mein メイド v1.6.17 Stable
+- reset function, async join channel
+
+## Mein メイド v1.6.16 Stable
+- update package
+
 ## Mein メイド v1.6.15 Stable
 - fix ytdlp live video abort error
 

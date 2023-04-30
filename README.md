@@ -1,6 +1,6 @@
 # PD_maid
 
-## Version `1.6.16 Stable` is out!!
+## Version `1.6.17 Stable` is out!!
 ![Banner](./readme_assets/banner.png)
 
 

@@ -1,5 +1,7 @@
 # change log
 
+## Mein メイド v1.6.18 Stable
+- update package
 
 ## Mein メイド v1.6.17 Stable
 - reset function, async join channel

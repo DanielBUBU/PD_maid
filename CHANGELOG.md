@@ -1,5 +1,8 @@
 # change log
 
+## Mein メイド v1.6.19 Stable
+- fix discord login sync bug
+
 ## Mein メイド v1.6.18 Stable
 - update package
 

@@ -89,10 +89,10 @@ async function fetchAndLogin(takenGuilds) {
 
         disableMentions: 'everyone',
     });
-    client.login(token);
+    await client.login(token);
     console.log("fetching...");
-    var allGuild = await client.guilds.fetch().then(client.destroy());
     var allGuildId = [];
+    var allGuild = await client.guilds.fetch()
     allGuild.forEach(
         element => {
             if (!takenGuilds.includes(element.id)) {
@@ -100,6 +100,13 @@ async function fetchAndLogin(takenGuilds) {
             }
         }
     );
+    try {
+        client.destroy();
+    } catch (error) {
+
+    }
+
+
     console.log("Fetched and login on:" + allGuildId);
 
     var newProcess = createProcess(allGuildId, childs.length);

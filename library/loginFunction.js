@@ -25,11 +25,12 @@ function login_client(unavailableGuildIDs) {
         disableMentions: 'everyone',
     });
     console.log("Loading variables...");
+
     const dmobj = (new discord_music(client));
     const cmdobj = (new commands(client, dmobj));
-    client = load_events(client, dmobj, cmdobj, unavailableGuildIDs);
     //login
     try {
+        client = load_events(client, dmobj, cmdobj, unavailableGuildIDs);
         client.login(token);
         return client;
     } catch {

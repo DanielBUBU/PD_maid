@@ -1,5 +1,8 @@
 # change log
 
+## Mein メイド v1.7.0 Stable
+- improve error handling logic
+
 ## Mein メイド v1.6.19 Stable
 - fix discord login sync bug
 

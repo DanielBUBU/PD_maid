@@ -40,11 +40,11 @@ const {
 
 const {
     YT_COOKIE = "",
-        music_temp_dir = "music_temp/",
-        authed_user_id = [],
-        download_chunk_size = 4194304,
-        clear_console = true,
-        YTCache = true
+    music_temp_dir = "music_temp/",
+    authed_user_id = [],
+    download_chunk_size = 4194304,
+    clear_console = true,
+    YTCache = true
 } = require('../config.json');
 
 var player = createAudioPlayer({
@@ -126,79 +126,68 @@ class discord_music {
     //fetching queue and call functions to play song
     /**
      * 
-     * @param {Boolean|undefined} force 
+     * @param {Boolean|undefined} [force=false] 
+     * @param {Boolean|undefined|String} [next_song_url=false] 
      */
-    async next_song(force = false) {
+    async next_song(force = false, next_song_url = false) {
         this.PBD = 0;
         this.processing_next_song = true;
         this.delete_np_embed();
-        var next_song_url = false;
-        var is_LIVE = await this.is_YT_live_url(this.queue[this.nowplaying]);
-        //It was playing something and it's a live video
-        if (this.nowplaying != -1 && is_LIVE && !force) {
-            next_song_url = this.queue[this.nowplaying];
-        } else {
-            switch (this.isloop) {
-                case 1:
-                    if (this.nowplaying == -1 && this.queue.length > 0) {
-                        this.nowplaying = 0;
-                    }
+        var is_LIVE = false;
+
+        try {
+
+            if (!next_song_url) {
+                is_LIVE = await this.is_YT_live_url(this.queue[this.nowplaying]);
+                //It was playing something and it's a live video
+                if (this.nowplaying != -1 && is_LIVE && !force) {
                     next_song_url = this.queue[this.nowplaying];
-                    break;
-                case 0:
-                    for (let index = 0; index < this.nowplaying; index++) {
-                        this.queue.push(this.queue.shift());
+                } else {
+                    switch (this.isloop) {
+                        case 1:
+                            if (this.nowplaying == -1 && this.queue.length > 0) {
+                                this.nowplaying = 0;
+                            }
+                            //will be undefined if np=-1
+                            next_song_url = this.queue[this.nowplaying];
+                            break;
+                        case 0:
+                            next_song_url = this.popQueue();
+                            break;
+                        case 2:
+                            if (this.queue.length > this.nowplaying + 1) {
+                                this.nowplaying++;
+                                next_song_url = this.queue[this.nowplaying];
+                            } else {
+                                this.nowplaying = 0;
+                                next_song_url = this.queue[this.nowplaying];
+                            }
+                            break;
+                        default:
+                            next_song_url = false;
+                            break;
                     }
-                    if (this.nowplaying != -1) {
-                        this.queue.shift();
-                    }
-                    if (this.queue.length) {
-                        this.nowplaying = 0;
-                        next_song_url = this.queue[this.nowplaying];
-                    } else {
-                        this.nowplaying = -1;
-                        console.log("queue empty")
-                    }
-                    break;
-                case 2:
-                    if (this.queue.length > this.nowplaying + 1) {
-                        this.nowplaying++;
-                        next_song_url = this.queue[this.nowplaying];
-                    } else {
-                        this.nowplaying = 0;
-                        next_song_url = this.queue[this.nowplaying];
-                    }
-                    break;
-
-                default:
-                    next_song_url = false;
-                    break;
+                }
             }
+            if (next_song_url) {
+                if (clear_console) {
+                    console.clear();
+                }
+                try {
+                    this.play_url(next_song_url, 0);
+                } catch (error) {
+                    console.error('next_song func error:', error.message);
+                    this.next_song(true);
+                }
+            } else {
+                console.log("can't get next song path:" + next_song_url);
+                this.clearAll();
+            }
+        } catch (error) {
+            console.log("NextSongError:" + error);
+            this.next_song(true, this.popQueue());
         }
 
-
-        if (next_song_url) {
-            if (clear_console) {
-                console.clear();
-            }
-            try {
-                this.play_url(next_song_url, 0);
-            } catch (error) {
-                console.error('next_song func error:', error.message);
-                this.next_song(true);
-            }
-        } else {
-            console.log("can't get next song path");
-            this.client.user.setPresence({
-                activities: [{
-                    name: 'cute,funny,and brutal',
-                    type: 1,
-                    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                }]
-            });
-            this.clear_status(true);
-            this.reset_music_parms();
-        }
     }
 
     //make sure bot is connected,having player,and subscribed
@@ -247,7 +236,7 @@ class discord_music {
                 }
                 try {
                     Reflect.get(newState, 'networking').on('stateChange', networkStateChangeHandler);
-                } catch (error) {}
+                } catch (error) { }
             });
             ///#endregion
             this.subscribe = this.connection.subscribe(player);
@@ -256,7 +245,7 @@ class discord_music {
 
 
             //try to reconnect if disconnect
-            this.connection.on(VoiceConnectionStatus.Disconnected, async(oldState, newState) => {
+            this.connection.on(VoiceConnectionStatus.Disconnected, async (oldState, newState) => {
                 try {
                     await Promise.race([
                         entersState(this.connection, VoiceConnectionStatus.Signalling, 10000),
@@ -353,6 +342,19 @@ class discord_music {
         this.nowplaying = -1;
     }
 
+    clearAll() {
+
+        this.client.user.setPresence({
+            activities: [{
+                name: 'cute,funny,and brutal',
+                type: 1,
+                url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            }]
+        });
+        this.clear_status(true);
+        this.reset_music_parms();
+    }
+
     //#endregion
 
     //#region discord GUI
@@ -400,23 +402,23 @@ class discord_music {
         */
         row2.addComponents(
             new ButtonBuilder()
-            .setCustomId('add')
-            .setLabel('Add')
-            .setStyle(ButtonStyle.Primary),
+                .setCustomId('add')
+                .setLabel('Add')
+                .setStyle(ButtonStyle.Primary),
             new ButtonBuilder()
-            .setCustomId('join')
-            .setLabel('Join')
-            .setStyle(ButtonStyle.Primary)
+                .setCustomId('join')
+                .setLabel('Join')
+                .setStyle(ButtonStyle.Primary)
             //                .setDisabled(true)
             ,
             new ButtonBuilder()
-            .setCustomId('leave')
-            .setLabel('Leave')
-            .setStyle(ButtonStyle.Danger),
+                .setCustomId('leave')
+                .setLabel('Leave')
+                .setStyle(ButtonStyle.Danger),
             new ButtonBuilder()
-            .setCustomId('queue')
-            .setLabel('Queue')
-            .setStyle(ButtonStyle.Primary),
+                .setCustomId('queue')
+                .setLabel('Queue')
+                .setStyle(ButtonStyle.Primary),
         );
 
         //        }
@@ -429,26 +431,26 @@ class discord_music {
         const row1 = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
-                .setCustomId('loop')
-                .setLabel('Loop')
-                .setStyle(ButtonStyle.Primary),
+                    .setCustomId('loop')
+                    .setLabel('Loop')
+                    .setStyle(ButtonStyle.Primary),
                 new ButtonBuilder()
-                .setCustomId('pause')
-                .setLabel('Pause')
-                .setStyle(ButtonStyle.Primary),
+                    .setCustomId('pause')
+                    .setLabel('Pause')
+                    .setStyle(ButtonStyle.Primary),
                 new ButtonBuilder()
-                .setCustomId('resume')
-                .setLabel('Resume')
-                .setStyle(ButtonStyle.Primary),
+                    .setCustomId('resume')
+                    .setLabel('Resume')
+                    .setStyle(ButtonStyle.Primary),
                 new ButtonBuilder()
-                .setCustomId('skip')
-                .setLabel('Skip')
-                .setStyle(ButtonStyle.Primary),
+                    .setCustomId('skip')
+                    .setLabel('Skip')
+                    .setStyle(ButtonStyle.Primary),
 
                 new ButtonBuilder()
-                .setCustomId('cache_list')
-                .setLabel('Cache list')
-                .setStyle(ButtonStyle.Primary),
+                    .setCustomId('cache_list')
+                    .setLabel('Cache list')
+                    .setStyle(ButtonStyle.Primary),
 
 
             );
@@ -489,7 +491,7 @@ class discord_music {
             ])
             //.setImage('attachment://disgust.png')
             .setTimestamp()
-            //.setFooter('Some footer text here', 'https://i.imgur.com/wSTFkRM.png');
+        //.setFooter('Some footer text here', 'https://i.imgur.com/wSTFkRM.png');
 
         try {
             this.control_panel = await this.last_at_channel.send({ embeds: [output_embed], files: [file], components: [row1, row2] });
@@ -554,7 +556,7 @@ class discord_music {
                 }
             } else if (await (this.is_GD_url(inp_url))) {
                 var GD_ID = inp_url.split("/")[5];
-                await probe("https://drive.google.com/uc?export=open&confirm=yTib&id=" + GD_ID).then(function(probeData) {
+                await probe("https://drive.google.com/uc?export=open&confirm=yTib&id=" + GD_ID).then(function (probeData) {
                     video_sec = probeData.format.duration % 60;
                     time_str = (probeData.format.duration - video_sec) / 60 + ":" +
                         parseInt(video_sec).toString();
@@ -568,7 +570,7 @@ class discord_music {
                     uploader_str = result.og.site_name;
                 }
             } else {
-                await probe(inp_url).then(function(probeData) {
+                await probe(inp_url).then(function (probeData) {
                     video_sec = probeData.format.duration % 60;
                     time_str = (probeData.format.duration - video_sec) / 60 + ":" +
                         parseInt(video_sec).toString();
@@ -589,7 +591,7 @@ class discord_music {
                 ])
                 //.setImage('attachment://disgust.png')
                 .setTimestamp()
-                //.setFooter('Some footer text here', 'https://i.imgur.com/wSTFkRM.png');
+            //.setFooter('Some footer text here', 'https://i.imgur.com/wSTFkRM.png');
             if (embed_thumbnail) {
                 output_embed.setThumbnail(embed_thumbnail)
             }
@@ -601,11 +603,11 @@ class discord_music {
                 }]
             });
             this.last_at_channel.send({ embeds: [output_embed] }).then(msg => {
-                    if (embed_author_str == "Nowplaying") {
-                        this.delete_np_embed();
-                        this.np_embed = msg;
-                    }
-                })
+                if (embed_author_str == "Nowplaying") {
+                    this.delete_np_embed();
+                    this.np_embed = msg;
+                }
+            })
                 .catch(console.error);;
         } catch (error) {
             console.error('send_info_embed func error:', error);
@@ -711,9 +713,9 @@ class discord_music {
         const row1 = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
-                .setCustomId('ytpl_toomuch_but')
-                .setLabel('Add anyway')
-                .setStyle(ButtonStyle.Primary),
+                    .setCustomId('ytpl_toomuch_but')
+                    .setLabel('Add anyway')
+                    .setStyle(ButtonStyle.Primary),
 
             );
 
@@ -866,13 +868,13 @@ class discord_music {
                                     file_url,
                                 ])
                                 .on('progress', (progress) => {
-                                        console.log(
-                                            progress.percent,
-                                            progress.totalSize,
-                                            progress.currentSpeed,
-                                            progress.eta
-                                        )
-                                    }
+                                    console.log(
+                                        progress.percent,
+                                        progress.totalSize,
+                                        progress.currentSpeed,
+                                        progress.eta
+                                    )
+                                }
 
                                 )
                                 .on('ytDlpEvent', (eventType, eventData) => {
@@ -886,7 +888,7 @@ class discord_music {
                                         this.playNewCachedYTLocalFile(file_url, begin_t);
                                     } catch (error) {
                                         console.log(error)
-                                            //don't need it because player will handle it
+                                        //don't need it because player will handle it
                                     }
                                 });
 
@@ -924,7 +926,7 @@ class discord_music {
         } catch (error) {
             console.log("[Skipping]Can't play YT URL")
             console.log(error);
-            this.next_song(true);
+            this.next_song(true, this.popQueue());
         }
     }
 
@@ -985,7 +987,7 @@ class discord_music {
                     response.on("error", () => {
                         bar1.stop();
                         console.log("[Skipping]can't download the song")
-                        this.next_song(true);
+                        this.next_song(true, this.popQueue());
                     });
                     // 'end' will be triggered once when there is no more data available
                     response.on("end", () => {
@@ -996,7 +998,7 @@ class discord_music {
                             this.play_local_stream(file_url, begin_t);
                         } catch (error) {
                             console.log("[Skipping]playing local stream err", error)
-                            this.next_song(true);
+                            this.next_song(true, this.popQueue());
                         }
                     });
 
@@ -1023,8 +1025,7 @@ class discord_music {
         } catch (error) {
             console.log("[Skipping]Can't play local url")
             console.log(error);
-            this.queue = this.remove_item_in_array(this.queue, url);
-            this.next_song(true);
+            this.next_song(true, this.popQueue());
         }
     }
 
@@ -1129,21 +1130,25 @@ class discord_music {
      * @returns {Boolean}
      */
     is_YT_live_url(url) {
-        return new Promise(async(resolve, reject) => {
-            if (ytdl.validateURL(url)) {
-                //YTDLP
-                /*var data = await ytDlpWrap.getVideoInfo(url);
-                resolve(data.is_live);*/
+        return new Promise(async (resolve, reject) => {
+            try {
+                if (ytdl.validateURL(url)) {
+                    //YTDLP
+                    /*var data = await ytDlpWrap.getVideoInfo(url);
+                    resolve(data.is_live);*/
 
-                //YTDL
-                var data = await ytdl.getBasicInfo(url, {
-                    requestOptions: {
-                        headers: {
-                            cookie: YT_COOKIE,
+                    //YTDL
+                    var data = await ytdl.getBasicInfo(url, {
+                        requestOptions: {
+                            headers: {
+                                cookie: YT_COOKIE,
+                            },
                         },
-                    },
-                });
-                resolve(data.videoDetails.liveBroadcastDetails && data.videoDetails.liveBroadcastDetails.isLiveNow);
+                    });
+                    resolve(data.videoDetails.liveBroadcastDetails && data.videoDetails.liveBroadcastDetails.isLiveNow);
+                }
+            } catch (error) {
+                reject(error);
             }
             resolve(false);
         });
@@ -1263,6 +1268,29 @@ class discord_music {
         });
     }
 
+    /**
+     * 
+     * @returns {Boolean|String}
+     */
+
+    popQueue() {
+        //np will be the first song
+        for (let index = 0; index < this.nowplaying; index++) {
+            this.queue.push(this.queue.shift());
+        }
+        if (this.nowplaying != -1) {
+            this.queue.shift();
+        }
+        if (this.queue.length) {
+            this.nowplaying = 0;
+            return this.queue[this.nowplaying];
+        } else {
+            this.nowplaying = -1;
+            console.log("queue empty")
+        }
+        return false;
+    }
+
     //#endregion fetching cache,queue
 
     //#region array functions
@@ -1275,7 +1303,7 @@ class discord_music {
      */
     remove_item_in_array(array = [], toRemove) {
 
-        array = array.filter(function(item) {
+        array = array.filter(function (item) {
             return item !== toRemove;
         });
 
@@ -1289,7 +1317,7 @@ class discord_music {
      * @returns {Array<String>}
      */
     urlFilterByFileName(array, target_str) {
-        array = array.filter(function(item) {
+        array = array.filter(function (item) {
             if (item.split("/").pop() == target_str) {
                 return true;
             }

@@ -825,7 +825,7 @@ class discord_music {
             var videoTitle=data.title;
             */
             //YTDL
-            var data = await ytdl.getBasicInfo(url, {
+            var data = await ytdl.getInfo(url, {
                 requestOptions: {
                     headers: {
                         cookie: YT_COOKIE,

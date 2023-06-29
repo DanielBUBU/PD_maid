@@ -1,5 +1,8 @@
 # change log
 
+## Mein メイド v1.7.1 Stable
+- fix YT without cache
+
 ## Mein メイド v1.7.0 Stable
 - improve error handling logic
 

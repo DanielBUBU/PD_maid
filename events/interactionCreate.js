@@ -191,6 +191,12 @@ module.exports = {
                         dmobj.send_cache_list(interaction);
                         return;
                     }
+                    
+                case 'stop':
+                    {
+                        dmobj.clearAll();
+                        return
+                    }
             }
 
         } else {

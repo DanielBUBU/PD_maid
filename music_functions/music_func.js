@@ -351,8 +351,8 @@ class discord_music {
                 url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
             }]
         });
-        this.clear_status(true);
         this.reset_music_parms();
+        this.clear_status(true);
     }
 
     //#endregion
@@ -403,22 +403,27 @@ class discord_music {
         row2.addComponents(
             new ButtonBuilder()
                 .setCustomId('add')
-                .setLabel('Add')
+                .setLabel('⏏📀Add')
                 .setStyle(ButtonStyle.Primary),
             new ButtonBuilder()
                 .setCustomId('join')
-                .setLabel('Join')
+                .setLabel('📡Join')
                 .setStyle(ButtonStyle.Primary)
             //                .setDisabled(true)
             ,
             new ButtonBuilder()
                 .setCustomId('leave')
-                .setLabel('Leave')
+                .setLabel('⛔Leave')
                 .setStyle(ButtonStyle.Danger),
             new ButtonBuilder()
                 .setCustomId('queue')
-                .setLabel('Queue')
+                .setLabel('🗒Queue')
                 .setStyle(ButtonStyle.Primary),
+
+            new ButtonBuilder()
+                .setCustomId('stop')
+                .setLabel('⏹Stop')
+                .setStyle(ButtonStyle.Danger),
         );
 
         //        }
@@ -432,24 +437,24 @@ class discord_music {
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId('loop')
-                    .setLabel('Loop')
+                    .setLabel('🔁Loop')
                     .setStyle(ButtonStyle.Primary),
                 new ButtonBuilder()
                     .setCustomId('pause')
-                    .setLabel('Pause')
+                    .setLabel('⏸Pause')
                     .setStyle(ButtonStyle.Primary),
                 new ButtonBuilder()
                     .setCustomId('resume')
-                    .setLabel('Resume')
+                    .setLabel('▶Resume')
                     .setStyle(ButtonStyle.Primary),
                 new ButtonBuilder()
                     .setCustomId('skip')
-                    .setLabel('Skip')
+                    .setLabel('⏭Skip')
                     .setStyle(ButtonStyle.Primary),
 
                 new ButtonBuilder()
                     .setCustomId('cache_list')
-                    .setLabel('Cache list')
+                    .setLabel('📂Cache list')
                     .setStyle(ButtonStyle.Primary),
 
 
@@ -458,13 +463,13 @@ class discord_music {
 
         switch (this.isloop) {
             case 1:
-                loop_mode_str = "Single"
+                loop_mode_str = "🔂Single"
                 break;
             case 0:
                 loop_mode_str = "None"
                 break;
             case 2:
-                loop_mode_str = "Multiple"
+                loop_mode_str = "🔁Multiple"
                 break;
 
             default:
@@ -859,6 +864,11 @@ class discord_music {
                         this.fileUrlCreateIfNotExist(YTTempUrl);
                         if (fileDead || !this.is_local_url_avaliabe(file_url)) {
                             console.log("Downloading:" + file_name)
+                            try {
+                                this.last_at_channel.send("Downloading YT video:" + videoTitle);
+                            } catch (error) {
+
+                            }
                             var ytDlpEventEmitter = ytDlpWrap
                                 .exec([
                                     url,

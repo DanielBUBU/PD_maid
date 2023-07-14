@@ -1,5 +1,10 @@
 # change log
 
+## Mein メイド v1.7.2 Stable
+- emoji for GUI
+- hint for downloading YT videos
+- stop function(clear all stuff,but not reset the process)
+
 ## Mein メイド v1.7.1 Stable
 - fix YT without cache
 

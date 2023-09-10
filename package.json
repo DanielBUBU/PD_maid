@@ -1,6 +1,6 @@
 {
     "name": "pd_maid",
-    "version": "1.7.2",
+    "version": "1.7.3",
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1"
@@ -26,7 +26,7 @@
         "mqtt": "^4.3.7",
         "node-ffprobe": "^3.0.0",
         "yt-dlp-wrap": "^2.3.11",
-        "ytdl-core": "^4.11.4",
+        "ytdl-core": "^4.9.0",
         "ytpl": "^2.3.0"
     }
 }

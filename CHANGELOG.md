@@ -1,5 +1,8 @@
 # change log
 
+## Mein メイド v1.7.3 Stable
+- evading `ytdl.getInfo()` error
+
 ## Mein メイド v1.7.2 Stable
 - emoji for GUI
 - hint for downloading YT videos

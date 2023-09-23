@@ -1,5 +1,9 @@
 # change log
 
+
+## Mein メイド v1.7.4 Stable
+- linux support improvement
+
 ## Mein メイド v1.7.3 Stable
 - evading `ytdl.getInfo()` error
 

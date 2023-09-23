@@ -1,7 +1,19 @@
 //#region packages
 
 const YTDlpWrapType = require('yt-dlp-wrap').default;
-const ytDlpWrap = new YTDlpWrapType();
+const os = require("os");
+var ytDlpWrap;
+switch (os.platform()) {
+    case "win32":
+        ytDlpWrap = new YTDlpWrapType("./yt-dlp.exe");
+        break;
+
+    case "linux":
+    case "android":
+    default:
+        ytDlpWrap = new YTDlpWrapType("./yt-dlp");
+        break;
+}
 const {
     StreamType,
     createAudioResource,

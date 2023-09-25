@@ -23,7 +23,7 @@ https://github.com/DanielBUBU/PD_maid
 - Free and easy to build
 - Open sauce and readable codes
 - Appendable commends
-- Self update from github
+- Self update launcher from github
 - RPC functions
 - Support mutiple platforms
 - Support Youtube,GD,and local file
@@ -65,8 +65,9 @@ double click, copy and paste all stuff like `"YT_COOKIE":"HSID=xxx;SSID=xxx...__
         []
     ]
 ````
-## Support
+## Support/Bug report
 - Discord:https://discord.gg/bGWZCShbea
+- Support me here:https://www.buymeacoffee.com/DanielBUBU
 ## Future
 
 - tag or auto reply picture function

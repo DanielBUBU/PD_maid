@@ -45,7 +45,7 @@ or simply follow the instruction here(https://discordjs.guide/preparations/addin
 ![biscuit](./readme_assets/Permission.png)</br>
 2. install programs in the system
     - ffmpeg(https://www.wikihow.com/Install-FFmpeg-on-Windows)</br>
-  `pkg install nodejs-lts`for Linux/Termux
+  `pkg install ffmpeg`for Linux/Termux
     - Python 3.x</br>
   `pkg install python`for Linux/Termux
     - git(https://git-scm.com/download/win)</br>

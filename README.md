@@ -34,7 +34,9 @@ https://github.com/DanielBUBU/PD_maid
 
 ## How to use
 
-- Step-bystep video tutorial:https://www.youtube.com/watch?v=BbDmGMcapAY
+- Step-bystep video tutorial:
+    - [Windows]https://www.youtube.com/watch?v=BbDmGMcapAY
+    - [Linux/Android(Termux)]https://www.youtube.com/watch?v=HjIwQkS4CWM
 - Installation for Git:https://youtu.be/eGNcXpXxh9U
 
 1. create a bot application here(https://discord.com/developers/applications)
@@ -71,6 +73,7 @@ double click, copy and paste all stuff like `"YT_COOKIE":"HSID=xxx;SSID=xxx...__
 ![npm](./readme_assets/npm.png)
 5. Click PD_Maid_link_start.bat (or just run using `node .` in cmd),PD_Maid_link_start_admin.bat will ask for admin permission</br>
 6. Once it's ready, it will output a console log</br>
+    - YTDLP ECCESS error might appear in Linux/Termux,`chmod a+x yt-dlp`should solve the problem
 
 
 ## Support/Bug report

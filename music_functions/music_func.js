@@ -363,6 +363,11 @@ class discord_music {
                 url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
             }]
         });
+        try {
+            this.player.stop();
+        } catch (error) {
+            
+        }
         this.reset_music_parms();
         this.clear_status(true);
     }
@@ -673,7 +678,7 @@ class discord_music {
     delete_np_embed() {
         if (this.np_embed) {
             try {
-                this.np_embed.delete();
+                this.np_embed.delete().then(() => { }).catch(() => { });
             } catch (error) {
                 console.log("DelNPE ERR");
             }
@@ -694,7 +699,7 @@ class discord_music {
                 //when stored panel is not the one clicked, delete the stored panel too
                 //or it's request from program in order to refresh the panel
                 oldCPID = this.control_panel.id;
-                this.control_panel.delete();
+                this.control_panel.delete().then(() => { }).catch(() => { });
 
             } catch (error) {
                 console.log("DelOLDCP ERR" + error);
@@ -707,7 +712,7 @@ class discord_music {
             try {
                 //generated panel cliked, must delete it
                 if (args.message.id != oldCPID) {
-                    args.message.delete();
+                    args.message.delete().then(() => { }).catch(() => { });
                 }
             } catch (error) {
                 console.log("DelCP ERR" + error);
@@ -881,6 +886,11 @@ class discord_music {
                             } catch (error) {
 
                             }
+
+                            const bar1 = new cliProgress.SingleBar({
+                                format: ('|{bar}|{percentage}% | ETA: {eta}s | {value}/{total}')
+                            }, cliProgress.Presets.shades_grey);
+                            bar1.start(100, 0);
                             var ytDlpEventEmitter = ytDlpWrap
                                 .exec([
                                     url,
@@ -890,12 +900,9 @@ class discord_music {
                                     file_url,
                                 ])
                                 .on('progress', (progress) => {
-                                    console.log(
-                                        progress.percent,
-                                        progress.totalSize,
-                                        progress.currentSpeed,
-                                        progress.eta
-                                    )
+                                    bar1.update(progress.percent);
+                                    bar1.updateETA(progress.eta)
+                                    //console.log(progress.percent, progress.totalSize, progress.currentSpeed, progress.eta)
                                 }
 
                                 )
@@ -903,9 +910,11 @@ class discord_music {
                                     //    console.log(eventType, eventData)
                                 })
                                 .on('error', (error) => {
+                                    bar1.stop();
                                     console.log("Can't download YT Video:" + error);
                                     this.next_song(true);
                                 }).on('close', () => {
+                                    bar1.stop();
                                     try {
                                         this.playNewCachedYTLocalFile(file_url, begin_t);
                                     } catch (error) {

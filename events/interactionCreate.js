@@ -41,6 +41,19 @@ module.exports = {
             }
         }
 
+        if (interaction.isChatInputCommand()) {
+            switch (interaction.commandName) {
+                case "dltmsg":
+                    commands.executeDiscordCommand(interaction.commandName,
+                        interaction,
+                        [interaction.options.getString("targetid", true)]);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
         if (interaction.isButton()) {
             try {
                 //interaction.channel.send({ content: interaction.customId + ' clicked', ephemeral: true });
@@ -158,8 +171,8 @@ module.exports = {
                 case 'ytpl_toomuch_but':
                     {
                         try {
-                            interaction.message.delete();
-                        } catch (error) {}
+                            interaction.message.delete().then(() => { }).catch(() => { });
+                        } catch (error) { }
                         let playlist = dmobj.ytpl_continuation;
                         let go_flag = true;
                         //interaction.channel.reply("Processing...")
@@ -191,10 +204,21 @@ module.exports = {
                         dmobj.send_cache_list(interaction);
                         return;
                     }
-                    
+
                 case 'stop':
                     {
                         dmobj.clearAll();
+                        return
+                    }
+                default:
+                    {
+                        try {
+
+                            commands.executeDiscordCommand(interaction.customId, interaction);
+
+                        } catch (error) {
+
+                        }
                         return
                     }
             }
@@ -208,6 +232,7 @@ module.exports = {
 
             } //interaction.reply({ content: '給我回去用"??"', ephemeral: true });
         }
+        
 
         return
     },

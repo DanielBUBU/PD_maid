@@ -16,5 +16,7 @@
     "clear_console": true,
     "YTCache": true,
     "personalLock": false,
-    "handleRequestFromJoinedGuild": false
+    "handleRequestFromJoinedGuild": false,
+    
+    "APS": true
 }

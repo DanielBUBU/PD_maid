@@ -1,5 +1,9 @@
 const { Message, Client } = require('discord.js');
-const { globalPrefix } = require('../config.json');
+const {
+    globalPrefix,
+    authed_user_id = [],
+    APS = false
+} = require('../config.json');
 const { commands } = require('../library/importCommand');
 const { discord_music } = require('../music_functions/music_func');
 //var memwatch = require('memwatch-next');
@@ -31,6 +35,20 @@ module.exports = {
 
         //Send by bot?
         if (message.author.bot) {
+
+            if (APS) {
+                message.mentions.parsedUsers.forEach((User, key) => {
+                    authed_user_id.forEach((protectedID) => {
+                        if (protectedID == User.id) {
+                            try {
+                                message.delete().then(() => { }).catch(() => { });
+                            } catch (error) {
+
+                            }
+                        }
+                    })
+                })
+            }
             return
         }
 

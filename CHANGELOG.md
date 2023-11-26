@@ -1,5 +1,10 @@
 # change log
 
+## Mein メイド v1.7.5 Stable
+- update ytdl package
+- add `dltmsg` command for deleting all message from the user by its ID
+- add button recursive handler in `interactionCreate.js`
+- add APS(Active Protect System) for preventing bots mention authed users in `messageCreate.js`
 
 ## Mein メイド v1.7.4 Stable
 - linux support improvement

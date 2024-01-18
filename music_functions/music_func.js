@@ -366,7 +366,7 @@ class discord_music {
         try {
             this.player.stop();
         } catch (error) {
-            
+
         }
         this.reset_music_parms();
         this.clear_status(true);
@@ -1492,6 +1492,10 @@ class discord_music {
                 console.log("The error might cause memory leak, please restart the program or enable YTCache;\nif already done,please call support")
                 console.log("click SKIP to skip the song");
                 return;
+            }
+            if (errorInp == "Error") {
+                console.log(error);
+                throw "Unknowen error"
             }
             console.log("err handled URL:%s\nTime:%d TS:%s", this.queue[this.nowplaying], this.PBD, Date.now());
             if (this.PBD) {

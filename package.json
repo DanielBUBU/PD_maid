@@ -1,9 +1,19 @@
 {
     "name": "pd_maid",
-    "version": "1.7.5",
+    "version": "1.7.6",
     "main": "index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "pkg": "pkg . --out-path=dist/"
+    },
+    "bin": "./index.js",
+    "pkg": {
+        "scripts": "build/**/*.js",
+        "assets": "views/**/*",
+        "targets": [
+            "node20"
+        ],
+        "outputPath": "dist"
     },
     "keywords": [],
     "author": "",

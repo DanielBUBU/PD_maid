@@ -1,5 +1,8 @@
 # change log
 
+## Mein メイド v1.7.6 Stable
+- add error handler for private video
+
 ## Mein メイド v1.7.5 Stable
 - update ytdl package
 - add `dltmsg` command for deleting all message from the user by its ID

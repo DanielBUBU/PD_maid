@@ -1,5 +1,9 @@
 # change log
 
+## Mein メイド v1.7.7 Stable
+- code rewind for building binary release
+- improve YT cache mechanism
+
 ## Mein メイド v1.7.6 Stable
 - add error handler for private video
 

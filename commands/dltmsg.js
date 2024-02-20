@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { authed_user_id } = require('../config.json');
+var path = require('path');
+const { authed_user_id } = require(path.join(process.cwd(),'./config.json'));
 const {
     EmbedBuilder, Message, InteractionType, MessageType, ChannelType,
 } = require('discord.js');

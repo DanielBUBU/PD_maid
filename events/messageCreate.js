@@ -1,9 +1,10 @@
 const { Message, Client } = require('discord.js');
+var path = require('path');
 const {
     globalPrefix,
     authed_user_id = [],
     APS = false
-} = require('../config.json');
+} = require(path.join(process.cwd(),'./config.json'));
 const { commands } = require('../library/importCommand');
 const { discord_music } = require('../music_functions/music_func');
 //var memwatch = require('memwatch-next');

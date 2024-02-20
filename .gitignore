@@ -18,3 +18,4 @@ appmap.yml
 tmp/*
 unused/*
 commands/pingdj.js
+build/*

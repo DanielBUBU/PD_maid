@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { Client, Message } = require('discord.js');
-const { discord_music } = require('../music_functions/music_func');
+var path = require('path');
+const { discord_music } = require(path.join(process.cwd(),'/music_functions/music_func.js'));
 
 module.exports = {
     data: new SlashCommandBuilder()

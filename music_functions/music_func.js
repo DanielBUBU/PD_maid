@@ -57,7 +57,7 @@ const {
     download_chunk_size = 4194304,
     clear_console = true,
     YTCache = true
-} = require('../config.json');
+} = require(path.join(process.cwd(),'/config.json'));
 
 var player = createAudioPlayer({
     behaviors: {
@@ -873,7 +873,7 @@ class discord_music {
                     this.next_song(true);
                 } else {
                     if (YTCache) {
-                        var file_name = videoTitle + ".webm";
+                        var file_name = "["+data.videoDetails.videoId+"]"+videoTitle + ".webm";
                         file_name = file_name.replace(/\:|\/|\\|\||\"|\*|\<|\>|\?/g, "");
                         var YTTempUrl = this.format_local_absolute_url(path.join(music_temp_dir, "YTTemp/"))
                         var file_url = this.format_local_absolute_url(path.join(YTTempUrl, file_name));
@@ -917,6 +917,9 @@ class discord_music {
                                     bar1.stop();
                                     try {
                                         this.playNewCachedYTLocalFile(file_url, begin_t);
+                                        if (!this.cached_file.find(funcUrl => funcUrl == file_url)) {
+                                            this.cached_file.push(file_url);
+                                        }
                                     } catch (error) {
                                         console.log(error)
                                         //don't need it because player will handle it
@@ -963,9 +966,6 @@ class discord_music {
 
     playNewCachedYTLocalFile(file_url, begin_t) {
         try {
-            if (!this.cached_file.find(funcUrl => funcUrl == file_url)) {
-                this.cached_file.push(file_url);
-            }
             if (begin_t) {
                 this.play_local_stream(file_url, begin_t);
             } else {

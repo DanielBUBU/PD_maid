@@ -1,9 +1,10 @@
 const fs = require('fs');
 const { Collection } = require('discord.js');
+var path = require('path');
 const {
     authed_user_id = [],
         personalLock = false,
-} = require('../config.json');
+} = require(path.join(process.cwd(),'./config.json'));
 
 
 function load_events(client, dmobj, cmdobj, authedGuildIDs) {

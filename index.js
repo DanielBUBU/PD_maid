@@ -3,6 +3,7 @@ const {
     deployCommands
 } = require('./library/deploy-commands');
 
+var path = require('path');
 const child_process = require('child_process');
 const {
     buildSlashCommandOnStartup = false,
@@ -14,7 +15,7 @@ const {
         clear_console = true,
         handleRequestFromJoinedGuild = true,
         token
-} = require('./config.json');
+} = require(path.join(process.cwd(),'./config.json'));
 
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
 

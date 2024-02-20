@@ -1,15 +1,17 @@
+
+var path = require('path');
 const {
     discord_music,
-} = require('../music_functions/music_func.js');
+} = require(path.join(process.cwd(),'./music_functions/music_func.js'));
 const {
     commands,
     load_events,
-} = require('./importCommand');
+} = require(path.join(process.cwd(),'./library/importCommand'));
 
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
 const {
     token
-} = require('../config.json');
+} = require(path.join(process.cwd(),'./config.json'));
 
 function login_client(unavailableGuildIDs) {
 

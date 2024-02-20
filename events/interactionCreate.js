@@ -7,8 +7,9 @@ const {
     Client
 } = require('discord.js');
 const ytpl = require('ytpl');
+var path = require('path');
 
-const { show_queue_len } = require('../config.json');
+const { show_queue_len } = require(path.join(process.cwd(),'./config.json'));
 const { commands } = require('../library/importCommand');
 const { discord_music } = require('../music_functions/music_func');
 

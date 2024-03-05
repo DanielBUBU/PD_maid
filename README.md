@@ -23,7 +23,7 @@ https://github.com/DanielBUBU/PD_maid
 - Free and easy to build
 - Open sauce and readable codes
 - Appendable commends
-- Self update launcher from github
+- Self update launcher from github(Not in release version)
 - RPC functions
 - Support mutiple platforms(Windows/Linux/Android)
 - Support Youtube,GD,and local file
@@ -34,25 +34,32 @@ https://github.com/DanielBUBU/PD_maid
 
 ## How to use
 
-- Step-bystep video tutorial:
-    - [Windows]https://www.youtube.com/watch?v=BbDmGMcapAY
-    - [Linux/Android(Termux)]https://www.youtube.com/watch?v=HjIwQkS4CWM
-- Installation for Git:https://youtu.be/eGNcXpXxh9U
+### How to use-Protable Release
+- No need to install node, ffmpeg, and git in your system if you use [release](https://github.com/DanielBUBU/PD_maid/releases)
+1. Download rar and unzip
+2. Paste validated config file `config.json`
+3. Click `pd_maid.exe`
 
-1. create a bot application here(https://discord.com/developers/applications)
-or simply follow the instruction here(https://discordjs.guide/preparations/adding-your-bot-to-servers.html#bot-invite-links)</br>
+### How to use-Sauce Code
+- Step-bystep video tutorial:
+    - [Windows](https://www.youtube.com/watch?v=BbDmGMcapAY)
+    - [Linux/Android(Termux)](https://www.youtube.com/watch?v=HjIwQkS4CWM)
+- [Installation Guide for Git](https://youtu.be/eGNcXpXxh9U)
+
+1. create a bot application [here](https://discord.com/developers/applications)
+or simply follow the instruction [here](https://discordjs.guide/preparations/adding-your-bot-to-servers.html#bot-invite-links)</br>
 
     - Remember to change permission integer(use `8` or `4398046511095`) of the invite link and turn on the intents</br>
 ![biscuit](./readme_assets/Intents.png)</br>
 ![biscuit](./readme_assets/Permission.png)</br>
 2. install programs in the system
-    - ffmpeg(https://www.wikihow.com/Install-FFmpeg-on-Windows)</br>
+    - [ffmpeg](https://www.wikihow.com/Install-FFmpeg-on-Windows)</br>
   `pkg install ffmpeg`for Linux/Termux
-    - Python 3.x</br>
+    - [Python 3.x](https://www.python.org/downloads/)</br>
   `pkg install python`for Linux/Termux
-    - git(https://git-scm.com/download/win)</br>
+    - [git](https://git-scm.com/download/win)</br>
   `pkg install git`for Linux/Termux
-    - Node.js LTS(https://nodejs.org/en/)</br>
+    - [Node.js LTS](https://nodejs.org/en/)</br>
   `pkg install nodejs-lts`for Linux/Termux</br>
   on your system and add then into the system path if they don't add automatically(windows)
 3. create/edit config.json in root</br>

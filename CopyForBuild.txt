@@ -1,0 +1,10 @@
+assets
+commands
+events
+frames
+library
+music_functions
+node_modules
+ffmpeg.exe
+yt-dlp(Linux)
+yt-dlp.exe(Windows)

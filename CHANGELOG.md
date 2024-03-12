@@ -1,5 +1,10 @@
 # change log
 
+## Mein メイド v1.7.8 Stable
+- add `badapple` command
+- improve non-authed user reply
+- copy list for release
+
 ## Mein メイド v1.7.7 Stable
 - code rewind for building binary release
 - improve YT cache mechanism

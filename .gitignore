@@ -19,3 +19,4 @@ tmp/*
 unused/*
 commands/pingdj.js
 build/*
+ffmpeg.exe

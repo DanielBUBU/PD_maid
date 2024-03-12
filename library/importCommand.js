@@ -3,8 +3,8 @@ const { Collection } = require('discord.js');
 var path = require('path');
 const {
     authed_user_id = [],
-        personalLock = false,
-} = require(path.join(process.cwd(),'./config.json'));
+    personalLock = false,
+} = require(path.join(process.cwd(), './config.json'));
 
 
 function load_events(client, dmobj, cmdobj, authedGuildIDs) {
@@ -29,7 +29,7 @@ function load_events(client, dmobj, cmdobj, authedGuildIDs) {
                 if (personalLock && args[0].user && !authed_user_id.find(element => element == args[0].user.id)) {
 
                     try {
-                        args[0].reply({ content: "You shall no pass" });
+                        args[0].reply({ content: "You shall no pass <@" + args[0].user.id + ">" });
                     } catch (error) {
 
                     }

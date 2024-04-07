@@ -73,9 +73,9 @@ module.exports = {
         //console.log(is_command);
 
 
-        if (!is_command) return;
+        if (!is_command) { return; }
+        console.log(`${message.author.tag} in #${message.channel.name} triggered an msg Command.`);
         try {
-
             commands.executeDiscordCommand(command_str, message, args);
         } catch (error) {
             console.error(error);

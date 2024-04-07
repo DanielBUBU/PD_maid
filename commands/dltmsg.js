@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 var path = require('path');
-const { authed_user_id } = require(path.join(process.cwd(),'./config.json'));
+const { authed_user_id } = require(path.join(process.cwd(), './config.json'));
 const {
     EmbedBuilder, Message, InteractionType, MessageType, ChannelType,
 } = require('discord.js');
@@ -25,24 +25,32 @@ module.exports = {
      */
     async execute(client, args, argsStr) {
         var notAuthed = true;
+        var notPassTag = "";
         authed_user_id.forEach((protectedID) => {
+            //for messages
             try {
                 if (protectedID == args.author.id) {
                     notAuthed = false;
+                } else {
+                    notPassTag = args.author.tag;
                 }
-
             } catch (error) {
 
             }
+
+            //for interaction
             try {
                 if (protectedID == args.user.id) {
                     notAuthed = false;
+                } else {
+                    notPassTag = args.user.tag;
                 }
             } catch (error) {
 
             }
         })
         if (notAuthed || !argsStr) {
+            args.reply("You shall no pass:" + notPassTag)
             return;
         }
         args.reply("Deleting msg of <@" + argsStr[0] + ">")

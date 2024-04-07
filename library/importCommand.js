@@ -65,6 +65,8 @@ class commands {
 
 
     executeDiscordCommand(commandStr, args, argsStr) {
+        console.log("executing command:" + commandStr)
+        console.log(argsStr)
         const command = this.commands.get(commandStr);
         if (command) {
             try {

@@ -5,6 +5,9 @@ frames
 library
 music_functions
 node_modules
+config.example.json
+config.minExample.json
+downloadLatest.sh
 ffmpeg.exe
 yt-dlp(Linux)
 yt-dlp.exe(Windows)

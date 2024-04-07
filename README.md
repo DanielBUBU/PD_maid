@@ -1,6 +1,6 @@
 # PD_maid
 
-## Version `1.7.8 Stable` is out!!
+## Version `1.7.9 Stable` is out!!
 ![Banner](./readme_assets/banner.png)
 
 
@@ -36,9 +36,12 @@ https://github.com/DanielBUBU/PD_maid
 
 ### How to use-Protable Release
 - No need to install node, ffmpeg, and git in your system if you use [release](https://github.com/DanielBUBU/PD_maid/releases)
-1. Download rar and unzip
+1. Download rar and unrar
 2. Paste validated config file `config.json`
 3. Click `pd_maid.exe`
+
+### How to download-Protable Release(Linux)
+1. execute `sh downloadLatest.sh`
 
 ### How to use-Sauce Code
 - Step-bystep video tutorial:
@@ -80,7 +83,8 @@ double click, copy and paste all stuff like `"YT_COOKIE":"HSID=xxx;SSID=xxx...__
 ![npm](./readme_assets/npm.png)
 5. Click PD_Maid_link_start.bat (or just run using `node .` in cmd),PD_Maid_link_start_admin.bat will ask for admin permission</br>
 6. Once it's ready, it will output a console log</br>
-    - YTDLP ECCESS error might appear in Linux/Termux,`chmod a+x yt-dlp`should solve the problem
+    - YTDLP ECCESS error might appear in Linux/Termux,`chmod a+x yt-dlp`should solve the problem</br>
+7. You can modify or add events or commands easily now by using the format I used
 
 
 ## Support/Bug report

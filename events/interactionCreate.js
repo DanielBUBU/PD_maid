@@ -9,7 +9,7 @@ const {
 const ytpl = require('ytpl');
 var path = require('path');
 
-const { show_queue_len } = require(path.join(process.cwd(),'./config.json'));
+const { show_queue_len } = require(path.join(process.cwd(), './config.json'));
 const { commands } = require('../library/importCommand');
 const { discord_music } = require('../music_functions/music_func');
 
@@ -41,21 +41,31 @@ module.exports = {
                     }
             }
         }
-
-        if (interaction.isChatInputCommand()) {
+        else if (interaction.isChatInputCommand()) {
             switch (interaction.commandName) {
                 case "dltmsg":
                     commands.executeDiscordCommand(interaction.commandName,
                         interaction,
                         [interaction.options.getString("targetid", true)]);
                     break;
-
+                case "badapple":
+                case "badappleDot":
+                    commands.executeDiscordCommand(interaction.commandName,
+                        interaction,
+                        [interaction.options.getInteger("jumpedframe", true)]);
+                    break;
                 default:
+                    try {
+
+                        commands.executeDiscordCommand(interaction.commandName, interaction);
+
+                    } catch (error) {
+
+                    }
                     break;
             }
         }
-
-        if (interaction.isButton()) {
+        else if (interaction.isButton()) {
             try {
                 //interaction.channel.send({ content: interaction.customId + ' clicked', ephemeral: true });
             } catch (error) {
@@ -233,7 +243,7 @@ module.exports = {
 
             } //interaction.reply({ content: '給我回去用"??"', ephemeral: true });
         }
-        
+
 
         return
     },

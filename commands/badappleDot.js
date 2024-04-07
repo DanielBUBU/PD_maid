@@ -6,7 +6,7 @@ const {
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('badapple')
+        .setName('badappledot')
         .setDescription('Play Bad Apple')
         .addIntegerOption(sOp => {
             return sOp
@@ -16,6 +16,6 @@ module.exports = {
                 .setMinValue(1)
         }),
     async execute(client, args, argsStr) {
-        playBadApple(args, "░▒▓▓█", argsStr[0]);
+        playBadApple(args, "⠄⠃⠆⠖⠇⠶⠏⡶⠟⣩⠿⣪⣫⣾⣿⠏⠟⠿", argsStr[0]);
     },
 };

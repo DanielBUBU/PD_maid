@@ -1,5 +1,10 @@
 # change log
 
+## Mein メイド v1.7.9 Stable
+- improve `badapple`
+- download latest release commands
+- improve sever logs
+
 ## Mein メイド v1.7.8 Stable
 - add `badapple` command
 - improve non-authed user reply

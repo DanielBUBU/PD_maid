@@ -18,5 +18,8 @@ appmap.yml
 tmp/*
 unused/*
 commands/pingdj.js
+commands/snailNews.js
 build/*
+build.bat
 ffmpeg.exe
+ffprobe.exe

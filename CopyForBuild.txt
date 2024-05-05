@@ -9,5 +9,6 @@ config.example.json
 config.minExample.json
 downloadLatest.sh
 ffmpeg.exe
-yt-dlp(Linux)
-yt-dlp.exe(Windows)
+ffprobe.exe
+yt-dlp
+yt-dlp.exe

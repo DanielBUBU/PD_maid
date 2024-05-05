@@ -29,7 +29,6 @@ const {
 } = require('@discordjs/voice');
 var path = require('path');
 const fs = require('fs');
-const probe = require('node-ffprobe');
 const https = require('https');
 const cliProgress = require('cli-progress');
 var Meta = require('html-metadata-parser');
@@ -57,7 +56,7 @@ const {
     download_chunk_size = 4194304,
     clear_console = true,
     YTCache = true
-} = require(path.join(process.cwd(),'/config.json'));
+} = require(path.join(process.cwd(), '/config.json'));
 
 var player = createAudioPlayer({
     behaviors: {
@@ -576,29 +575,34 @@ class discord_music {
                     time_str = (data.videoDetails.lengthSeconds - video_sec) / 60 + ":" +
                         video_sec.toString().padStart(2, '0');
                 }
-            } else if (await (this.is_GD_url(inp_url))) {
-                var GD_ID = inp_url.split("/")[5];
-                await probe("https://drive.google.com/uc?export=open&confirm=yTib&id=" + GD_ID).then(function (probeData) {
-                    video_sec = probeData.format.duration % 60;
-                    time_str = (probeData.format.duration - video_sec) / 60 + ":" +
-                        parseInt(video_sec).toString();
-                })
-                var result = await Meta.parser(inp_url);
-                //console.log(result);
-                if (result.meta.title) {
-                    title_str = result.meta.title;
-                }
-                if (result.og.site_name) {
-                    uploader_str = result.og.site_name;
-                }
             } else {
-                await probe(inp_url).then(function (probeData) {
-                    video_sec = probeData.format.duration % 60;
-                    time_str = (probeData.format.duration - video_sec) / 60 + ":" +
-                        parseInt(video_sec).toString();
+                var sendURL = inp_url;
+                if (await (this.is_GD_url(inp_url))) {
+                    var GD_ID = inp_url.split("/")[5];
+                    sendURL = "https://drive.google.com/uc?export=open&confirm=yTib&id=" + GD_ID;
+                    var result = await Meta.parser(inp_url);
+                    //console.log(result);
+                    if (result.meta.title) {
+                        title_str = result.meta.title;
+                    }
+                    if (result.og.site_name) {
+                        uploader_str = result.og.site_name;
+                    }
+                } else {
+                    title_str = inp_url.split("/").pop();
+                    inp_url = "https://www.google.com"
+                }
+                await new Promise((resolve, reject) => {
+                    fluentffmpeg.ffprobe(sendURL, function (err, probeData) {
+                        if (err) {
+                            resolve();
+                        }
+                        video_sec = probeData.format.duration % 60;
+                        time_str = (probeData.format.duration - video_sec) / 60 + ":" +
+                            parseInt(video_sec).toString();
+                        resolve();
+                    })
                 })
-                title_str = inp_url.split("/").pop();
-                inp_url = "https://www.google.com"
             }
 
             var output_embed = new EmbedBuilder()
@@ -873,7 +877,7 @@ class discord_music {
                     this.next_song(true);
                 } else {
                     if (YTCache) {
-                        var file_name = "["+data.videoDetails.videoId+"]"+videoTitle + ".webm";
+                        var file_name = videoTitle + "[" + data.videoDetails.videoId + "]" + ".webm";
                         file_name = file_name.replace(/\:|\/|\\|\||\"|\*|\<|\>|\?/g, "");
                         var YTTempUrl = this.format_local_absolute_url(path.join(music_temp_dir, "YTTemp/"))
                         var file_url = this.format_local_absolute_url(path.join(YTTempUrl, file_name));

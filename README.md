@@ -1,12 +1,13 @@
-# PD_maid
-
-## Version `1.7.9 Stable` is out!!
+# PD_maid `1.7.10 Stable` is out!!
 ![Banner](./readme_assets/banner.png)
 
 
 - A discord bot with GUI using node.js avaliable on Windows,Linux,and Android</br>
 https://github.com/DanielBUBU/PD_maid
-### Here are some showcases
+
+
+# Here are some showcases
+<details>
 
 - Main GUI</br>
 ![Main UI](./readme_assets/main_UI.png)
@@ -16,8 +17,10 @@ https://github.com/DanielBUBU/PD_maid
 ![YTPL too much](./readme_assets/ytpl_toomuch.png)
 - How console logs looks like when loading</br>
 ![logs](./readme_assets/console_logs.png)
+</details>
 
-## Why PD_Maid?
+# Why PD_Maid?
+<details>
 
 - GUI
 - Free and easy to build
@@ -31,31 +34,42 @@ https://github.com/DanielBUBU/PD_maid
 - Cross server support,bring your music to another server using join and leave buttons
 - 3 loop modes
 - Information for different links
+</details>
 
-## How to use
+# Apply bot
+<details>
 
-### How to use-Protable Release
+- create a bot application [here](https://discord.com/developers/applications)
+or simply follow the instruction [here](https://discordjs.guide/preparations/adding-your-bot-to-servers.html#bot-invite-links)</br>
+
+    - Remember to change permission integer(use `8` or `4398046511095` is recommaded) of the invite link and turn on the intents</br>
+![biscuit](./readme_assets/Intents.png)</br>
+![biscuit](./readme_assets/Permission.png)</br>
+</details>
+
+# How to use
+
+<details>
+
+## How to use-Protable Release(Easy)
+<details>
+
 - No need to install node, ffmpeg, and git in your system if you use [release](https://github.com/DanielBUBU/PD_maid/releases)
-1. Download rar and unrar
-2. Paste validated config file `config.json`
-3. Click `pd_maid.exe`
+1. Download rar and unzip
+- (for Linux only)there's a CLI script called `sh downloadLatest.sh` to download release binary
+2. Paste validated config file `config.json` in the folder
+3. Click `pd_maid.exe` or run using CLI
+</details>
 
-### How to download-Protable Release(Linux)
-1. execute `sh downloadLatest.sh`
+## How to use-Sauce Code(Hard)
+<details>
 
-### How to use-Sauce Code
 - Step-bystep video tutorial:
     - [Windows](https://www.youtube.com/watch?v=BbDmGMcapAY)
     - [Linux/Android(Termux)](https://www.youtube.com/watch?v=HjIwQkS4CWM)
 - [Installation Guide for Git](https://youtu.be/eGNcXpXxh9U)
 
-1. create a bot application [here](https://discord.com/developers/applications)
-or simply follow the instruction [here](https://discordjs.guide/preparations/adding-your-bot-to-servers.html#bot-invite-links)</br>
-
-    - Remember to change permission integer(use `8` or `4398046511095`) of the invite link and turn on the intents</br>
-![biscuit](./readme_assets/Intents.png)</br>
-![biscuit](./readme_assets/Permission.png)</br>
-2. install programs in the system
+1. install programs in the system
     - [ffmpeg](https://www.wikihow.com/Install-FFmpeg-on-Windows)</br>
   `pkg install ffmpeg`for Linux/Termux
     - [Python 3.x](https://www.python.org/downloads/)</br>
@@ -65,7 +79,7 @@ or simply follow the instruction [here](https://discordjs.guide/preparations/add
     - [Node.js LTS](https://nodejs.org/en/)</br>
   `pkg install nodejs-lts`for Linux/Termux</br>
   on your system and add then into the system path if they don't add automatically(windows)
-3. create/edit config.json in root</br>
+2. create/edit config.json in root</br>
 Format example can be found in `config.example.json`</br>
 `config.minExample.json` only require bot token string</br>
     - (Optional)YT_COOKIE can be found in any YT video with developer mode on</br>
@@ -79,19 +93,20 @@ double click, copy and paste all stuff like `"YT_COOKIE":"HSID=xxx;SSID=xxx...__
         []
     ]
     ````
-4. install lost packages using `npm i` in cmd</br>
+3. install lost packages using `npm i` in cmd</br>
 ![npm](./readme_assets/npm.png)
-5. Click PD_Maid_link_start.bat (or just run using `node .` in cmd),PD_Maid_link_start_admin.bat will ask for admin permission</br>
-6. Once it's ready, it will output a console log</br>
+4. Click PD_Maid_link_start.bat (or just run using `node .` in cmd),PD_Maid_link_start_admin.bat will ask for admin permission</br>
+5. Once it's ready, it will output a console log</br>
     - YTDLP ECCESS error might appear in Linux/Termux,`chmod a+x yt-dlp`should solve the problem</br>
-7. You can modify or add events or commands easily now by using the format I used
+6. You can modify or add events or commands easily now by using the format I used
 
+</details>
+</details>
 
-## Support/Bug report
+# Support/Bug report
 - Discord:https://discord.gg/bGWZCShbea
 - Support me here:https://www.buymeacoffee.com/DanielBUBU
-## Future
+# Future
 
 - tag or auto reply picture function
 - http server using node.js for web UI
-

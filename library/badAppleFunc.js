@@ -1,10 +1,15 @@
 const { Message } = require('discord.js');
-const imageToAscii = require("image-to-ascii");
+const convertToASCII = require('ascii-converter').default;
 const zeroPad = (num, places) => String(num).padStart(places, '0');
 const MAXFRAME = 6572
-async function playBadApple(args, drawElements, jumpedFrame) {
-    
-    if (!jumpedFrame) {
+async function playBadApple(args, drawElements, jumpedFrame, width, height) {
+
+    if (isNaN(jumpedFrame) ||
+        isNaN(width) ||
+        isNaN(height)) {
+        return;
+    }
+    if (jumpedFrame < 1) {
         return;
     }
     args.reply('Testing').then(
@@ -14,32 +19,38 @@ async function playBadApple(args, drawElements, jumpedFrame) {
          */
         async resultMessage => {
             var msg = resultMessage;
-
+            var temp = [];
             try {
-                for (let index = 1; index < MAXFRAME; index += jumpedFrame) {
-                    await new Promise((resolve, reject) => {
+                for (let index = 1; index < MAXFRAME; index += parseInt(jumpedFrame)) {
+                    var optFrame = await new Promise((resolve, reject) => {
                         var frameNum = zeroPad(index, 4);
                         var filePath = "./frames/BadApple" +
                             frameNum + ".png";
                         var content = frameNum + "Frame\n";
-                        var contentSent = false;
-                        imageToAscii(filePath.toString(),
+                        convertToASCII(
+                            filePath.toString(),
                             {
-                                colored: false,
-                                pixels: drawElements
-                            },
-                            (err, converted) => {
+                                width: width,
+                                height: height,
+                                grayScale: drawElements
+                            }
+                        ).then(
+                            (converted) => {
                                 content += converted;
-                                //console.log(err);
-                                msg.edit(content)
-                                    .then(() => { resolve(content); })
-                                    .catch((err) => { reject(err) })
-
+                                resolve(content);
                             }
                         );
                     }).catch((err) => { throw err })
+                    temp.push(optFrame);
 
+                }
 
+                for (let index = 1; index < temp.length; index += 1) {
+                    try {
+                        msg.edit(temp[index]);
+                    } catch (error) {
+                        console.log(error);
+                    }
                 }
             } catch (error) { console.log(error); }
 

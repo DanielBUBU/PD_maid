@@ -34,7 +34,6 @@ module.exports = {
                 case 'add_inp':
                     {
                         dmobj.set_client(client);
-
                         // const vc_channel = modal.member.voice.channelId;
                         dmobj.fetch_url_to_queue(interaction);
                         return;
@@ -49,10 +48,14 @@ module.exports = {
                         [interaction.options.getString("targetid", true)]);
                     break;
                 case "badapple":
-                case "badappleDot":
+                case "badappledot":
                     commands.executeDiscordCommand(interaction.commandName,
                         interaction,
-                        [interaction.options.getInteger("jumpedframe", true)]);
+                        [
+                            interaction.options.getInteger("jumpedframe", true),
+                            interaction.options.getInteger("width", true),
+                            interaction.options.getInteger("height", true)
+                        ]);
                     break;
                 default:
                     try {
@@ -66,11 +69,6 @@ module.exports = {
             }
         }
         else if (interaction.isButton()) {
-            try {
-                //interaction.channel.send({ content: interaction.customId + ' clicked', ephemeral: true });
-            } catch (error) {
-
-            }
             switch (interaction.customId) {
                 case 'loop':
                     {
@@ -190,18 +188,19 @@ module.exports = {
                         if (dmobj.ytpl_continuation) {
                             dmobj.ytpl_continuation = playlist.continuation;
                             while (go_flag) {
-                                playlist = await ytpl.continueReq(dmobj.ytpl_continuation);
+                                try {
+                                    playlist = await ytpl.continueReq(dmobj.ytpl_continuation);
+                                    interaction.channel.send((playlist.items.length) + ' songs adding to list');
+                                } catch (error) { }
 
-                                interaction.channel.send((playlist.items.length) + ' songs adding to list')
                                 for (let index = 0; index < playlist.items.length; index++) {
                                     dmobj.queue.push(playlist.items[index].shortUrl);
                                 }
 
                                 dmobj.ytpl_continuation = playlist.continuation;
                                 if (playlist.continuation) {
-                                    // let new_row1 = interaction.message.components[0];
+                                    //keep going - Johny walker
                                     dmobj.ytpl_continuation = playlist.continuation;
-                                    interaction.channel.send('Detected too much song in playlist')
                                 } else {
                                     go_flag = false;
                                 }
@@ -224,24 +223,16 @@ module.exports = {
                 default:
                     {
                         try {
-
                             commands.executeDiscordCommand(interaction.customId, interaction);
-
-                        } catch (error) {
-
-                        }
+                        } catch (error) { }
                         return
                     }
             }
-
         } else {
             try {
-
                 commands.executeDiscordCommand(interaction.commandName, interaction);
-
             } catch (error) {
-
-            } //interaction.reply({ content: '給我回去用"??"', ephemeral: true });
+            }
         }
 
 

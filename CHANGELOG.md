@@ -1,5 +1,13 @@
 # change log
 
+## Mein メイド v1.7.10 Stable
+- fix `badappleDot`, add width and height option, frame to ascii pre-processing
+- change from `image-to-ascii` to `ascii-converter` since the previous one needs to install graphicMagik in env
+- `discord.js` package update, replace `node-ffprobe` dependency using `fluentffmpeg.ffprobe`
+- clean `events\interactionCreate.js`
+- change YT temp ID position to postfix to prevent wrong order in OS file system
+- build `node20` binary using `pkg` fork now https://github.com/yao-pkg/pkg
+
 ## Mein メイド v1.7.9 Stable
 - improve `badapple`
 - download latest release commands

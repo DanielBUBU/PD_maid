@@ -54,9 +54,10 @@ or simply follow the instruction [here](https://discordjs.guide/preparations/add
 ## How to use-Protable Release(Easy)
 <details>
 
-- No need to install node, ffmpeg, and git in your system if you use [release](https://github.com/DanielBUBU/PD_maid/releases)
+- Step-by-step video tutorial:
+    - [Windows](https://www.youtube.com/watch?v=tYBX-v1j-Lc)
 1. Download rar and unzip
-- (for Linux only)there's a CLI script called `sh downloadLatest.sh` to download release binary
+    - (for Linux only)there's a CLI script called `sh downloadLatest.sh` to download release binary
 2. Paste validated config file `config.json` in the folder
 3. Click `pd_maid.exe` or run using CLI
 </details>
@@ -64,7 +65,7 @@ or simply follow the instruction [here](https://discordjs.guide/preparations/add
 ## How to use-Sauce Code(Hard)
 <details>
 
-- Step-bystep video tutorial:
+- Step-by-step video tutorial:
     - [Windows](https://www.youtube.com/watch?v=BbDmGMcapAY)
     - [Linux/Android(Termux)](https://www.youtube.com/watch?v=HjIwQkS4CWM)
 - [Installation Guide for Git](https://youtu.be/eGNcXpXxh9U)

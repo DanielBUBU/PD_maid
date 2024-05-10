@@ -41,21 +41,29 @@ module.exports = {
             }
         }
         else if (interaction.isChatInputCommand()) {
+            var options = undefined;
             switch (interaction.commandName) {
+
+                case "talk":
+                    options =
+                        [
+                            interaction.options.getString("content"),
+                            interaction.options.getString("replymessageid"),
+                            interaction.options.getString("stickerid")
+                        ]
+                    break;
                 case "dltmsg":
-                    commands.executeDiscordCommand(interaction.commandName,
-                        interaction,
-                        [interaction.options.getString("targetid", true)]);
+                    options =
+                        [interaction.options.getString("targetid", true)]
                     break;
                 case "badapple":
                 case "badappledot":
-                    commands.executeDiscordCommand(interaction.commandName,
-                        interaction,
+                    options =
                         [
                             interaction.options.getInteger("jumpedframe", true),
                             interaction.options.getInteger("width", true),
                             interaction.options.getInteger("height", true)
-                        ]);
+                        ]
                     break;
                 default:
                     try {
@@ -66,7 +74,21 @@ module.exports = {
 
                     }
                     break;
+
+
             }
+            if (options) {
+                try {
+                    commands.executeDiscordCommand(
+                        interaction.commandName,
+                        interaction,
+                        options
+                    )
+                } catch (error) {
+
+                }
+            }
+
         }
         else if (interaction.isButton()) {
             switch (interaction.customId) {

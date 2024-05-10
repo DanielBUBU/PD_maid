@@ -1,6 +1,6 @@
 {
     "name": "pd_maid",
-    "version": "1.7.10",
+    "version": "1.8.0",
     "main": "index.js",
     "output": "blob.blob",
     "disableExperimentalSEAWarning": true,

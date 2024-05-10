@@ -47,9 +47,16 @@ async function playBadApple(args, drawElements, jumpedFrame, width, height) {
 
                 for (let index = 1; index < temp.length; index += 1) {
                     try {
-                        msg.edit(temp[index]);
+                        //warp it to wait the result or error
+                        await new Promise((resolve, reject) => {
+
+                            msg.edit(temp[index])
+                                .then(() => { resolve(); })
+                                .catch((err) => { reject(err) })
+                        }).catch((err) => { throw err })
                     } catch (error) {
-                        console.log(error);
+                        console.log("BadappleEditErr");
+                        break;
                     }
                 }
             } catch (error) { console.log(error); }

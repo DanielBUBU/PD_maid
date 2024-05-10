@@ -1,5 +1,10 @@
 # change log
 
+## Mein メイド v1.8.0 Stable
+- fix/improve `badappleFunc`, when handling error
+- improve `interactionCreate` event
+- add command to sending messages via bot
+
 ## Mein メイド v1.7.10 Stable
 - fix `badappleDot`, add width and height option, frame to ascii pre-processing
 - change from `image-to-ascii` to `ascii-converter` since the previous one needs to install graphicMagik in env

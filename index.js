@@ -7,17 +7,32 @@ var path = require('path');
 const child_process = require('child_process');
 const {
     buildSlashCommandOnStartup = false,
-        clientId = undefined,
-        rpc = false,
-        guildId = [
-            []
-        ],
-        clear_console = true,
-        handleRequestFromJoinedGuild = true,
-        token
-} = require(path.join(process.cwd(),'./config.json'));
+    clientId = undefined,
+    rpc = false,
+    guildId = [
+        []
+    ],
+    clear_console = true,
+    handleRequestFromJoinedGuild = true,
+    token,
+    webAwakeLock = false
+} = require(path.join(process.cwd(), './config.json'));
 
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
+
+if (webAwakeLock) {
+    const express = require('express')
+    const app = express()
+    const port = process.env.PORT || 4000;
+
+    app.get('/', (req, res) => {
+        res.send('Hello World!')
+    })
+
+    app.listen(port, () => {
+        console.log(`Example app listening on port ${port}`)
+    })
+}
 
 //#region Login
 var rpc_client;
@@ -44,15 +59,15 @@ async function rpc_login(params) {
             partyMax: 4,
 
             buttons: [{
-                    label: "Youtube",
-                    url: "https://www.youtube.com/@DanielBUBU"
-                }, {
-                    label: "Github",
-                    url: "https://github.com/DanielBUBU/PD_maid"
-                }]
-                //matchSecret: 'https://github.com/DanielBUBU/PD_maid',
-                //joinSecret: 'https://github.com/DanielBUBU/',
-                //spectateSecret: 'https://github.com/',
+                label: "Youtube",
+                url: "https://www.youtube.com/@DanielBUBU"
+            }, {
+                label: "Github",
+                url: "https://github.com/DanielBUBU/PD_maid"
+            }]
+            //matchSecret: 'https://github.com/DanielBUBU/PD_maid',
+            //joinSecret: 'https://github.com/DanielBUBU/',
+            //spectateSecret: 'https://github.com/',
         });
     });
 
@@ -81,10 +96,10 @@ async function fetchAndLogin(takenGuilds) {
 
     var client = new Client({
         intents: [GatewayIntentBits.Guilds,
-            GatewayIntentBits.GuildMessages,
-            GatewayIntentBits.GuildMessageReactions,
-            GatewayIntentBits.GuildVoiceStates,
-            GatewayIntentBits.MessageContent
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.MessageContent
         ],
         partials: [Partials.Channel],
 
@@ -134,7 +149,7 @@ function createProcess(guilds, index) {
     workerProcess.on("message", (data) => {
         //console.log(index + ")" + data);
     });
-    workerProcess.on('close', function(code) {
+    workerProcess.on('close', function (code) {
         console.log(index + ')Child killed,Code: ' + code);
         workerProcess.emit("error");
     }).on("error", () => {

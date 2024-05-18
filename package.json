@@ -25,6 +25,7 @@
     "description": "",
     "dependencies": {
         "@discordjs/voice": "^0.13.0",
+        "@distube/ytdl-core": "^4.13.3",
         "ascii-converter": "^1.1.5",
         "auto-git-update": "^2.1.2",
         "avconv": "^3.1.0",
@@ -37,7 +38,6 @@
         "html-metadata-parser": "^2.0.4",
         "libsodium-wrappers": "^0.7.10",
         "yt-dlp-wrap": "^2.3.11",
-        "ytdl-core": "^4.11.5",
         "ytpl": "^2.3.0"
     }
 }

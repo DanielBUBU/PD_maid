@@ -35,6 +35,7 @@ module.exports = {
                     {
                         dmobj.set_client(client);
                         // const vc_channel = modal.member.voice.channelId;
+                        interaction.reply("Processing...")
                         dmobj.fetch_url_to_queue(interaction);
                         return;
                     }

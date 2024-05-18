@@ -2,6 +2,10 @@
 
 const YTDlpWrapType = require('yt-dlp-wrap').default;
 const os = require("os");
+
+/**
+ * @type {YTDlpWrapType}
+ */
 var ytDlpWrap;
 switch (os.platform()) {
     case "win32":
@@ -32,7 +36,7 @@ const fs = require('fs');
 const https = require('https');
 const cliProgress = require('cli-progress');
 var Meta = require('html-metadata-parser');
-const ytdl = require("@distube/ytdl-core");
+const ytdl = require("ytdl-core");
 const fluentffmpeg = require('fluent-ffmpeg');
 const ytpl = require('ytpl');
 
@@ -561,7 +565,7 @@ class discord_music {
                     },
                 });
                 title_str = data.videoDetails.title;
-                video_sec = data.videoDetails.lengthSeconds % 60;
+                video_sec = data.videoDetails.lengthSeconds;
                 embed_thumbnail = data.videoDetails.thumbnails[3].url;
                 uploader_str = data.videoDetails.author.name.toString();
                 var is_LIVE = data.videoDetails.liveBroadcastDetails && data.videoDetails.liveBroadcastDetails.isLiveNow;
@@ -572,7 +576,7 @@ class discord_music {
                     /*time_str = (data.duration - video_sec) / 60 + ":" +
                         video_sec.toString().padStart(2, '0');*/
                     //YTDL
-                    time_str = (data.videoDetails.lengthSeconds - video_sec) / 60 + ":" +
+                    time_str = (video_sec - (video_sec % 60)) / 60 + ":" +
                         video_sec.toString().padStart(2, '0');
                 }
             } else {
@@ -775,20 +779,20 @@ class discord_music {
                 }
             } else if (ytdl.validateURL(inp_url)) {
                 await this.queue.push(inp_url);
-                interaction.reply('1 song adding to list' + `\`\`\`${inp_url}\`\`\``)
+                interaction.channel.send('1 song adding to list' + `\`\`\`${inp_url}\`\`\``)
             } else if ((await this.is_GD_url(inp_url))) {
                 inp_url = "https://drive.google.com/file/d/" + GD_ID;
                 await this.queue.push(inp_url);
-                interaction.reply('adding GD link to list' + `\`\`\`${inp_url}\`\`\``)
+                interaction.channel.send('adding GD link to list' + `\`\`\`${inp_url}\`\`\``)
             } else if ((await this.is_local_url_avaliabe(inp_url)) &&
                 this.urlFilterByFileName(authed_user_id, interaction.user.id).length != 0) {
                 this.fetch_cache_files(this.format_local_absolute_url(inp_url), true)
-                interaction.reply('adding local link to list')
+                interaction.channel.send('adding local link to list')
             } else if (this.urlFilterByFileName(this.cached_file, inp_url).length != 0) {
-                interaction.reply('adding local cache to list' + `\`\`\`${inp_url}\`\`\``)
+                interaction.channel.send('adding local cache to list' + `\`\`\`${inp_url}\`\`\``)
                 this.fetch_cache_files(this.urlFilterByFileName(this.cached_file, inp_url)[0], true);
             } else {
-                interaction.reply('link not avaliable' + `\`\`\`${inp_url}\`\`\``)
+                interaction.channel.send('link not avaliable' + `\`\`\`${inp_url}\`\`\``)
             }
             this.join_channel(interaction);
         } catch (error) {
@@ -817,9 +821,13 @@ class discord_music {
     async play_url(url, begin_t, args, forceD) {
 
         //preprocessing
-        if (this.audio_streamLV) {
+        try {
             this.YTDLPAbortController.abort("STOP");
             player.stop(true);
+        } catch (error) {
+
+        }
+        if (this.audio_streamLV) {
             this.audio_streamLV = undefined;
         }
         console.log(url + " TS:" + Date.now() + "\nBT:" + begin_t + "\nForce:" + forceD);
@@ -877,7 +885,10 @@ class discord_music {
                     this.next_song(true);
                 } else {
                     if (YTCache) {
+                        //YTDL
                         var file_name = videoTitle + "[" + data.videoDetails.videoId + "]" + ".webm";
+                        //YTDLP
+                        //var file_name = videoTitle + "[" + data.display_id + "]" + ".webm";
                         file_name = file_name.replace(/\:|\/|\\|\||\"|\*|\<|\>|\?/g, "");
                         var YTTempUrl = this.format_local_absolute_url(path.join(music_temp_dir, "YTTemp/"))
                         var file_url = this.format_local_absolute_url(path.join(YTTempUrl, file_name));
@@ -1183,7 +1194,25 @@ class discord_music {
                     resolve(data.videoDetails.liveBroadcastDetails && data.videoDetails.liveBroadcastDetails.isLiveNow);
                 }
             } catch (error) {
-                reject(error);
+                reject("is_YT_live_urlREJECT" + error);
+            }
+            resolve(false);
+        });
+    }
+
+    /**
+     * 
+     * @param {String} url 
+     * @returns {Boolean}
+     */
+    is_YTdlp_url(url) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                var data = await ytDlpWrap.getVideoInfo([url, "--simulate"]);
+                resolve(data);
+            }
+            catch (error) {
+                resolve(false);
             }
             resolve(false);
         });

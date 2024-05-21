@@ -822,8 +822,8 @@ class discord_music {
 
         //preprocessing
         try {
-            this.YTDLPAbortController.abort("STOP");
             player.stop(true);
+            this.YTDLPAbortController.abort("STOP");
         } catch (error) {
 
         }
@@ -1435,6 +1435,7 @@ class discord_music {
 
     //#endregion format things
 
+    //#region objAndCommandWarpers
     /**
      * 
      * @param {Stream}stream
@@ -1493,6 +1494,10 @@ class discord_music {
         }
     }
 
+    
+    //#endregion
+
+    //#region errorhandler
     /**
      * 
      * @param {AudioResource} resauce 
@@ -1545,7 +1550,7 @@ class discord_music {
             this.next_song(true);
         }
     }
-
+    //#endregion
 
 }
 module.exports = {

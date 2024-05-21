@@ -545,30 +545,31 @@ class discord_music {
         try {
             if (ytdl.validateURL(inp_url)) {
                 //YTDLP are too slow, but still working
-                /* var data = await ytDlpWrap.getVideoInfo(inp_url);
+                var data = await ytDlpWrap.getVideoInfo(inp_url);
 
-                 title_str = data.title;
-                 video_sec = data.duration % 60;
-                 embed_thumbnail = data.thumbnails.pop().url;
-                 uploader_str = data.uploader;
-                 var is_LIVE = data.is_live //data.videoDetails.liveBroadcastDetails && data.videoDetails.liveBroadcastDetails.isLiveNow;
+                title_str = data.title;
+                video_sec = data.duration;
+                embed_thumbnail = data.thumbnail;
+                uploader_str = data.uploader;
+                var is_LIVE = data.is_live;
+
+                /* var data = await ytdl.getBasicInfo(inp_url, {
+                     requestOptions: {
+                         headers: {
+                             cookie: YT_COOKIE,
+                             // Optional. If not given, ytdl-core will try to find it.
+                             // You can find this by going to a video's watch page, viewing the source,
+                             // and searching for "ID_TOKEN".
+                             // 'x-youtube-identity-token': 1324,
+                         },
+                     },
+                 });
+                 title_str = data.videoDetails.title;
+                 video_sec = data.videoDetails.lengthSeconds;
+                 embed_thumbnail = data.videoDetails.thumbnails[3].url;
+                 uploader_str = data.videoDetails.author.name.toString();
+                 var is_LIVE = data.videoDetails.liveBroadcastDetails && data.videoDetails.liveBroadcastDetails.isLiveNow;
                  */
-                var data = await ytdl.getBasicInfo(inp_url, {
-                    requestOptions: {
-                        headers: {
-                            cookie: YT_COOKIE,
-                            // Optional. If not given, ytdl-core will try to find it.
-                            // You can find this by going to a video's watch page, viewing the source,
-                            // and searching for "ID_TOKEN".
-                            // 'x-youtube-identity-token': 1324,
-                        },
-                    },
-                });
-                title_str = data.videoDetails.title;
-                video_sec = data.videoDetails.lengthSeconds;
-                embed_thumbnail = data.videoDetails.thumbnails[3].url;
-                uploader_str = data.videoDetails.author.name.toString();
-                var is_LIVE = data.videoDetails.liveBroadcastDetails && data.videoDetails.liveBroadcastDetails.isLiveNow;
                 if (is_LIVE) {
                     time_str = "LIVE";
                 } else {
@@ -853,13 +854,13 @@ class discord_music {
 
         try {
             //YTDLP
-            /*var data = await ytDlpWrap.getVideoInfo(url);
+            var data = await ytDlpWrap.getVideoInfo(url);
             var isLIVE = data.is_live;
-            var duration=data.duration
-            var videoTitle=data.title;
-            */
+            var duration = data.duration;
+            var videoTitle = data.title;
+
             //YTDL
-            var data = await ytdl.getInfo(url, {
+            /*var data = await ytdl.getInfo(url, {
                 requestOptions: {
                     headers: {
                         cookie: YT_COOKIE,
@@ -868,7 +869,7 @@ class discord_music {
             });
             var isLIVE = data.videoDetails.liveBroadcastDetails && data.videoDetails.liveBroadcastDetails.isLiveNow;
             var duration = data.videoDetails.lengthSeconds;
-            var videoTitle = data.videoDetails.title;
+            var videoTitle = data.videoDetails.title;*/
             if (isLIVE) {
                 console.log("YT Live video");
                 //YTDLP are more stable for live videos
@@ -950,8 +951,17 @@ class discord_music {
                         }
 
                     } else {
+                        //YTDLP
 
-                        var audio_stream = ytdl.downloadFromInfo(data, {
+                        this.YTDLPAbortController = new AbortController();
+                        var audio_stream = ytDlpWrap.execStream(
+                            [url], {},
+                            this.YTDLPAbortController.signal
+                        ).on("error", (e) => { console.log("YTDLPLiveErr") });
+
+
+                        //ytdl
+                        /*var audio_stream = ytdl.downloadFromInfo(data, {
                             filter: "audioonly",
                             //liveBuffer: 2000,
                             highWaterMark: 16384,
@@ -967,7 +977,7 @@ class discord_music {
                                     // 'x-youtube-identity-token': 1324,
                                 },
                             },
-                        });
+                        });*/
                         this.playAudioResauce(this.wrapStreamToResauce(audio_stream, begin_t));
                     }
                 }
@@ -1180,17 +1190,17 @@ class discord_music {
             try {
                 if (ytdl.validateURL(url)) {
                     //YTDLP
-                    /*var data = await ytDlpWrap.getVideoInfo(url);
-                    resolve(data.is_live);*/
+                    var data = await ytDlpWrap.getVideoInfo(url);
+                    resolve(data.is_live);
 
                     //YTDL
-                    var data = await ytdl.getBasicInfo(url, {
+                    /*var data = await ytdl.getBasicInfo(url, {
                         requestOptions: {
                             headers: {
                                 cookie: YT_COOKIE,
                             },
                         },
-                    });
+                    });*/
                     resolve(data.videoDetails.liveBroadcastDetails && data.videoDetails.liveBroadcastDetails.isLiveNow);
                 }
             } catch (error) {
@@ -1494,7 +1504,7 @@ class discord_music {
         }
     }
 
-    
+
     //#endregion
 
     //#region errorhandler

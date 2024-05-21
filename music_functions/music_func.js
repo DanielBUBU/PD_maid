@@ -822,7 +822,7 @@ class discord_music {
 
         //preprocessing
         try {
-            player.stop(true);
+            this.player.stop(true);
             this.YTDLPAbortController.abort("STOP");
         } catch (error) {
 

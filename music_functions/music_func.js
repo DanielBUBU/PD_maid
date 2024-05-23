@@ -547,7 +547,7 @@ class discord_music {
                 //YTDLP are too slow, but still working
                 var data = await ytDlpWrap.getVideoInfo(inp_url);
 
-                title_str = data.title;
+                title_str = data.fulltitle;
                 video_sec = data.duration;
                 embed_thumbnail = data.thumbnail;
                 uploader_str = data.uploader;
@@ -573,10 +573,6 @@ class discord_music {
                 if (is_LIVE) {
                     time_str = "LIVE";
                 } else {
-                    //YTDLP
-                    /*time_str = (data.duration - video_sec) / 60 + ":" +
-                        video_sec.toString().padStart(2, '0');*/
-                    //YTDL
                     time_str = (video_sec - (video_sec % 60)) / 60 + ":" +
                         video_sec.toString().padStart(2, '0');
                 }
@@ -857,7 +853,7 @@ class discord_music {
             var data = await ytDlpWrap.getVideoInfo(url);
             var isLIVE = data.is_live;
             var duration = data.duration;
-            var videoTitle = data.title;
+            var videoTitle = data.fulltitle;
 
             //YTDL
             /*var data = await ytdl.getInfo(url, {

@@ -362,8 +362,6 @@ class discord_music {
         setTimeout(() => {
             if (this.nowplaying == -1 && this.queue.length >= 1) {
                 this.next_song(true);
-            } else {
-                this.send_control_panel();
             }
         }, 1000)
 
@@ -389,7 +387,7 @@ class discord_music {
             return false;
         })
         this.cleanConnectionArr(targets);
-        this.send_control_panel(args);
+
         return;
     }
 
@@ -636,10 +634,23 @@ class discord_music {
         //.setFooter('Some footer text here', 'https://i.imgur.com/wSTFkRM.png');
 
         try {
-            this.control_panel = await this.last_at_channel.send({ embeds: [output_embed], files: [file], components: [row1, row2] });
-            if (this.nowplaying != -1) {
-                this.send_info_embed(this.queue[this.nowplaying], "Nowplaying");
-            }
+            this.send_info_embed(this.queue[this.nowplaying], "Nowplaying",
+                () => {
+                    return new Promise(async (resolve, reject) => {
+                        try {
+                            this.control_panel =
+                                await this.last_at_channel.send(
+                                    {
+                                        embeds: [output_embed],
+                                        files: [file], components: [row1, row2]
+                                    }
+                                );
+                        } catch (error) {
+                            resolve(error)
+                        }
+                        resolve(false);
+                    });
+                });
         } catch (error) {
             console.log("SIE Sending Err");
         }
@@ -652,18 +663,30 @@ class discord_music {
      * @param {String} inp_url 
      * @param {String} embed_author_str 
      */
-    async send_info_embed(inp_url, embed_author_str) {
+    async send_info_embed(inp_url, embed_author_str, callbackF) {
         var video_sec = 0,
             embed_thumbnail,
             title_str = "",
             uploader_str = "Unknown",
             time_str = "0:00";
 
+        if (this.nowplaying == -1) {
+            if (callbackF) {
+                callbackF();
+            }
+            return;
+        }
+
         try {
             if (ytdl.validateURL(inp_url)) {
                 //YTDLP are too slow, but still working
-                var data = await ytDlpWrap.getVideoInfo([inp_url, "--simulate"]);
-
+                var data = await ytDlpWrap.getVideoInfo([inp_url, "--simulate"]).catch((e) => { });
+                if (!data) {
+                    if (callbackF) {
+                        callbackF();
+                    }
+                    return;
+                }
                 title_str = data.fulltitle;
                 video_sec = data.duration;
                 embed_thumbnail = data.thumbnail;
@@ -746,13 +769,15 @@ class discord_music {
                     url: inp_url
                 }]
             });
+            if (callbackF) {
+                await callbackF();
+            }
             this.last_at_channel.send({ embeds: [output_embed] }).then(msg => {
                 if (embed_author_str == "Nowplaying") {
                     this.delete_np_embed();
                     this.np_embed = msg;
                 }
-            })
-                .catch(console.error);;
+            }).catch(console.error);;
         } catch (error) {
             console.error('send_info_embed func error:', error);
         }
@@ -789,7 +814,6 @@ class discord_music {
         } catch (error) {
             console.log(error);
         }
-        this.send_control_panel(args);
     }
 
     //delete nowplaying info
@@ -915,9 +939,8 @@ class discord_music {
                 `\`\`\`${inp_url}\`\`\``);
         }
 
-        //fetch resauce and play songs if not playing
-
-        if (this.player.state == AudioPlayerStatus.Playing) {
+        //no new panel if it's playing
+        if (this.player.state.status == AudioPlayerStatus.Playing) {
             this.send_control_panel(interaction);
         } else {
             this.deleteOldPanel(interaction);
@@ -1678,6 +1701,7 @@ class discord_music {
     }
 
     async showQueueHandler(args) {
+        this.deleteOldPanel(args);
         if (this.nowplaying != -1) {
             await this.send_info_embed(this.queue[this.nowplaying], "Nowplaying is No." + this.nowplaying);
             if ((this.nowplaying + show_queue_len) <= this.queue.length) {
@@ -1692,9 +1716,9 @@ class discord_music {
 
 
         } else {
-            interaction.channel.send('No song in playing');
+            args.channel.send('No song in playing');
         }
-        this.send_control_panel(interaction);
+        this.send_control_panel(args);
     }
 
     async changeLoopMode(args) {

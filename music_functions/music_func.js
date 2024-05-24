@@ -30,6 +30,7 @@ const {
     AudioResource,
     PlayerSubscription,
     AudioPlayer,
+    VoiceConnection,
 } = require('@discordjs/voice');
 var path = require('path');
 const fs = require('fs');
@@ -41,14 +42,17 @@ const fluentffmpeg = require('fluent-ffmpeg');
 const ytpl = require('ytpl');
 
 const {
+    ModalBuilder,
     AttachmentBuilder,
     EmbedBuilder,
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
+    TextInputBuilder,
+    TextInputStyle,
     Message,
     Client,
-    ClientUser
+    VoiceChannel,
 } = require('discord.js');
 
 //#endregion
@@ -59,14 +63,123 @@ const {
     authed_user_id = [],
     download_chunk_size = 4194304,
     clear_console = true,
-    YTCache = true
+    YTCache = true,
+    show_queue_len = 10
 } = require(path.join(process.cwd(), '/config.json'));
 
-var player = createAudioPlayer({
+var initPlayer = createAudioPlayer({
     behaviors: {
         noSubscriber: NoSubscriberBehavior.Pause,
     },
 });
+
+class DiscordConnectionClass {
+
+    /**
+     * @type {VoiceConnection|undefined}
+     */
+    connection;
+
+    /**
+     * @type {PlayerSubscription|undefined}
+     */
+    subscribe;
+
+    isDestroyed = false;
+
+    constructor(args, player, last_at_vc_channel, last_interaction) {
+        console.log('Connecting...');
+
+        this.connection = joinVoiceChannel({
+            channelId: last_at_vc_channel.id,
+            guildId: last_interaction.guild.id,
+            adapterCreator: last_interaction.guild.voiceAdapterCreator,
+        }).on("error", (err) => {
+            console.log("CON ERR" + err);
+            this.join_channel();
+        })
+
+        ///#region tempFix
+        //https://github.com/discordjs/discord.js/issues/9185#issuecomment-1453535500
+        //https://github.com/discordjs/discord.js/issues/9185#issuecomment-1459083216
+        const networkStateChangeHandler = (oldNetworkState, newNetworkState) => {
+            const newUdp = Reflect.get(newNetworkState, 'udp');
+            try {
+                clearInterval(newUdp.keepAliveInterval);
+            } catch (error) {
+
+            }
+        }
+        this.connection.on('stateChange', (oldState, newState) => {
+            try {
+                Reflect.get(oldState, 'networking').off('stateChange', networkStateChangeHandler);
+            } catch (error) {
+
+            }
+            try {
+                Reflect.get(newState, 'networking').on('stateChange', networkStateChangeHandler);
+            } catch (error) { }
+        });
+        ///#endregion
+
+        this.subscribe = this.connection.subscribe(player);
+        this.connection.on(VoiceConnectionStatus.Disconnected, async (oldState, newState) => {
+            try {
+                await Promise.race([
+                    entersState(this.connection, VoiceConnectionStatus.Signalling, 10000),
+                    entersState(this.connection, VoiceConnectionStatus.Connecting, 10000),
+                ]);
+                // Seems to be reconnecting to a new channel - ignore disconnect
+            } catch (error) {
+                // Seems to be a real disconnect which SHOULDN'T be recovered from
+                console.log("connection error!!");
+                try {
+                    this.connection.destroy();
+                    this.connection = undefined;
+                } catch (error) {
+                    console.log("Connection Destroy ERR" + error);
+                }
+                this.connection = undefined;
+                this.join_channel();
+            }
+        })
+    }
+
+    destroy(args) {
+        console.log(`Connection in <#${this.connection.joinConfig.channelId}> self destruction in 1 second`);
+        if (args) {
+            try {
+                args.channel.send(`Connection in <#${this.connection.joinConfig.channelId}> self destruction in 1 second`);
+            } catch (error) {
+
+            }
+        }
+        if (this.connection) {
+            try {
+                console.log('Connection detected, leaving');
+                this.subscribe.unsubscribe();
+                this.subscribe = undefined;
+                this.connection.destroy();
+                this.connection = undefined;
+            } catch (error) {
+
+            }
+        }
+        this.isDestroyed = true;
+    }
+
+    resub(player) {
+        if (this.subscribe) {
+            try {
+                this.subscribe.unsubscribe();
+                this.subscribe = undefined;
+                this.connection.subscribe(player);
+            } catch (error) {
+
+            }
+        }
+    }
+}
 
 class discord_music {
     //#region variables
@@ -83,19 +196,22 @@ class discord_music {
      * @type {AbortController|undefined}
      */
     YTDLPAbortController;
-    /**
-     * @type {PlayerSubscription}
-     */
-    subscribe;
-    player = player;
+    player = initPlayer;
     currentPlayerID = 0;
-    connection;
+
+    /**
+     * @type {DiscordConnectionClass[]}
+     */
+    connections = [];
     control_panel = undefined;
     queue = [];
     isloop = 2;
     ytpl_continuation = undefined;
     ytpl_limit = 2;
     last_at_channel = null;
+    /**
+     * @type {VoiceChannel|null}
+     */
     last_at_vc_channel = null;
     last_interaction = null;
     nowplaying = -1;
@@ -147,7 +263,7 @@ class discord_music {
     async next_song(force = false, next_song_url = false) {
         this.PBD = 0;
         this.processing_next_song = true;
-        this.delete_np_embed();
+        //this.delete_np_embed();
         var is_LIVE = false;
 
         try {
@@ -213,74 +329,26 @@ class discord_music {
      */
     async join_channel(args) {
         if (args) {
-            //this.last_at_vc_channel = args.member.voice.channelId;
-            //this.last_at_channel = args.channel;
             this.last_interaction = args;
-            if (args.member.voice.channelId) {
-                this.last_at_vc_channel = args.member.voice.channelId;
+            if (args.member.voice.channel) {
+                this.last_at_vc_channel = args.member.voice.channel;
             }
         }
 
 
         if (this.last_at_vc_channel) {
-
-            this.connection = joinVoiceChannel({
-                channelId: this.last_at_vc_channel,
-                guildId: this.last_interaction.guild.id,
-                adapterCreator: this.last_interaction.guild.voiceAdapterCreator,
-            }).on("error", (err) => {
-                console.log("CON ERR" + err);
-                this.join_channel();
-            });
-            ///#region tempFix
-            //https://github.com/discordjs/discord.js/issues/9185#issuecomment-1453535500
-            //https://github.com/discordjs/discord.js/issues/9185#issuecomment-1459083216
-            const networkStateChangeHandler = (oldNetworkState, newNetworkState) => {
-                const newUdp = Reflect.get(newNetworkState, 'udp');
-                try {
-                    clearInterval(newUdp.keepAliveInterval);
-                } catch (error) {
-
+            var sameGuildConnection = this.connections.filter((e, ind, arr) => {
+                //same guild and not same vc channel
+                if (e.connection.joinConfig.guildId == this.last_at_vc_channel.guildId && e.connection.joinConfig.channelId != this.last_at_vc_channel.id) {
+                    e.destroy(args);
+                    return true;
                 }
+                return false;
+            })
+            this.cleanConnectionArr(sameGuildConnection);
+            if (!this.connections.find((e) => { return e.connection.joinConfig.channelId == this.last_at_vc_channel.id })) {
+                this.connections.push(new DiscordConnectionClass(args, this.player, this.last_at_vc_channel, this.last_interaction))
             }
-            this.connection.on('stateChange', (oldState, newState) => {
-                try {
-                    Reflect.get(oldState, 'networking').off('stateChange', networkStateChangeHandler);
-                } catch (error) {
-
-                }
-                try {
-                    Reflect.get(newState, 'networking').on('stateChange', networkStateChangeHandler);
-                } catch (error) { }
-            });
-            ///#endregion
-            this.subscribe = this.connection.subscribe(player);
-            console.log('Connecting...');
-
-
-
-            //try to reconnect if disconnect
-            this.connection.on(VoiceConnectionStatus.Disconnected, async (oldState, newState) => {
-                try {
-                    await Promise.race([
-                        entersState(this.connection, VoiceConnectionStatus.Signalling, 10000),
-                        entersState(this.connection, VoiceConnectionStatus.Connecting, 10000),
-                    ]);
-                    // Seems to be reconnecting to a new channel - ignore disconnect
-                } catch (error) {
-                    // Seems to be a real disconnect which SHOULDN'T be recovered from
-                    console.log("connection error!!");
-                    try {
-                        this.connection.destroy();
-                        this.connection = undefined;
-                    } catch (error) {
-                        console.log("Connection Destroy ERR" + error);
-                    }
-                    this.connection = undefined;
-                    this.join_channel();
-                }
-            });
-
         } else {
             try {
                 this.last_at_channel.send('Plese join a voice channel first');
@@ -313,12 +381,14 @@ class discord_music {
      * @returns {void}
      */
     connection_self_destruct(args) {
-        console.log('self destruction in 1 second');
-        if (this.connection) {
-            console.log('Connection detected, leaving');
-            this.connection.destroy();
-            this.connection = undefined;
-        }
+        var targets = this.connections.filter((e, index, array) => {
+            if (e.connection.joinConfig.guildId == args.guildId) {
+                e.destroy(args);
+                return true;
+            }
+            return false;
+        })
+        this.cleanConnectionArr(targets);
         this.send_control_panel(args);
         return;
     }
@@ -333,14 +403,16 @@ class discord_music {
      */
     clear_status(connectionSD = false, callbackF) {
         console.log("Cleaning dirty stuff");
-        this.delete_np_embed();
-        if (this.subscribe) {
-            this.subscribe.unsubscribe();
-            this.subscribe = undefined;
-            this.connection.subscribe(player);
-        }
+        //this.delete_np_embed();
         if (connectionSD) {
-            this.connection_self_destruct();
+            while (this.connections.length) {
+                this.connections.pop().destroy();
+            }
+        } else {
+            for (let index = 0; index < this.connections.length; index++) {
+                const element = this.connections[index];
+                element.resub(this.player);
+            }
         }
         if (callbackF) {
             callbackF();
@@ -357,7 +429,7 @@ class discord_music {
         this.nowplaying = -1;
     }
 
-    clearAll() {
+    clearAll(args) {
 
         this.client.user.setPresence({
             activities: [{
@@ -373,11 +445,43 @@ class discord_music {
         }
         this.reset_music_parms();
         this.clear_status(true);
+        this.send_control_panel(args);
+    }
+
+    /**
+     * 
+     * @param {DiscordConnectionClass[]} filteredEle 
+     * @returns 
+     */
+    cleanConnectionArr(filteredEle) {
+        filteredEle.forEach(f => this.connections.splice(this.connections.findIndex((e) => { return e.isDestroyed }), 1));
+        return
     }
 
     //#endregion
 
     //#region discord GUI
+
+    async sendInpModal(args) {
+        const ytInpModal = new ModalBuilder()
+            .setCustomId('add_inp')
+            .setTitle('Add song or list into queue!')
+
+        // Create the text input components
+        const ytUrlInput = new TextInputBuilder()
+            .setCustomId('add_url_str')
+            .setLabel('URL(Timeout if the playlist is too long)')
+            // Short means only a single line of text
+            .setStyle(TextInputStyle.Short)
+            .setMinLength(0)
+            .setMaxLength(100)
+            .setPlaceholder('Write a text here')
+            .setRequired(true)
+        const firstActionRow = new ActionRowBuilder().addComponents(ytUrlInput);
+        // Add inputs to the modal
+        ytInpModal.addComponents(firstActionRow);
+        await args.showModal(ytInpModal);
+    }
 
     //send control panel
     /**
@@ -705,7 +809,7 @@ class discord_music {
                 //or it's request from program in order to refresh the panel
                 oldCPID = this.control_panel.id;
                 this.control_panel.delete().then(() => { }).catch(() => { });
-
+                this.delete_np_embed();
             } catch (error) {
                 console.log("DelOLDCP ERR" + error);
             }
@@ -800,7 +904,7 @@ class discord_music {
 
         //fetch resauce and play songs if not playing
 
-        if (player.state == AudioPlayerStatus.Playing) {
+        if (this.player.state == AudioPlayerStatus.Playing) {
             this.send_control_panel(interaction);
         } else {
             this.deleteOldPanel(interaction);
@@ -829,7 +933,7 @@ class discord_music {
         }
         console.log(url + " TS:" + Date.now() + "\nBT:" + begin_t + "\nForce:" + forceD);
 
-        if ((!this.connection || !this.subscribe)) {
+        if ((!this.connections.length || !this.subscribe)) {
             this.join_channel(args);
         }
 
@@ -840,7 +944,7 @@ class discord_music {
         } else {
             this.play_local_url(url, begin_t);
         }
-        if ((!this.connection || !this.subscribe)) {
+        if ((!this.connections.length || !this.subscribe)) {
             this.join_channel(args);
         }
     }
@@ -869,11 +973,8 @@ class discord_music {
             if (isLIVE) {
                 console.log("YT Live video");
                 //YTDLP are more stable for live videos
-                this.YTDLPAbortController = new AbortController();
-                this.audio_streamLV = ytDlpWrap.execStream(
-                    [url], {},
-                    this.YTDLPAbortController.signal
-                ).on("error", (e) => { console.log("YTDLPLiveErr") });
+
+                this.audio_streamLV = this.createYTDLPStream(url);
 
                 this.playAudioResauce(this.wrapStreamToResauce(this.audio_streamLV, false));
             } else {
@@ -949,15 +1050,11 @@ class discord_music {
                     } else {
                         //YTDLP
 
-                        this.YTDLPAbortController = new AbortController();
-                        var audio_stream = ytDlpWrap.execStream(
-                            [url], {},
-                            this.YTDLPAbortController.signal
-                        ).on("error", (e) => { console.log("YTDLPLiveErr") });
+                        //var audio_stream = this.createYTDLPStream(url);
 
 
                         //ytdl
-                        /*var audio_stream = ytdl.downloadFromInfo(data, {
+                        var audio_stream = ytdl(url, {
                             filter: "audioonly",
                             //liveBuffer: 2000,
                             highWaterMark: 16384,
@@ -973,7 +1070,7 @@ class discord_music {
                                     // 'x-youtube-identity-token': 1324,
                                 },
                             },
-                        });*/
+                        });
                         this.playAudioResauce(this.wrapStreamToResauce(audio_stream, begin_t));
                     }
                 }
@@ -1126,7 +1223,7 @@ class discord_music {
     playAudioResauce(audioResauce) {
         console.log("Inserting sauce disk");
         try {
-            player.play(audioResauce);
+            this.player.play(audioResauce);
             this.processing_next_song = false;
         } catch (error) {
             console.log("PSP_ERR" + error);
@@ -1148,11 +1245,11 @@ class discord_music {
      */
     init_player() {
 
-        player.on('error', (error) => {
+        initPlayer.on('error', (error) => {
             console.log("AP_err" + error);
             this.playingErrorHandling(error.resource, error);
         }).on(AudioPlayerStatus.Idle, () => {
-            if (player.state.status === AudioPlayerStatus.Idle && !this.handling_vc_err && !this.processing_next_song) {
+            if (initPlayer.state.status === AudioPlayerStatus.Idle && !this.handling_vc_err && !this.processing_next_song) {
                 this.next_song();
             } else {
                 console.log('Player already playing',
@@ -1167,8 +1264,22 @@ class discord_music {
             console.log("Player " + newState.status);
         });
         console.log("Player inited");
-        this.player = player;
+        this.player = initPlayer;
         return;
+    }
+
+    createYTDLPStream(url) {
+        try {
+            this.player.stop(true);
+            this.YTDLPAbortController.abort("STOP");
+        } catch (error) {
+
+        }
+        this.YTDLPAbortController = new AbortController();
+        return ytDlpWrap.execStream(
+            [url], {},
+            this.YTDLPAbortController.signal
+        ).on("error", (e) => { console.log("YTDLPLiveErr") });
     }
 
 
@@ -1500,6 +1611,94 @@ class discord_music {
         }
     }
 
+    async pauseHandler(args) {
+        if (this.player.pause()) {
+            args.channel.send({ content: 'Resumed' });
+        } else {
+            args.channel.send({ content: 'Error when Resumed' });
+        }
+        this.send_control_panel(args);
+    }
+
+    async resumeHandler(args) {
+        if (this.player.unpause()) {
+            args.channel.send({ content: 'Resumed' });
+        } else {
+            args.channel.send({ content: 'Error when Resumed' });
+        }
+        this.send_control_panel(args);
+    }
+
+    async modalInpHandler(args) {
+        args.reply("Processing...")
+        this.fetch_url_to_queue(args);
+    }
+
+    async ytplTooMuchHandler(args) {
+        try {
+            args.message.delete().then(() => { }).catch(() => { });
+        } catch (error) { }
+        var playlist = this.ytpl_continuation;
+        var go_flag = true;
+        //args.channel.reply("Processing...")
+        if (this.ytpl_continuation) {
+            this.ytpl_continuation = playlist.continuation;
+            while (go_flag) {
+                try {
+                    playlist = await ytpl.continueReq(this.ytpl_continuation);
+                    args.channel.send((playlist.items.length) + ' songs adding to list');
+                } catch (error) { }
+
+                for (let index = 0; index < playlist.items.length; index++) {
+                    this.queue.push(playlist.items[index].shortUrl);
+                }
+
+                this.ytpl_continuation = playlist.continuation;
+                if (playlist.continuation) {
+                    //keep going - Johny walker
+                    this.ytpl_continuation = playlist.continuation;
+                } else {
+                    go_flag = false;
+                }
+            }
+        }
+    }
+
+    async showQueueHandler(args) {
+        if (this.nowplaying != -1) {
+            await this.send_info_embed(this.queue[this.nowplaying], "Nowplaying is No." + this.nowplaying);
+            if ((this.nowplaying + show_queue_len) <= this.queue.length) {
+                for (let index = this.nowplaying + 1; index < this.nowplaying + show_queue_len; index++) {
+                    await this.send_info_embed(this.queue[index], "No." + (index));
+                }
+            } else {
+                for (let index = this.nowplaying + 1; index < this.queue.length; index++) {
+                    await this.send_info_embed(this.queue[index], "No." + (index));
+                }
+            }
+
+
+        } else {
+            interaction.channel.send('No song in playing');
+        }
+        this.send_control_panel(interaction);
+    }
+
+    async changeLoopMode(args) {
+
+        if (this.isloop === 2) {
+            this.isloop = 0;
+            args.channel.send({ content: 'Set loop to false' });
+        } else if (this.isloop === 0) {
+            this.isloop = 1;
+            args.channel.send({ content: 'Set loop to single' });
+        } else {
+            this.isloop = 2;
+            args.channel.send({ content: 'Set loop to multiple' });
+        }
+        this.send_control_panel(args);
+    }
+
 
     //#endregion
 
@@ -1514,14 +1713,14 @@ class discord_music {
     playingErrorHandling(resauce, errorInp, forceD = false) {
 
         if (this.handling_vc_err ||
-            player.state.status === AudioPlayerStatus.Playing ||
+            this.player.state.status === AudioPlayerStatus.Playing ||
             this.queue[this.nowplaying] != resauce.metadata) {
             return;
         }
         try {
             this.handling_vc_err = true;
-            if (player.checkPlayable()) {
-                player.unpause();
+            if (this.player.checkPlayable()) {
+                this.player.unpause();
                 return;
             }
             this.PBD = this.PBD + resauce.playbackDuration;

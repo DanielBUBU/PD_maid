@@ -462,7 +462,11 @@ class discord_music {
 
     //#region discord GUI
 
-    async sendInpModal(args) {
+    /**
+     * 
+     * @param {import('discord.js').Interaction} interaction 
+     */
+    async sendInpModal(interaction) {
         const ytInpModal = new ModalBuilder()
             .setCustomId('add_inp')
             .setTitle('Add song or list into queue!')
@@ -480,7 +484,16 @@ class discord_music {
         const firstActionRow = new ActionRowBuilder().addComponents(ytUrlInput);
         // Add inputs to the modal
         ytInpModal.addComponents(firstActionRow);
-        await args.showModal(ytInpModal);
+        try {
+            await interaction.showModal(ytInpModal);
+        } catch (error) {
+            try {
+                interaction.message.delete()
+                    .catch(console.error);
+            } catch (error) {
+
+            }
+        }
     }
 
     //send control panel

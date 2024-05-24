@@ -649,7 +649,7 @@ class discord_music {
         try {
             if (ytdl.validateURL(inp_url)) {
                 //YTDLP are too slow, but still working
-                var data = await ytDlpWrap.getVideoInfo(inp_url);
+                var data = await ytDlpWrap.getVideoInfo([inp_url, "--simulate"]);
 
                 title_str = data.fulltitle;
                 video_sec = data.duration;
@@ -954,7 +954,7 @@ class discord_music {
 
         try {
             //YTDLP
-            var data = await ytDlpWrap.getVideoInfo(url);
+            var data = await ytDlpWrap.getVideoInfo([url, "--simulate"]);
             var isLIVE = data.is_live;
             var duration = data.duration;
             var videoTitle = data.fulltitle;
@@ -1297,7 +1297,7 @@ class discord_music {
             try {
                 if (ytdl.validateURL(url)) {
                     //YTDLP
-                    var data = await ytDlpWrap.getVideoInfo(url);
+                    var data = await ytDlpWrap.getVideoInfo([url, "--simulate"]);
                     resolve(data.is_live);
 
                     //YTDL

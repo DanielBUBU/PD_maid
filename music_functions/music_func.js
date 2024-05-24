@@ -646,15 +646,16 @@ class discord_music {
                                     }
                                 );
                         } catch (error) {
+                            this.is_sending_panel = false;
                             resolve(error)
                         }
+                        this.is_sending_panel = false;
                         resolve(false);
                     });
                 });
         } catch (error) {
             console.log("SIE Sending Err");
         }
-        this.is_sending_panel = false;
     }
 
     //send info using url,has special input "Nowplaying"
@@ -814,6 +815,7 @@ class discord_music {
         } catch (error) {
             console.log(error);
         }
+        this.send_control_panel(args);
     }
 
     //delete nowplaying info

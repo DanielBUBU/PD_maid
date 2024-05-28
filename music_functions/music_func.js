@@ -1046,7 +1046,7 @@ class discord_music {
                                 .exec([
                                     url,
                                     '-f',
-                                    'best',
+                                    'bestaudio',
                                     '-o',
                                     file_url,
                                 ])
@@ -1315,7 +1315,11 @@ class discord_music {
         }
         this.YTDLPAbortController = new AbortController();
         return ytDlpWrap.execStream(
-            [url], {},
+            [
+                url,
+                '-f',
+                'bestaudio'
+            ], {},
             this.YTDLPAbortController.signal
         ).on("error", (e) => { console.log("YTDLPLiveErr") });
     }

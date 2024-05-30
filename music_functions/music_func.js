@@ -1028,9 +1028,9 @@ class discord_music {
                 } else {
                     if (YTCache) {
                         //YTDL
-                        var file_name = videoTitle + "[" + data.videoDetails.videoId + "]" + ".opus";
+                        //var file_name = videoTitle + "[" + data.videoDetails.videoId + "]" + ".opus";
                         //YTDLP
-                        //var file_name = videoTitle + "[" + data.display_id + "]" + ".opus";
+                        var file_name = videoTitle + "[" + data.display_id + "]" + ".opus";
                         file_name = file_name.replace(/\:|\/|\\|\||\"|\*|\<|\>|\?/g, "");
                         var YTTempUrl = this.format_local_absolute_url(path.join(music_temp_dir, "YTTemp/"))
                         var file_url = this.format_local_absolute_url(path.join(YTTempUrl, file_name));

@@ -96,7 +96,12 @@ class DiscordConnectionClass {
             adapterCreator: last_interaction.guild.voiceAdapterCreator,
         }).on("error", (err) => {
             console.log("CON ERR" + err);
-            this.join_channel();
+            try {
+                this.connection.rejoin()
+            } catch (error) {
+                console.log("REJOIN ERR" + error);
+                this.isDestroyed = true;
+            }
         })
 
         ///#region tempFix
@@ -339,7 +344,8 @@ class discord_music {
         if (this.last_at_vc_channel) {
             var sameGuildConnection = this.connections.filter((e, ind, arr) => {
                 //same guild and not same vc channel
-                if (e.connection.joinConfig.guildId == this.last_at_vc_channel.guildId && e.connection.joinConfig.channelId != this.last_at_vc_channel.id) {
+                if (e.connection.joinConfig.guildId == this.last_at_vc_channel.guildId &&
+                    (e.connection.joinConfig.channelId != this.last_at_vc_channel.id || e.isDestroyed)) {
                     e.destroy(args);
                     return true;
                 }

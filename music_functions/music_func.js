@@ -1052,7 +1052,7 @@ class discord_music {
                                 .exec([
                                     url,
                                     '--remux-video',
-                                    'opus',
+                                    'webm>opus',
                                     '--embed-thumbnail',
                                     '-f',
                                     'bestaudio',
@@ -1139,7 +1139,7 @@ class discord_music {
 
         } catch (error) {
             try {
-                this.play_local_stream(file_url + ".mkv", begin_t);
+                this.play_local_stream(file_url, begin_t);
             } catch (error2) {
                 throw error + error2
             }

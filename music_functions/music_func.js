@@ -912,13 +912,13 @@ class discord_music {
 
                     interaction.channel.send({ embeds: [output_embed], components: [row1] });
 
-                    interaction.reply((this.ytpl_limit * 100) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
+                    interaction.channel.send((this.ytpl_limit * 100) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
                     for (let index = 0; index < this.ytpl_limit * 100; index++) {
                         this.queue.push(playlist.items[index].shortUrl);
                     }
                     this.ytpl_continuation = playlist;
                 } else {
-                    interaction.reply((playlist.items.length) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
+                    interaction.channel.send((playlist.items.length) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
                     for (let index = 0; index < playlist.items.length; index++) {
                         this.queue.push(playlist.items[index].shortUrl);
                     }

@@ -1030,10 +1030,11 @@ class discord_music {
                         //YTDL
                         //var file_name = videoTitle + "[" + data.videoDetails.videoId + "]" + ".opus";
                         //YTDLP
-                        var file_name = videoTitle + "[" + data.display_id + "]" + ".opus";
+                        var file_name = videoTitle + "[" + data.display_id + "]";
                         file_name = file_name.replace(/\:|\/|\\|\||\"|\*|\<|\>|\?/g, "");
                         var YTTempUrl = this.format_local_absolute_url(path.join(music_temp_dir, "YTTemp/"))
-                        var file_url = this.format_local_absolute_url(path.join(YTTempUrl, file_name));
+                        var file_url = this.format_local_absolute_url(path.join(YTTempUrl, file_name + ".opus"));
+                        var fileUrlWithoutFormat = this.format_local_absolute_url(path.join(YTTempUrl, file_name));
 
                         this.fileUrlCreateIfNotExist(YTTempUrl);
                         if (fileDead || !this.is_local_url_avaliabe(file_url)) {
@@ -1051,13 +1052,13 @@ class discord_music {
                             var ytDlpEventEmitter = ytDlpWrap
                                 .exec([
                                     url,
-                                    '--remux-video',
-                                    'webm>opus',
+                                    '--recode-video',
+                                    'opus',
                                     '--embed-thumbnail',
                                     '-f',
                                     'bestaudio',
                                     '-o',
-                                    file_url,
+                                    fileUrlWithoutFormat,
                                 ])
                                 .on('progress', (progress) => {
                                     bar1.update(progress.percent);

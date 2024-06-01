@@ -1,4 +1,4 @@
-# PD_maid `1.8.0 Stable` is out!!
+# PD_maid `1.8.1 Stable` is out!!
 ![Banner](./readme_assets/banner.png)
 
 

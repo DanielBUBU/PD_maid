@@ -1,5 +1,10 @@
 # change log
 
+## Mein メイド v1.8.1 Stable
+- warp all stuff from `interactionCreate.js` to `music_func.js`
+- update ytdlp and format some docs
+- awake web server for keeping PAAS awake
+
 ## Mein メイド v1.8.0 Stable
 - fix/improve `badappleFunc`, when handling error
 - improve `interactionCreate` event

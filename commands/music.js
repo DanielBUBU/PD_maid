@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { Client, Message } = require('discord.js');
 var path = require('path');
-const { discord_music } = require(path.join(process.cwd(),'/music_functions/music_func.js'));
+const { discord_music } = require('../music_functions/music_func');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -19,5 +19,6 @@ module.exports = {
         dmobj.set_client(client);
         dmobj.set_last_at_channel(args.channel);
         dmobj.join_channel(args);
+        dmobj.send_control_panel(args);
     },
 };

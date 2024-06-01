@@ -17,6 +17,6 @@
     "YTCache": true,
     "personalLock": false,
     "handleRequestFromJoinedGuild": false,
-    
-    "APS": true
+    "APS": true,
+    "webAwakeLock":true
 }

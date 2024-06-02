@@ -721,7 +721,7 @@ class discord_music {
                     time_str = "LIVE";
                 } else {
                     time_str = (video_sec - (video_sec % 60)) / 60 + ":" +
-                        video_sec.toString().padStart(2, '0');
+                    (video_sec % 60).toString().padStart(2, '0');
                 }
             } else {
                 var sendURL = inp_url;

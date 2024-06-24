@@ -87,7 +87,7 @@ class DiscordConnectionClass {
 
     isDestroyed = false;
 
-    constructor(args, player, last_at_vc_channel, last_interaction,join_channel) {
+    constructor(args, player, last_at_vc_channel, last_interaction) {
         console.log('Connecting...');
 
         this.connection = joinVoiceChannel({
@@ -139,13 +139,10 @@ class DiscordConnectionClass {
                 // Seems to be a real disconnect which SHOULDN'T be recovered from
                 console.log("connection error!!");
                 try {
-                    this.connection.destroy();
-                    this.connection = undefined;
+                    this.destroy();
                 } catch (error) {
                     console.log("Connection Destroy ERR" + error);
                 }
-                this.connection = undefined;
-                join_channel();
             }
         })
     }
@@ -353,7 +350,7 @@ class discord_music {
             })
             this.cleanConnectionArr(sameGuildConnection);
             if (!this.connections.find((e) => { return e.connection.joinConfig.channelId == this.last_at_vc_channel.id })) {
-                this.connections.push(new DiscordConnectionClass(args, this.player, this.last_at_vc_channel, this.last_interaction,this.join_channel))
+                this.connections.push(new DiscordConnectionClass(args, this.player, this.last_at_vc_channel, this.last_interaction))
             }
         } else {
             try {

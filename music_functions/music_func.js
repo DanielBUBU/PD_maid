@@ -87,7 +87,7 @@ class DiscordConnectionClass {
 
     isDestroyed = false;
 
-    constructor(args, player, last_at_vc_channel, last_interaction) {
+    constructor(args, player, last_at_vc_channel, last_interaction,join_channel) {
         console.log('Connecting...');
 
         this.connection = joinVoiceChannel({
@@ -145,7 +145,7 @@ class DiscordConnectionClass {
                     console.log("Connection Destroy ERR" + error);
                 }
                 this.connection = undefined;
-                this.join_channel();
+                join_channel();
             }
         })
     }
@@ -353,7 +353,7 @@ class discord_music {
             })
             this.cleanConnectionArr(sameGuildConnection);
             if (!this.connections.find((e) => { return e.connection.joinConfig.channelId == this.last_at_vc_channel.id })) {
-                this.connections.push(new DiscordConnectionClass(args, this.player, this.last_at_vc_channel, this.last_interaction))
+                this.connections.push(new DiscordConnectionClass(args, this.player, this.last_at_vc_channel, this.last_interaction,this.join_channel))
             }
         } else {
             try {

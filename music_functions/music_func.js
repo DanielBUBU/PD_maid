@@ -31,6 +31,7 @@ const {
     PlayerSubscription,
     AudioPlayer,
     VoiceConnection,
+    JoinConfig
 } = require('@discordjs/voice');
 var path = require('path');
 const fs = require('fs');
@@ -84,6 +85,11 @@ class DiscordConnectionClass {
      * @type {PlayerSubscription|undefined}
      */
     subscribe;
+
+    /**
+     * @type {JoinConfig|undefined}
+     */
+    joinConfig;
 
     isDestroyed = false;
 
@@ -145,13 +151,14 @@ class DiscordConnectionClass {
                 }
             }
         })
+        this.joinConfig = this.connection.joinConfig;
     }
 
     destroy(args) {
-        console.log(`Connection in <#${this.connection.joinConfig.channelId}> self destruction in 1 second`);
+        console.log(`Connection in <#${this.joinConfig.channelId}> self destruction in 1 second`);
         if (args) {
             try {
-                args.channel.send(`Connection in <#${this.connection.joinConfig.channelId}> self destruction in 1 second`);
+                args.channel.send(`Connection in <#${this.joinConfig.channelId}> self destruction in 1 second`);
             } catch (error) {
 
             }
@@ -341,15 +348,15 @@ class discord_music {
         if (this.last_at_vc_channel) {
             var sameGuildConnection = this.connections.filter((e, ind, arr) => {
                 //same guild and not same vc channel
-                if (e.connection.joinConfig.guildId == this.last_at_vc_channel.guildId &&
-                    (e.connection.joinConfig.channelId != this.last_at_vc_channel.id || e.isDestroyed)) {
+                if (e.joinConfig.guildId == this.last_at_vc_channel.guildId &&
+                    (e.joinConfig.channelId != this.last_at_vc_channel.id || e.isDestroyed)) {
                     e.destroy(args);
                     return true;
                 }
                 return false;
             })
             this.cleanConnectionArr(sameGuildConnection);
-            if (!this.connections.find((e) => { return e.connection.joinConfig.channelId == this.last_at_vc_channel.id })) {
+            if (!this.connections.find((e) => { return (e.joinConfig.channelId == this.last_at_vc_channel.id) })) {
                 this.connections.push(new DiscordConnectionClass(args, this.player, this.last_at_vc_channel, this.last_interaction))
             }
         } else {
@@ -383,7 +390,7 @@ class discord_music {
      */
     connection_self_destruct(args) {
         var targets = this.connections.filter((e, index, array) => {
-            if (e.connection.joinConfig.guildId == args.guildId) {
+            if (e.joinConfig.guildId == args.guildId) {
                 e.destroy(args);
                 return true;
             }
@@ -718,7 +725,7 @@ class discord_music {
                     time_str = "LIVE";
                 } else {
                     time_str = (video_sec - (video_sec % 60)) / 60 + ":" +
-                    (video_sec % 60).toString().padStart(2, '0');
+                        (video_sec % 60).toString().padStart(2, '0');
                 }
             } else {
                 var sendURL = inp_url;

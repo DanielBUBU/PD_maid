@@ -38,7 +38,7 @@ const fs = require('fs');
 const https = require('https');
 const cliProgress = require('cli-progress');
 var Meta = require('html-metadata-parser');
-const ytdl = require("ytdl-core");
+const ytdl = require("@distube/ytdl-core");
 const fluentffmpeg = require('fluent-ffmpeg');
 const ytpl = require('ytpl');
 
@@ -942,7 +942,8 @@ class discord_music {
                 interaction.channel.send('adding local cache to list' + `\`\`\`${inp_url}\`\`\``)
                 this.fetch_cache_files(this.urlFilterByFileName(this.cached_file, inp_url)[0], true);
             } else {
-                interaction.channel.send('link not avaliable' + `\`\`\`${inp_url}\`\`\``)
+                interaction.channel.send('link not avaliable' + `\`\`\`${inp_url}\`\`\``);
+                this.send_control_panel(interaction);
             }
             this.join_channel(interaction);
         } catch (error) {
@@ -1298,8 +1299,15 @@ class discord_music {
     init_player() {
 
         initPlayer.on('error', (error) => {
-            console.log("AP_err" + error);
-            this.playingErrorHandling(error.resource, error);
+            if (this.handling_vc_err) {
+                console.log("[Skipping]Can't play URL:" + this.queue[this.nowplaying])
+                console.log(error);
+                this.handling_vc_err = false;
+                this.next_song(true, this.popQueue());
+            } else {
+                console.log("AP_err" + error);
+                this.playingErrorHandling(error.resource, error);
+            }
         }).on(AudioPlayerStatus.Idle, () => {
             if (initPlayer.state.status === AudioPlayerStatus.Idle && !this.handling_vc_err && !this.processing_next_song) {
                 this.next_song();
@@ -1710,10 +1718,7 @@ class discord_music {
                 }
 
                 this.ytpl_continuation = playlist.continuation;
-                if (playlist.continuation) {
-                    //keep going - Johny walker
-                    this.ytpl_continuation = playlist.continuation;
-                } else {
+                if (!playlist.continuation) {
                     go_flag = false;
                 }
             }

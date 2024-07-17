@@ -1677,9 +1677,9 @@ class discord_music {
 
     async pauseHandler(args) {
         if (this.player.pause()) {
-            args.channel.send({ content: 'Resumed' });
+            args.channel.send({ content: 'Paused' });
         } else {
-            args.channel.send({ content: 'Error when Resumed' });
+            args.channel.send({ content: 'Error when Pause' });
         }
         this.send_control_panel(args);
     }
@@ -1688,7 +1688,7 @@ class discord_music {
         if (this.player.unpause()) {
             args.channel.send({ content: 'Resumed' });
         } else {
-            args.channel.send({ content: 'Error when Resumed' });
+            args.channel.send({ content: 'Error when Resume' });
         }
         this.send_control_panel(args);
     }

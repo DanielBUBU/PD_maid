@@ -99,7 +99,7 @@ module.exports = {
                     }
                 case 'resume':
                     {
-                        dmobj.pauseHandler(interaction);
+                        dmobj.resumeHandler(interaction);
                         return
                     }
                 case 'skip':

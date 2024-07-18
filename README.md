@@ -1,4 +1,8 @@
 # PD_maid `1.8.1 Stable` is out!!
+[![Downloads](https://img.shields.io/github/downloads/DanielBUBU/PD_maid/total.svg)](https://github.com/DanielBUBU/PD_maid/releases/latest)
+[![Release](https://img.shields.io/github/release/DanielBUBU/PD_maid.svg)](https://github.com/DanielBUBU/PD_maid/releases/latest)
+
+
 ![Banner](./readme_assets/banner.png)
 
 
@@ -36,6 +40,19 @@ https://github.com/DanielBUBU/PD_maid
 - Information for different links
 </details>
 
+# Comparison to other discord music bot
+Capability | PD_Maid | [yeecord](https://github.com/yeecord/) | [MatchBox](https://top.gg/bot/1145363441524166758?campaign=18-1) | [JMusicBot](https://github.com/jagrosh/MusicBot)
+:------------ | :-------------| :-------------| :------------- | :----
+Open sauce | ✅ |  ❌ | ❌ | ✅
+GUI | ✅ | ✅ | ❌ | ❌
+Playing local file | ✅ |  ❌ | ❌ | ✅
+Free 24/7 playing | ✅ |  ❌ | ❌ | ✅
+Add custom functions, command, events | ✅ | ❌ | ❌ | ✅
+YTDLP support | ✅ |  ❌ | ❌ | ❌
+Playing badapple in chat | ✅ | ❌ | ❌ | ❌
+Playing music syncly in different server | ✅ | ❌ | ❌ | ❌
+Linux, Android support | ✅ | doesn't fit | doesn't fit | ❌
+
 # Apply bot
 <details>
 
@@ -56,7 +73,7 @@ or simply follow the instruction [here](https://discordjs.guide/preparations/add
 
 - Step-by-step video tutorial:
     - [Windows](https://www.youtube.com/watch?v=tYBX-v1j-Lc)
-1. Download rar and unzip
+1. [Download](https://github.com/DanielBUBU/PD_maid/releases) rar and unzip
     - (for Linux only)there's a CLI script called `sh downloadLatest.sh` to download release binary
 2. Paste validated config file `config.json` in the folder
 3. Click `pd_maid.exe` or run using CLI
@@ -109,5 +126,5 @@ double click, copy and paste all stuff like `"YT_COOKIE":"HSID=xxx;SSID=xxx...__
 - Support me here:https://www.buymeacoffee.com/DanielBUBU
 # Future
 
-- tag or auto reply picture function
+- tag or auto reply picture function (it can be done in 5 mins using existing codes)
 - http server using node.js for web UI

@@ -1,5 +1,10 @@
 # change log
 
+
+## Mein メイド v1.8.2 Stable
+- add support file format
+- update ytdlp and ytdl
+
 ## Mein メイド v1.8.1 Stable
 - warp all stuff from `interactionCreate.js` to `music_func.js`
 - update ytdlp and format some docs

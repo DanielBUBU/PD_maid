@@ -1061,7 +1061,7 @@ class discord_music {
                                     'opus',
                                     '--embed-thumbnail',
                                     '-f',
-                                    'bestaudio',
+                                    'bestaudio[acodec=opus]/bestaudio[ext=aac]/bestaudio',
                                     '-o',
                                     fileUrlWithoutFormat,
                                 ])
@@ -1340,7 +1340,7 @@ class discord_music {
             [
                 url,
                 '-f',
-                'bestaudio'
+                'bestaudio[acodec=opus]/bestaudio[ext=aac]/bestaudio'
             ], {},
             this.YTDLPAbortController.signal
         ).on("error", (e) => { console.log("YTDLPLiveErr") });
@@ -1422,7 +1422,7 @@ class discord_music {
      */
     is_file_type_avaliable(str) {
         var type = str.split(".").pop()
-        var searched_fromat = this.urlFilterByFileName(["mp3", "wav", "flac", "webm", "mp4", "mkv"], type);
+        var searched_fromat = this.urlFilterByFileName(["mp3", "wav", "flac", "webm", "mp4", "mkv","opus"], type);
         if (searched_fromat.length != 0) {
             return true;
         }

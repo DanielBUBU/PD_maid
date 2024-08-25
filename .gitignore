@@ -23,3 +23,4 @@ build/*
 build.bat
 ffmpeg.exe
 ffprobe.exe
+/music_temp

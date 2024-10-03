@@ -3,6 +3,7 @@
 const YTDlpWrapType = require('yt-dlp-wrap').default;
 const os = require("os");
 
+const express = require('express');
 /**
  * @type {YTDlpWrapType}
  */
@@ -65,14 +66,98 @@ const {
     download_chunk_size = 4194304,
     clear_console = true,
     YTCache = true,
-    show_queue_len = 10
+    show_queue_len = 10,
+    webAwakeLock = false
 } = require(path.join(process.cwd(), '/config.json'));
 
 var initPlayer = createAudioPlayer({
     behaviors: {
+        maxMissedFrames: Infinity,
         noSubscriber: NoSubscriberBehavior.Pause,
     },
 });
+
+const { Transform } = require('stream');
+
+const DEFAULT_CAPACITY = 5;
+
+class BufferingTransform extends Transform {
+    constructor(options = {}) {
+        super(options);
+
+        this.capacity = options.capacity || DEFAULT_CAPACITY;
+        this.delay = options.delay || 25
+        this.pending = [];
+        this.pipes = 0;
+        return;
+    }
+
+    get atCapacity() {
+        return this.pending.length >= this.capacity;
+    }
+
+    _transform(chunk, encoding, cb) {
+
+        this.pending.push([chunk, encoding]);
+
+        if (this.atCapacity) {
+            if (this.pipes > 0) {
+                //console.log(this.pending.length)
+                this.push(...this.pending.shift());
+            } else {
+                this.pending = [];
+            }
+        }
+        if (cb != undefined) {
+            cb();
+        }
+    }
+
+    _flush(cb) {
+        console.log("flush")
+
+        while (this.pending.length > 0) {
+            if (this.pipes > 0) {
+                this.push(...this.pending.shift());
+            } else {
+                this.pending = [];
+            }
+        }
+
+        if (cb != undefined) {
+            cb();
+        }
+    }
+
+    _write(chunk, encoding, callback) {
+        this.push(chunk);
+        setTimeout(callback, this.delay);
+    }
+    _final() {
+        this.push(null)
+    }
+}
+
+class WebConnectionClass {
+
+    /**
+     * @type {import('express').Request|undefined}
+     */
+    req;
+
+    /**
+     * @type {import('express').Response|undefined}
+     */
+    res;
+
+    buffer = new BufferingTransform();
+    isDestroyed = false;
+
+    constructor(req, res) {
+        this.req = req;
+        this.res = res;
+    }
+}
 
 class DiscordConnectionClass {
 
@@ -211,7 +296,8 @@ class discord_music {
     /**
      * @type {DiscordConnectionClass[]}
      */
-    connections = [];
+    discordConnections = [];
+
     control_panel = undefined;
     queue = [];
     isloop = 2;
@@ -231,6 +317,14 @@ class discord_music {
     is_sending_panel = false;
     handling_chunk = false;
     cached_file = [];
+    webListenerSuccessFlag = false;
+    webAudioStream = new BufferingTransform();
+    port
+
+    /**
+     * @type {Express.Application}
+     */
+    expressApp = express();
     //#endregion
 
     //#region constructor & set functions
@@ -238,12 +332,53 @@ class discord_music {
     /**
      * 
      * @param {Client} client 
+     * @param {Number} processIndex 
      */
-    constructor(client) {
+    constructor(client, processIndex) {
+        if (webAwakeLock) {
+            this.port = process.env.PORT + processIndex + 1 || 4000 + processIndex + 1;
+
+            this.expressApp.get('/0.hls', (req, res) => {
+                res.writeHead(200, {
+                    //'Content-Type': 'audio/ogg',
+                    //"Content-Length": "*",
+                });
+                
+                res.on('error', () => {
+                    this.webAudioStream.pipes--;
+                    console.log(processIndex + ")web Client disconnected(error)")
+                });
+                res.on('close', () => {
+                    this.webAudioStream.pipes--;
+                    console.log(processIndex + ")web Client disconnected")
+                });
+                this.webAudioStream.pipe(res);
+                this.webAudioStream.pipes++;
+                console.log(processIndex + ")web Client connected");
+            })
+            while (!this.webListenerSuccessFlag && this.port <= 65535) {
+                try {
+                    this.expressApp.listen(this.port, () => {
+                        this.port--;
+                        console.log(`ChildProcess ${processIndex} listening on port ${this.port}`);
+                        process.send({ Port: this.port });
+                    }).on('connection', function (socket) {
+                        socket.setTimeout(300 * 1000);
+                        // 300 second(5mins) timeout. Change this as you see fit.
+                    });
+                    this.webListenerSuccessFlag = true;
+                } catch (error) {
+                    console.log(error);
+                }
+                this.port++;
+            }
+        }
+
         this.set_client(client);
         this.fetch_cache_files(music_temp_dir);
         this.init_player();
     }
+
 
     /**
      * 
@@ -346,7 +481,7 @@ class discord_music {
 
 
         if (this.last_at_vc_channel) {
-            var sameGuildConnection = this.connections.filter((e, ind, arr) => {
+            var sameGuildConnection = this.discordConnections.filter((e, ind, arr) => {
                 //same guild and not same vc channel
                 if (e.joinConfig.guildId == this.last_at_vc_channel.guildId &&
                     (e.joinConfig.channelId != this.last_at_vc_channel.id || e.isDestroyed)) {
@@ -356,8 +491,8 @@ class discord_music {
                 return false;
             })
             this.cleanConnectionArr(sameGuildConnection);
-            if (!this.connections.find((e) => { return (e.joinConfig.channelId == this.last_at_vc_channel.id) })) {
-                this.connections.push(new DiscordConnectionClass(args, this.player, this.last_at_vc_channel, this.last_interaction))
+            if (!this.discordConnections.find((e) => { return (e.joinConfig.channelId == this.last_at_vc_channel.id) })) {
+                this.discordConnections.push(new DiscordConnectionClass(args, this.player, this.last_at_vc_channel, this.last_interaction))
             }
         } else {
             try {
@@ -389,7 +524,7 @@ class discord_music {
      * @returns {void}
      */
     connection_self_destruct(args) {
-        var targets = this.connections.filter((e, index, array) => {
+        var targets = this.discordConnections.filter((e, index, array) => {
             if (e.joinConfig.guildId == args.guildId) {
                 e.destroy(args);
                 return true;
@@ -413,12 +548,12 @@ class discord_music {
         console.log("Cleaning dirty stuff");
         //this.delete_np_embed();
         if (connectionSD) {
-            while (this.connections.length) {
-                this.connections.pop().destroy();
+            while (this.discordConnections.length) {
+                this.discordConnections.pop().destroy();
             }
         } else {
-            for (let index = 0; index < this.connections.length; index++) {
-                const element = this.connections[index];
+            for (let index = 0; index < this.discordConnections.length; index++) {
+                const element = this.discordConnections[index];
                 element.resub(this.player);
             }
         }
@@ -462,7 +597,7 @@ class discord_music {
      * @returns 
      */
     cleanConnectionArr(filteredEle) {
-        filteredEle.forEach(f => this.connections.splice(this.connections.findIndex((e) => { return e.isDestroyed }), 1));
+        filteredEle.forEach(f => this.discordConnections.splice(this.discordConnections.findIndex((e) => { return e.isDestroyed }), 1));
         return
     }
 
@@ -982,7 +1117,7 @@ class discord_music {
         }
         console.log(url + " TS:" + Date.now() + "\nBT:" + begin_t + "\nForce:" + forceD);
 
-        if ((!this.connections.length || !this.subscribe)) {
+        if ((!this.discordConnections.length)) {
             this.join_channel(args);
         }
 
@@ -993,7 +1128,7 @@ class discord_music {
         } else {
             this.play_local_url(url, begin_t);
         }
-        if ((!this.connections.length || !this.subscribe)) {
+        if ((!this.discordConnections.length)) {
             this.join_channel(args);
         }
     }
@@ -1316,7 +1451,7 @@ class discord_music {
                     this.handling_vc_err, this.processing_next_song);
             }
 
-        }).on(AudioPlayerStatus.Playing, () => {
+        }).on(AudioPlayerStatus.Playing, (APSta) => {
             this.handling_vc_err = false;
             this.processing_next_song = false;
             this.send_control_panel();
@@ -1422,7 +1557,7 @@ class discord_music {
      */
     is_file_type_avaliable(str) {
         var type = str.split(".").pop()
-        var searched_fromat = this.urlFilterByFileName(["mp3", "wav", "flac", "webm", "mp4", "mkv","opus"], type);
+        var searched_fromat = this.urlFilterByFileName(["mp3", "wav", "flac", "webm", "mp4", "mkv", "opus"], type);
         if (searched_fromat.length != 0) {
             return true;
         }
@@ -1619,45 +1754,56 @@ class discord_music {
     //#region objAndCommandWarpers
     /**
      * 
-     * @param {Stream}stream
+     * @param {Transform}stream
      * @param {Number|Boolean}BT
      * @returns {AudioResource}
      */
     wrapStreamToResauce(stream, BT = false) {
         try {
             var streamOpt;
-            var ffmpeg_audio_stream_C;
+            var ffmpeg_audio_stream_C = fluentffmpeg(stream)
             var audio_resauce;
             if (BT) {
-                ffmpeg_audio_stream_C = fluentffmpeg().addInput(stream);
-                console.log("Set BT:" + Math.ceil(BT / 1000));
-                ffmpeg_audio_stream_C.seekInput(Math.ceil(BT / 1000)).toFormat('wav');
 
-                ffmpeg_audio_stream_C.on("error", (error) => {
-                    this.handling_vc_err = true;
-                    console.log("ffmpegErr" + error);
-                    if (error.outputStreamError) {
-                        if (error.outputStreamError.code == "ERR_STREAM_PREMATURE_CLOSE") {
-                            this.clear_status(false, () => {
-                                try {
-                                    //stream.destroy();
-                                } catch (error) {
-                                    console.log(error);
-                                }
-                                this.playingErrorHandling(audio_resauce, error)
-                            })
-                            return;
-                        }
+                console.log("Set BT:" + Math.ceil(BT / 1000));
+                ffmpeg_audio_stream_C.seekInput(Math.ceil(BT / 1000))
+            }
+            ffmpeg_audio_stream_C.toFormat('hls').audioChannels(2).audioFrequency(48000).audioBitrate('1536k');
+
+            ffmpeg_audio_stream_C.on("error", (error) => {
+                this.handling_vc_err = true;
+                console.log("ffmpegErr" + error);
+                if (error.outputStreamError) {
+                    if (error.outputStreamError.code == "ERR_STREAM_PREMATURE_CLOSE") {
+                        this.clear_status(false, () => {
+                            try {
+                                //stream.destroy();
+                            } catch (error) {
+                                console.log(error);
+                            }
+                            this.playingErrorHandling(audio_resauce, error)
+                        })
+                        return;
                     }
-                    this.playingErrorHandling(audio_resauce, error);
-                });
-                streamOpt = ffmpeg_audio_stream_C.pipe();
-            } else {
-                streamOpt = stream;
+                }
+                this.playingErrorHandling(audio_resauce, error);
+            });
+
+            streamOpt = ffmpeg_audio_stream_C.pipe();
+
+            if (webAwakeLock) {
+                streamOpt.on("data", (chunk) => {
+                    //console.log(chunk.length)
+                    this.webAudioStream._transform(chunk);
+                })
+                streamOpt.on("end", () => {
+                    console.log("streamEnd")
+                })
             }
             audio_resauce = createAudioResource(
                 streamOpt, { inputType: StreamType.Arbitrary, silencePaddingFrames: 10 }
             );
+
             audio_resauce.metadata = this.queue[this.nowplaying];
             return new Proxy(audio_resauce, {
                 set: (target, key, value) => {

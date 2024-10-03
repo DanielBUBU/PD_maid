@@ -38,6 +38,7 @@ module.exports = {
             switch (interaction.commandName) {
 
                 case "talk":
+                    console.log(dmobj.webAudioStream.pipes);
                     options =
                         [
                             interaction.options.getString("content"),

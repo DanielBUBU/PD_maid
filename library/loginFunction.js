@@ -19,6 +19,7 @@ function login_client(unavailableGuildIDs, processIndex) {
 
     var client = new Client({
         intents: [GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.GuildMessageReactions,
         GatewayIntentBits.GuildVoiceStates,
@@ -37,7 +38,7 @@ function login_client(unavailableGuildIDs, processIndex) {
         client = load_events(client, dmobj, cmdobj, unavailableGuildIDs);
         client.login(token);
         return client;
-    } catch(error) {
+    } catch (error) {
         console.log("Login failed, retrying");
         console.log(error);
         login_client(unavailableGuildIDs);

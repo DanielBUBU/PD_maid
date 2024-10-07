@@ -26,7 +26,7 @@ function load_events(client, dmobj, cmdobj, authedGuildIDs) {
                     //has guild param and it's not in authed ID's
                     return;
                 }
-                if (personalLock && args[0].user && !authed_user_id.find(element => element == args[0].user.id)) {
+                if (!event.isGlobalEvent && (personalLock && args[0].user && !authed_user_id.find(element => element == args[0].user.id))) {
 
                     try {
                         args[0].reply({ content: "You shall no pass <@" + args[0].user.id + ">" });

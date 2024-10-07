@@ -4,13 +4,14 @@ const {
 var path = require('path');
 const {
     APS = false
-} = require(path.join(process.cwd(),'./config.json'));
+} = require(path.join(process.cwd(), './config.json'));
 const { commands } = require('../library/importCommand');
 const { discord_music } = require('../music_functions/music_func');
 
 
 module.exports = {
     name: 'guildMemberAdd',
+    isGlobalEvent: true,
     /**
      * 
      * @param {Client} client 
@@ -23,16 +24,16 @@ module.exports = {
 
 
         console.log(`${addedMember.user.tag} joined`);
-        if (APS&&addedMember.user.bot) {
+        if (APS && addedMember.user.bot) {
             try {
                 addedMember.kick("Don't get close to my master");
                 console.log(`${addedMember.user.tag} kicked`);
-            } catch (error) {                
+            } catch (error) {
                 console.log(error);
             }
         }
 
-       
+
 
         return
     },

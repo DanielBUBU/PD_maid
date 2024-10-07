@@ -11,6 +11,7 @@ const { discord_music } = require('../music_functions/music_func');
 
 module.exports = {
     name: 'guildMemberAvailable',
+    isGlobalEvent: true,
     /**
      * 
      * @param {Client} client 
@@ -22,7 +23,7 @@ module.exports = {
     async execute(client, dmobj, commands, addedMember) {
 
 
-        console.log(`${addedMember.user.tag} Ava`);
+        console.log(`${addedMember.user.tag} became Available`);
         if (APS&&addedMember.user.bot) {
             try {
                 addedMember.kick("Don't get close to my master");

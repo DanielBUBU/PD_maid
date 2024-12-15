@@ -1192,6 +1192,8 @@ class discord_music {
                             var ytDlpEventEmitter = ytDlpWrap
                                 .exec([
                                     url,
+                                    '--cookies',
+                                    './cookies.txt',
                                     '--recode-video',
                                     'opus',
                                     '--embed-thumbnail',
@@ -1474,6 +1476,8 @@ class discord_music {
         return ytDlpWrap.execStream(
             [
                 url,
+                '--cookies',
+                './cookies.txt',
                 '-f',
                 'bestaudio[acodec=opus]/bestaudio[ext=aac]/bestaudio'
             ], {},

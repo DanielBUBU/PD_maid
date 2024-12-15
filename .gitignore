@@ -1,5 +1,6 @@
 
 config.json
+cookies.txt
 package-lock.json
 .data/youtube.data
 !node_modules/

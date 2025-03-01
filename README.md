@@ -27,6 +27,7 @@ https://github.com/DanielBUBU/PD_maid
 <details>
 
 - GUI
+- Web radio (tested using VLC)
 - Free and easy to build
 - Open sauce and readable codes
 - Appendable commends

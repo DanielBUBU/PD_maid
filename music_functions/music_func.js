@@ -143,26 +143,6 @@ class BufferingTransform extends Transform {
     }
 }
 
-class WebConnectionClass {
-
-    /**
-     * @type {import('express').Request|undefined}
-     */
-    req;
-
-    /**
-     * @type {import('express').Response|undefined}
-     */
-    res;
-
-    buffer = new BufferingTransform();
-    isDestroyed = false;
-
-    constructor(req, res) {
-        this.req = req;
-        this.res = res;
-    }
-}
 
 class DiscordConnectionClass {
 

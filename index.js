@@ -27,55 +27,6 @@ const { error } = require('console');
 const app = express()
 
 
-class BufferingTransform extends Transform {
-    constructor(options = {}) {
-        super(options);
-
-        this.capacity = options.capacity || DEFAULT_CAPACITY;
-        this.delay = options.delay || 25
-        this.pending = [];
-
-        return;
-    }
-
-    get atCapacity() {
-        return this.pending.length >= this.capacity;
-    }
-
-    _transform(chunk, encoding, cb) {
-
-        if (this.atCapacity) {
-            this.push(...this.pending.shift());
-        }
-
-        this.pending.push([chunk, encoding]);
-
-        if (cb != undefined) {
-            cb();
-        }
-    }
-
-    _flush(cb) {
-
-        while (this.pending.length > 0) {
-            this.push(...this.pending.shift());
-        }
-
-        if (cb != undefined) {
-            cb();
-        }
-    }
-
-    _write(chunk, encoding, callback) {
-        this.push(chunk);
-        setTimeout(callback, this.delay);
-    }
-    _final() {
-        this.push(null)
-    }
-}
-
-
 if (webAwakeLock) {
 
     app.get('/', (req, res) => {

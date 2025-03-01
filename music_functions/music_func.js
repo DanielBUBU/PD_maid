@@ -67,7 +67,8 @@ const {
     clear_console = true,
     YTCache = true,
     show_queue_len = 10,
-    webAwakeLock = false
+    webAwakeLock = false,
+    OPUSDownload = false
 } = require(path.join(process.cwd(), '/config.json'));
 
 var initPlayer = createAudioPlayer({
@@ -77,11 +78,15 @@ var initPlayer = createAudioPlayer({
     },
 });
 
-const { Transform } = require('stream');
+const { Transform, setDefaultHighWaterMark } = require('stream');
 
 const DEFAULT_CAPACITY = 5;
 
 class BufferingTransform extends Transform {
+    capacity;
+    delay;
+    pending;
+    pipes;
     constructor(options = {}) {
         super(options);
 
@@ -343,7 +348,7 @@ class discord_music {
                     //'Content-Type': 'audio/ogg',
                     //"Content-Length": "*",
                 });
-                
+
                 res.on('error', () => {
                     this.webAudioStream.pipes--;
                     console.log(processIndex + ")web Client disconnected(error)")
@@ -1168,12 +1173,15 @@ class discord_music {
                 } else {
                     if (YTCache) {
                         //YTDL
-                        //var file_name = videoTitle + "[" + data.videoDetails.videoId + "]" + ".opus";
+                        //var file_name = videoTitle + "[" + data.videoDetails.videoId + "]" + ".webm";
                         //YTDLP
                         var file_name = videoTitle + "[" + data.display_id + "]";
                         file_name = file_name.replace(/\:|\/|\\|\||\"|\*|\<|\>|\?/g, "");
                         var YTTempUrl = this.format_local_absolute_url(path.join(music_temp_dir, "YTTemp/"))
-                        var file_url = this.format_local_absolute_url(path.join(YTTempUrl, file_name + ".opus"));
+                        var file_url = this.format_local_absolute_url(path.join(YTTempUrl, file_name + ".webm"));
+                        if (OPUSDownload) {
+                            file_url = this.format_local_absolute_url(path.join(YTTempUrl, file_name + ".opus"));
+                        }
                         var fileUrlWithoutFormat = this.format_local_absolute_url(path.join(YTTempUrl, file_name));
 
                         this.fileUrlCreateIfNotExist(YTTempUrl);
@@ -1189,8 +1197,21 @@ class discord_music {
                                 format: ('|{bar}|{percentage}% | ETA: {eta}s | {value}/{total}')
                             }, cliProgress.Presets.shades_grey);
                             bar1.start(100, 0);
-                            var ytDlpEventEmitter = ytDlpWrap
-                                .exec([
+
+                            var ytdlpOptions = [
+                                url,
+                                '--cookies',
+                                './cookies.txt',
+                                '--recode-video',
+                                'webm',
+                                //'--embed-thumbnail',
+                                '-f',
+                                'bestaudio[acodec=opus]/bestaudio[ext=aac]/bestaudio',
+                                '-o',
+                                file_url,
+                            ];
+                            if (OPUSDownload) {
+                                ytdlpOptions = [
                                     url,
                                     '--cookies',
                                     './cookies.txt',
@@ -1201,7 +1222,10 @@ class discord_music {
                                     'bestaudio[acodec=opus]/bestaudio[ext=aac]/bestaudio',
                                     '-o',
                                     fileUrlWithoutFormat,
-                                ])
+                                ];
+                            }
+                            var ytDlpEventEmitter = ytDlpWrap
+                                .exec(ytdlpOptions)
                                 .on('progress', (progress) => {
                                     bar1.update(progress.percent);
                                     bar1.updateETA(progress.eta)
@@ -1767,12 +1791,17 @@ class discord_music {
             var streamOpt;
             var ffmpeg_audio_stream_C = fluentffmpeg(stream)
             var audio_resauce;
+            //begin time
             if (BT) {
 
                 console.log("Set BT:" + Math.ceil(BT / 1000));
                 ffmpeg_audio_stream_C.seekInput(Math.ceil(BT / 1000))
             }
-            ffmpeg_audio_stream_C.toFormat('hls').audioChannels(2).audioFrequency(48000).audioBitrate('1536k');
+            ffmpeg_audio_stream_C
+                .toFormat('hls')
+                .audioChannels(2)
+                .audioFrequency(48000)
+                .audioBitrate('1536k');
 
             ffmpeg_audio_stream_C.on("error", (error) => {
                 this.handling_vc_err = true;
@@ -1792,9 +1821,8 @@ class discord_music {
                 }
                 this.playingErrorHandling(audio_resauce, error);
             });
-
             streamOpt = ffmpeg_audio_stream_C.pipe();
-
+            //pass data to http server
             if (webAwakeLock) {
                 streamOpt.on("data", (chunk) => {
                     //console.log(chunk.length)
@@ -1809,6 +1837,7 @@ class discord_music {
             );
 
             audio_resauce.metadata = this.queue[this.nowplaying];
+            //return audio_resauce for player
             return new Proxy(audio_resauce, {
                 set: (target, key, value) => {
                     //console.log(`${key} set to ${value}`);
@@ -1821,6 +1850,7 @@ class discord_music {
             });
         } catch (error) {
             console.log("ERRwhenwarp");
+            console.log(error)
             throw error;
         }
     }

@@ -2,11 +2,18 @@
     "clientId": "Your bot client ID",
     "rpc": true,
     "guildId": [
-        ["Your guild ID", "Your second guild ID(optional)"],
-        ["Your third guild ID(optional)"]
+        [
+            "Your guild ID",
+            "Your second guild ID(optional)"
+        ],
+        [
+            "Your third guild ID(optional)"
+        ]
     ],
     "buildSlashCommandOnStartup": false,
-    "authed_user_id": ["Users' ID for those who can input local url"],
+    "authed_user_id": [
+        "Users' ID for those who can input local url"
+    ],
     "download_chunk_size": 4194304,
     "globalPrefix": "??",
     "token": "Your bot's token",
@@ -18,5 +25,6 @@
     "personalLock": false,
     "handleRequestFromJoinedGuild": false,
     "APS": true,
-    "webAwakeLock":true
+    "webAwakeLock": true,
+    "OPUSDownload": false
 }

@@ -1,5 +1,11 @@
 # change log
 
+## Mein メイド v1.8.3 Stable
+- add `isGlobalEvent` parameter for bypassing personal lock if needed
+- update ytdlp and packages
+- auto kick bot function is added in APS option
+- option to choose download file format between `opus` and `webm` (by default)
+- add web radio, enjoy music both in VLC and Discord!
 
 ## Mein メイド v1.8.2 Stable
 - add support file format

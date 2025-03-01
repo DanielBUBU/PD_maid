@@ -10,5 +10,6 @@ config.minExample.json
 downloadLatest.sh
 ffmpeg.exe
 ffprobe.exe
+README.md
 yt-dlp
 yt-dlp.exe

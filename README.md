@@ -1,4 +1,4 @@
-# PD_maid `1.8.2 Stable` is out!!
+# PD_maid `1.8.3 Stable` is out!!
 [![Downloads](https://img.shields.io/github/downloads/DanielBUBU/PD_maid/total.svg)](https://github.com/DanielBUBU/PD_maid/releases/latest)
 [![Release](https://img.shields.io/github/release/DanielBUBU/PD_maid.svg)](https://github.com/DanielBUBU/PD_maid/releases/latest)
 
@@ -27,6 +27,7 @@ https://github.com/DanielBUBU/PD_maid
 <details>
 
 - GUI
+- Web radio (tested using VLC)
 - Free and easy to build
 - Open sauce and readable codes
 - Appendable commends

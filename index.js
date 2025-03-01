@@ -2,7 +2,7 @@ console.log("Loading packages...");
 const {
     deployCommands
 } = require('./library/deploy-commands');
-
+var request = require('request');
 var path = require('path');
 const child_process = require('child_process');
 const {
@@ -15,22 +15,22 @@ const {
     clear_console = true,
     handleRequestFromJoinedGuild = true,
     token,
-    webAwakeLock = false
+    webAwakeLock = false,
 } = require(path.join(process.cwd(), './config.json'));
+const DEFAULT_CAPACITY = 256;
+const port = process.env.PORT || 4000;
 
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
+const express = require('express');
+const { Transform, Stream } = require('stream');
+const { error } = require('console');
+const app = express()
+
 
 if (webAwakeLock) {
-    const express = require('express')
-    const app = express()
-    const port = process.env.PORT || 4000;
 
     app.get('/', (req, res) => {
-        res.send('Hello World!')
-    })
-
-    app.listen(port, () => {
-        console.log(`Example app listening on port ${port}`)
+        res.send("Hi");
     })
 }
 
@@ -141,13 +141,20 @@ if (clientId && rpc) {
 }
 var usedGuildId = [];
 var childs = [];
+var childsServerUrl = [];
 
 function createProcess(guilds, index) {
-    var workerProcess = child_process.fork('./library/login.js', [JSON.stringify(guilds)]);
+    addChildProxy(childs.length);
+    var workerProcess = child_process.fork('./library/login.js', [JSON.stringify(guilds), index]);
     //workerProcess.stdout.on('data', function(data) { console.log(index + ')stdout: ' + data); });
-    //workerProcess.stderr.on('data', function(data) { console.log(index + ')stderr: ' + data); });
+    //workerProcess.stderr.on('data', function(data) { console.log(index + ')stderr: ' + data); });    
     workerProcess.on("message", (data) => {
-        //console.log(index + ")" + data);
+        //console.log(index + ")child Message:");
+        //console.log(data);
+        if (data.Port != undefined) {
+            childsServerUrl[index] = "http://127.0.0.1:" + data.Port + "/0.hls";
+            console.log(index + ")child SetPort:" + data.Port);
+        }
     });
     workerProcess.on('close', function (code) {
         console.log(index + ')Child killed,Code: ' + code);
@@ -163,11 +170,49 @@ function timerWorkload() {
     return;
 }
 
+function addChildProxy(index) {
+    const childPort = process.env.PORT + index + 1 || 4000 + index + 1;
+    var childUrl = "http://127.0.0.1:" + childPort + "/0.hls";
+    childsServerUrl.push(childUrl);
+    var childMsgHandler = async (req, res) => {
+        var passSocket;
+        var passreq = await request(childsServerUrl[index]).on("error", (error) => {
+            console.log("proxyRequestErr:" + error);
+            res.end()
+        }).on("disconnect",() => {
+            try {
+                passSocket.end()
+            } catch (error) {
+
+            }
+            console.log(index + ")web Client disconnected(complete) from parent")
+        }).on("socket", (src) => passSocket = src).pipe(res);
+        res.on('error', () => {
+            try {
+                passSocket.end()
+            } catch (error) {
+
+            }
+            console.log(index + ")web Client disconnected(error) from parent")
+        });
+        res.on('close', () => {
+            try {
+                passSocket.end()
+            } catch (error) {
+
+            }
+            console.log(index + ")web Client disconnected from parent")
+        });
+    }
+    var path = '/' + index;
+    app.use(path, childMsgHandler);
+}
+
 guildId.forEach((element, index) => {
     if (element.length != 0) {
         usedGuildId = usedGuildId.concat(element);
         console.log("Login guilds group" + element);
-        var newProcess = createProcess(element, childs.length);
+        var newProcess = createProcess(element, index);
         childs.push(newProcess);
     }
 });
@@ -179,6 +224,15 @@ if (clear_console) {
 if (handleRequestFromJoinedGuild) {
     fetchAndLogin(usedGuildId);
 }
+if (webAwakeLock) {
+    app.listen(port, () => {
+        console.log(`Example app listening on port ${port}`)
+    }).on('connection', function (socket) {
+        socket.setTimeout(3000 * 1000);
+        // 30 second timeout. Change this as you see fit.
+    });
+}
+
 console.log("Main executed");
 //for guilds that are not on the lists
 //#endregion Login

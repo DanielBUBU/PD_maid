@@ -21,6 +21,8 @@ https://github.com/DanielBUBU/PD_maid
 ![YTPL too much](./readme_assets/ytpl_toomuch.png)
 - How console logs looks like when loading</br>
 ![logs](./readme_assets/console_logs.png)
+- Playing bad apple in a text channel</br>
+![BadAppleExp](./readme_assets/BadAppleExp.png)
 </details>
 
 # Why PD_Maid?
@@ -39,6 +41,7 @@ https://github.com/DanielBUBU/PD_maid
 - Cross server support,bring your music to another server using join and leave buttons
 - 3 loop modes
 - Information for different links
+- Being able to play bad apple in a text channel
 </details>
 
 # Comparison to other discord music bot

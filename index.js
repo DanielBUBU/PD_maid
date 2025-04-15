@@ -4,6 +4,7 @@ const {
 } = require('./library/deploy-commands');
 var request = require('request');
 var path = require('path');
+const port = process.env.PORT || 4000;
 const child_process = require('child_process');
 const {
     buildSlashCommandOnStartup = false,
@@ -16,9 +17,9 @@ const {
     handleRequestFromJoinedGuild = true,
     token,
     webAwakeLock = false,
+    InternetUrl = "http://127.0.0.1:" + port
 } = require(path.join(process.cwd(), './config.json'));
 const DEFAULT_CAPACITY = 256;
-const port = process.env.PORT || 4000;
 
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
 const express = require('express');
@@ -176,10 +177,12 @@ function addChildProxy(index) {
     childsServerUrl.push(childUrl);
     var childMsgHandler = async (req, res) => {
         var passSocket;
+        res.set({
+        })
         var passreq = await request(childsServerUrl[index]).on("error", (error) => {
             console.log("proxyRequestErr:" + error);
             res.end()
-        }).on("disconnect",() => {
+        }).on("disconnect", () => {
             try {
                 passSocket.end()
             } catch (error) {
@@ -204,8 +207,18 @@ function addChildProxy(index) {
             console.log(index + ")web Client disconnected from parent")
         });
     }
-    var path = '/' + index;
-    app.use(path, childMsgHandler);
+    var hlsPath = '/' + index + ".hls";
+    app.use(hlsPath, childMsgHandler);
+    var childM3uHandler = async (req, res) => {
+        res.set({ 'Content-Type': 'application/force-download', 'Content-disposition': 'attachment; filename=file.m3u' })
+        res.end(
+            "#EXTM3U\n\n" +
+            "#EXTINF:PD_Maid" + index + " - InternetRadio\n" +
+            InternetUrl + hlsPath
+        );
+    }
+    var m3uPath = '/' + index + ".m3u";
+    app.use(m3uPath, childM3uHandler);
 }
 
 guildId.forEach((element, index) => {

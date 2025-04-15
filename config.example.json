@@ -26,5 +26,6 @@
     "handleRequestFromJoinedGuild": false,
     "APS": true,
     "webAwakeLock": true,
-    "OPUSDownload": false
+    "OPUSDownload": false,
+    "InternetUrl": "http://yourdomain:8080"
 }

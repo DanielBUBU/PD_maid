@@ -1,5 +1,9 @@
 # change log
 
+
+## Mein メイド v1.8.3 Stable#hotfix1
+- improve Internet radio and added m3u response
+
 ## Mein メイド v1.8.3 Stable
 - add `isGlobalEvent` parameter for bypassing personal lock if needed
 - update ytdlp and packages

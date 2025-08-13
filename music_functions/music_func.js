@@ -695,7 +695,7 @@ class discord_music {
 
 
 
-        let file = new AttachmentBuilder('./assets/disgust.png');
+        const file = new AttachmentBuilder('./assets/disgust.png');
 
 
         const row1 = new ActionRowBuilder()
@@ -776,6 +776,7 @@ class discord_music {
                                     }
                                 );
                         } catch (error) {
+                            console.log(error)
                             this.is_sending_panel = false;
                             resolve(error)
                         }

@@ -16,7 +16,7 @@
         "assets": "views/**/*",
         "targets": [
             "node22",
-            "node22-linux"
+            "node22-linux-x64"
         ],
         "outputPath": "build"
     },

@@ -1187,7 +1187,7 @@ class discord_music {
                                 'webm',
                                 //'--embed-thumbnail',
                                 '-f',
-                                'bestaudio[acodec=opus]/bestaudio[ext=aac]/bestaudio',
+                                'bestaudio[acodec=opus]/bestaudio[ext=aac]/bestaudio/best',
                                 '-o',
                                 file_url,
                             ];
@@ -1200,7 +1200,7 @@ class discord_music {
                                     'opus',
                                     '--embed-thumbnail',
                                     '-f',
-                                    'bestaudio[acodec=opus]/bestaudio[ext=aac]/bestaudio',
+                                    'bestaudio[acodec=opus]/bestaudio[ext=aac]/bestaudio/best',
                                     '-o',
                                     fileUrlWithoutFormat,
                                 ];
@@ -1484,7 +1484,7 @@ class discord_music {
                 '--cookies',
                 './cookies.txt',
                 '-f',
-                'bestaudio[acodec=opus]/bestaudio[ext=aac]/bestaudio'
+                'bestaudio[acodec=opus]/bestaudio[ext=aac]/bestaudio/best'
             ], {},
             this.YTDLPAbortController.signal
         ).on("error", (e) => { console.log("YTDLPLiveErr") });

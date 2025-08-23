@@ -46,11 +46,11 @@ async function fetchGuildIDs() {
 }
 
 async function deployCommands() {
-
+    console.log("Deploying commands...");
     var IDs = await fetchGuildIDs();
     IDs.forEach(element => {
 
-        console.log('Deploying commands to guild:' + element)
+        console.log('Deploying command to guild:' + element)
         rest.put(Routes.applicationGuildCommands(clientId, element), { body: commands })
             .then(() => console.log('Successfully registered application commands to guild:' + element))
             .catch(console.error);

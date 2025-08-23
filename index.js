@@ -1,11 +1,6 @@
-console.log("Loading packages...");
-const {
-    deployCommands
-} = require('./library/deploy-commands');
-var request = require('request');
+console.log("Loading Configs...");
 var path = require('path');
 const port = process.env.PORT || 4000;
-const child_process = require('child_process');
 const {
     buildSlashCommandOnStartup = false,
     clientId = undefined,
@@ -20,6 +15,12 @@ const {
     InternetUrl = "http://127.0.0.1:" + port
 } = require(path.join(process.cwd(), './config.json'));
 const DEFAULT_CAPACITY = 256;
+const {
+    deployCommands
+} = require('./library/deploy-commands');
+console.log("Loading packages...");
+var request = require('request');
+const child_process = require('child_process');
 
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
 const express = require('express');
@@ -138,6 +139,7 @@ if (buildSlashCommandOnStartup) {
     }
 }
 if (clientId && rpc) {
+    console.log("Loading RPC...");
     rpc_login();
 }
 var usedGuildId = [];

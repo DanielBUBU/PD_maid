@@ -3,7 +3,7 @@
 [![Release](https://img.shields.io/github/release/DanielBUBU/PD_maid.svg)](https://github.com/DanielBUBU/PD_maid/releases/latest)
 
 
-![Banner](./readme_assets/banner.png)
+![Banner](./readme_assets/banner.gif)
 
 
 - A discord bot with GUI using node.js avaliable on Windows,Linux,and Android</br>

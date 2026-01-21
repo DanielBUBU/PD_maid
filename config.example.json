@@ -27,5 +27,8 @@
     "APS": true,
     "webAwakeLock": true,
     "OPUSDownload": false,
-    "InternetUrl": "http://yourdomain:8080"
+    "InternetUrl": "http://yourdomain:8080",
+    "trapChannels": [
+        "trap channel ID"
+    ]
 }

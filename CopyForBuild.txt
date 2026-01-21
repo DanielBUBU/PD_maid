@@ -5,6 +5,7 @@ frames
 library
 music_functions
 node_modules
+readme_assets
 config.example.json
 config.minExample.json
 downloadLatest.sh

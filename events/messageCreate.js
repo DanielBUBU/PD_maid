@@ -3,8 +3,9 @@ var path = require('path');
 const {
     globalPrefix,
     authed_user_id = [],
-    APS = false
-} = require(path.join(process.cwd(),'./config.json'));
+    APS = false,
+    trapChannels = []
+} = require(path.join(process.cwd(), './config.json'));
 const { commands } = require('../library/importCommand');
 const { discord_music } = require('../music_functions/music_func');
 //var memwatch = require('memwatch-next');
@@ -51,6 +52,17 @@ module.exports = {
                 })
             }
             return
+        } else {
+            //spam APS
+            if (trapChannels.find((element) => element == message.channelId)) {
+                try {
+                    message.channel.send(`${message.author.tag} in #${message.channel.name} triggered an msg Command.`);
+                    message.guild.members.ban(message.author, { reason: "Spam message:"+message.content, deleteMessageSeconds: 600 });
+                } catch (error) {
+                    console.log(error);
+                }
+            }
+
         }
 
 

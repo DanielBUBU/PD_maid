@@ -1,5 +1,8 @@
 # change log
 
+## Mein メイド v1.8.4 Stable
+- add `trapChannels` parameter for detecting spam messages
+- update yt-dlp
 
 ## Mein メイド v1.8.3 Stable#hotfix1
 - improve Internet radio and added m3u response

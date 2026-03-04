@@ -1,5 +1,11 @@
 # change log
 
+## Mein メイド v1.8.5 Stable
+- rename `ready` event to `clientReady` to fit the dependency
+- add `DAVEY` to make connections work
+- change `ytpl` branch
+- update yt-dlp
+
 ## Mein メイド v1.8.4 Stable
 - add `trapChannels` parameter for detecting spam messages
 - update yt-dlp

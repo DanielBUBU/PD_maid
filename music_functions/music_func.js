@@ -41,7 +41,7 @@ const cliProgress = require('cli-progress');
 var Meta = require('html-metadata-parser');
 const ytdl = require("@distube/ytdl-core");
 const fluentffmpeg = require('fluent-ffmpeg');
-const ytpl = require('ytpl');
+const ytpl = require('@distube/ytpl');
 
 const {
     ModalBuilder,

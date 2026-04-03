@@ -1,4 +1,4 @@
-const YTDlpWrap = require('yt-dlp-wrap').default;
+const YTDlpWrap = require('yt-dlp-wrap-plus').default;
 
 //Download the yt-dlp binary for the given version and platform to the provided path.
 

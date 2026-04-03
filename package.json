@@ -41,6 +41,6 @@
         "html-metadata-parser": "^2.0.4",
         "libsodium-wrappers": "^0.7.15",
         "request": "^2.88.2",
-        "yt-dlp-wrap": "^2.3.12"
+        "yt-dlp-wrap-plus": "^2.4.3"
     }
 }

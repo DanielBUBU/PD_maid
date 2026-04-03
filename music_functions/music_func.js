@@ -1,6 +1,6 @@
 //#region packages
 
-const YTDlpWrapType = require('yt-dlp-wrap').default;
+const YTDlpWrapType = require('yt-dlp-wrap-plus').default;
 const os = require("os");
 
 const express = require('express');
@@ -268,7 +268,7 @@ class discord_music {
      */
     client;
     /**
-     * @type {import('yt-dlp-wrap').YTDlpReadable}
+     * @type {import('yt-dlp-wrap-plus').YTDlpReadable}
      */
     audio_streamLV;
     /**
@@ -1479,12 +1479,15 @@ class discord_music {
         }
         this.YTDLPAbortController = new AbortController();
         return ytDlpWrap.execStream(
-            [
-                url,
+            [                
+                '--js-runtimes',
+                'node',
+                '--no-live-from-start',
                 '--cookies',
                 './cookies.txt',
                 '-f',
-                'bestaudio[acodec=opus]/bestaudio[ext=aac]/bestaudio/best'
+                'bestaudio[acodec=opus]/bestaudio[ext=aac]/bestaudio/best',
+                url
             ], {},
             this.YTDLPAbortController.signal
         ).on("error", (e) => { console.log("YTDLPLiveErr") });

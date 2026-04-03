@@ -1,5 +1,9 @@
 # change log
 
+## Mein メイド v1.8.5 Stable#hotfix1
+- change `yt-dlp-warp` branch
+- update yt-dlp and live video options
+
 ## Mein メイド v1.8.5 Stable
 - rename `ready` event to `clientReady` to fit the dependency
 - add `DAVEY` to make connections work

@@ -1181,6 +1181,8 @@ class discord_music {
 
                             var ytdlpOptions = [
                                 url,
+                                '--js-runtimes',
+                                'node',
                                 '--cookies',
                                 './cookies.txt',
                                 '--recode-video',
@@ -1193,7 +1195,8 @@ class discord_music {
                             ];
                             if (OPUSDownload) {
                                 ytdlpOptions = [
-                                    url,
+                                    '--js-runtimes',
+                                    'node',
                                     '--cookies',
                                     './cookies.txt',
                                     '--recode-video',
@@ -1203,6 +1206,7 @@ class discord_music {
                                     'bestaudio[acodec=opus]/bestaudio[ext=aac]/bestaudio/best',
                                     '-o',
                                     fileUrlWithoutFormat,
+                                    url
                                 ];
                             }
                             var ytDlpEventEmitter = ytDlpWrap
@@ -1479,7 +1483,7 @@ class discord_music {
         }
         this.YTDLPAbortController = new AbortController();
         return ytDlpWrap.execStream(
-            [                
+            [
                 '--js-runtimes',
                 'node',
                 '--no-live-from-start',

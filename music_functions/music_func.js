@@ -812,7 +812,14 @@ class discord_music {
         try {
             if (ytdl.validateURL(inp_url)) {
                 //YTDLP are too slow, but still working
-                var data = await ytDlpWrap.getVideoInfo([inp_url, "--simulate"]).catch((e) => { });
+                var data = await ytDlpWrap.getVideoInfo([
+                    inp_url,
+                    '--js-runtimes',
+                    'node',
+                    '--cookies',
+                    './cookies.txt',
+                    "--simulate"
+                ]).catch((e) => { });
                 if (!data) {
                     if (callbackF) {
                         callbackF();
@@ -1124,7 +1131,13 @@ class discord_music {
 
         try {
             //YTDLP
-            var data = await ytDlpWrap.getVideoInfo([url, "--simulate"]);
+            var data = await ytDlpWrap.getVideoInfo([
+                url,
+                '--js-runtimes',
+                'node',
+                '--cookies',
+                './cookies.txt',
+                "--simulate"]);
             var isLIVE = data.is_live;
             var duration = data.duration;
             var videoTitle = data.fulltitle;
@@ -1512,7 +1525,14 @@ class discord_music {
             try {
                 if (ytdl.validateURL(url)) {
                     //YTDLP
-                    var data = await ytDlpWrap.getVideoInfo([url, "--simulate"]);
+                    var data = await ytDlpWrap.getVideoInfo([
+                        url,
+                        '--js-runtimes',
+                        'node',
+                        '--cookies',
+                        './cookies.txt',
+                        "--simulate"
+                    ]);
                     resolve(data.is_live);
 
                     //YTDL
@@ -1540,7 +1560,14 @@ class discord_music {
     is_YTdlp_url(url) {
         return new Promise(async (resolve, reject) => {
             try {
-                var data = await ytDlpWrap.getVideoInfo([url, "--simulate"]);
+                var data = await ytDlpWrap.getVideoInfo([
+                    url,
+                    '--js-runtimes',
+                    'node',
+                    '--cookies',
+                    './cookies.txt',
+                    "--simulate"
+                ]);
                 resolve(data);
             }
             catch (error) {

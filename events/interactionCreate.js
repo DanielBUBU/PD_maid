@@ -133,12 +133,6 @@ module.exports = {
                         dmobj.showQueueHandler(interaction);
                         return
                     }
-                case 'ytpl_toomuch_but':
-                    {
-                        dmobj.ytplTooMuchHandler(interaction);
-                        return;
-
-                    }
                 case 'cache_list':
                     {
                         dmobj.send_cache_list(interaction);

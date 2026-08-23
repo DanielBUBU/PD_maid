@@ -1,5 +1,9 @@
 # change log
 
+## Mein メイド v1.8.5 Stable#hotfix2
+- remove `ytpl` dep
+- update yt-dlp
+
 ## Mein メイド v1.8.5 Stable#hotfix1
 - change `yt-dlp-warp` branch
 - update yt-dlp and live video options

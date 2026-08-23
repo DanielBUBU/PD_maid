@@ -41,7 +41,6 @@ const cliProgress = require('cli-progress');
 var Meta = require('html-metadata-parser');
 const ytdl = require("@distube/ytdl-core");
 const fluentffmpeg = require('fluent-ffmpeg');
-const ytpl = require('@distube/ytpl');
 
 const {
     ModalBuilder,
@@ -286,8 +285,6 @@ class discord_music {
     control_panel = undefined;
     queue = [];
     isloop = 2;
-    ytpl_continuation = undefined;
-    ytpl_limit = 2;
     last_at_channel = null;
     /**
      * @type {VoiceChannel|null}
@@ -398,7 +395,9 @@ class discord_music {
         try {
 
             if (!next_song_url) {
-                is_LIVE = await this.is_YT_live_url(this.queue[this.nowplaying]);
+                if (this.queue[this.nowplaying] != undefined) {
+                    is_LIVE = await this.is_YT_live_url(this.queue[this.nowplaying]);
+                }
                 //It was playing something and it's a live video
                 if (this.nowplaying != -1 && is_LIVE && !force) {
                     next_song_url = this.queue[this.nowplaying];
@@ -812,14 +811,7 @@ class discord_music {
         try {
             if (ytdl.validateURL(inp_url)) {
                 //YTDLP are too slow, but still working
-                var data = await ytDlpWrap.getVideoInfo([
-                    inp_url,
-                    '--js-runtimes',
-                    'node',
-                    '--cookies',
-                    './cookies.txt',
-                    "--simulate"
-                ]).catch((e) => { });
+                var data = await this.is_YTdlp_url(inp_url);
                 if (!data) {
                     if (callbackF) {
                         callbackF();
@@ -1018,46 +1010,36 @@ class discord_music {
         if (interaction) {
             this.last_interaction = interaction;
         }
-        const row1 = new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId('ytpl_toomuch_but')
-                    .setLabel('Add anyway')
-                    .setStyle(ButtonStyle.Primary),
 
-            );
-
-        const output_embed = new EmbedBuilder()
-            .setColor('#831341')
-            .setTitle('Detected too much song in playlist')
-            .setDescription('keep adding into queue?')
-            .setTimestamp();
         var inp_url = interaction.fields.getTextInputValue('add_url_str').toString();
+
+        var ytDlp_data = await this.is_YTdlp_url(inp_url);
         var GD_ID = inp_url.split("/")[5];
         try {
 
             //fetch video
+            //yt-dlp works, determine playlist or not
+            if (ytDlp_data) {
+                if (ytDlp_data._type === 'playlist') {
 
-            if (ytpl.validateID(inp_url)) {
-                const playlist = await ytpl(inp_url, { pages: this.ytpl_limit });
-                if (playlist.continuation) {
-
-                    interaction.channel.send({ embeds: [output_embed], components: [row1] });
-
-                    interaction.channel.send((this.ytpl_limit * 100) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
-                    for (let index = 0; index < this.ytpl_limit * 100; index++) {
-                        this.queue.push(playlist.items[index].shortUrl);
+                    console.log(`✅ 成功辨識為播放清單，標題為: "${ytDlp_data.title}"，共有 ${ytDlp_data.entries.length} 部影片。`);
+                    // 將 entries 內的影片資料轉換為網址陣列
+                    var urlsArray = ytDlp_data.entries.map(entry => {
+                        return entry.url || entry.webpage_url || `https://www.youtube.com/watch?v=${entry.id}`;
+                    });
+                    interaction.channel.send((urlsArray.length) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
+                    for (let index = 0; index < urlsArray.length; index++) {
+                        this.queue.push(urlsArray[index]);
                     }
-                    this.ytpl_continuation = playlist;
+                } else if (ytDlp_data._type === 'video') {
+                    await this.queue.push(inp_url);
+                    interaction.channel.send('1 song adding to list' + `\`\`\`${inp_url}\`\`\``)
                 } else {
-                    interaction.channel.send((playlist.items.length) + ' songs adding to list' + `\`\`\`${inp_url}\`\`\``)
-                    for (let index = 0; index < playlist.items.length; index++) {
-                        this.queue.push(playlist.items[index].shortUrl);
-                    }
+                    interaction.channel.send('Unknown ytdlp format:' + `\`\`\`${ytDlp_data._type}\`\`\``)
                 }
-            } else if (ytdl.validateURL(inp_url)) {
-                await this.queue.push(inp_url);
-                interaction.channel.send('1 song adding to list' + `\`\`\`${inp_url}\`\`\``)
+
+
+
             } else if ((await this.is_GD_url(inp_url))) {
                 inp_url = "https://drive.google.com/file/d/" + GD_ID;
                 await this.queue.push(inp_url);
@@ -1131,6 +1113,7 @@ class discord_music {
 
         try {
             //YTDLP
+            //use old method to prevent lost info
             var data = await ytDlpWrap.getVideoInfo([
                 url,
                 '--js-runtimes',
@@ -1208,6 +1191,7 @@ class discord_music {
                             ];
                             if (OPUSDownload) {
                                 ytdlpOptions = [
+                                    url,
                                     '--js-runtimes',
                                     'node',
                                     '--cookies',
@@ -1218,8 +1202,7 @@ class discord_music {
                                     '-f',
                                     'bestaudio[acodec=opus]/bestaudio[ext=aac]/bestaudio/best',
                                     '-o',
-                                    fileUrlWithoutFormat,
-                                    url
+                                    fileUrlWithoutFormat
                                 ];
                             }
                             var ytDlpEventEmitter = ytDlpWrap
@@ -1523,16 +1506,9 @@ class discord_music {
     is_YT_live_url(url) {
         return new Promise(async (resolve, reject) => {
             try {
-                if (ytdl.validateURL(url)) {
-                    //YTDLP
-                    var data = await ytDlpWrap.getVideoInfo([
-                        url,
-                        '--js-runtimes',
-                        'node',
-                        '--cookies',
-                        './cookies.txt',
-                        "--simulate"
-                    ]);
+                //YTDLP
+                var data = await this.is_YTdlp_url(url);
+                if (data) {
                     resolve(data.is_live);
 
                     //YTDL
@@ -1560,17 +1536,23 @@ class discord_music {
     is_YTdlp_url(url) {
         return new Promise(async (resolve, reject) => {
             try {
-                var data = await ytDlpWrap.getVideoInfo([
+                var data = await ytDlpWrap.execPromise([
                     url,
+                    '--flat-playlist',
+                    '-J',
                     '--js-runtimes',
                     'node',
                     '--cookies',
                     './cookies.txt',
                     "--simulate"
                 ]);
-                resolve(data);
+                // 將回傳的字串解析為 JSON 物件
+                const info = JSON.parse(data);
+                resolve(info);
             }
             catch (error) {
+                console.log("Something is wrong when getting YTDLP info");
+                console.log(error);
                 resolve(false);
             }
             resolve(false);
@@ -1891,33 +1873,6 @@ class discord_music {
     async modalInpHandler(args) {
         args.reply("Processing...")
         this.fetch_url_to_queue(args);
-    }
-
-    async ytplTooMuchHandler(args) {
-        try {
-            args.message.delete().then(() => { }).catch(() => { });
-        } catch (error) { }
-        var playlist = this.ytpl_continuation;
-        var go_flag = true;
-        //args.channel.reply("Processing...")
-        if (this.ytpl_continuation) {
-            this.ytpl_continuation = playlist.continuation;
-            while (go_flag) {
-                try {
-                    playlist = await ytpl.continueReq(this.ytpl_continuation);
-                    args.channel.send((playlist.items.length) + ' songs adding to list');
-                } catch (error) { }
-
-                for (let index = 0; index < playlist.items.length; index++) {
-                    this.queue.push(playlist.items[index].shortUrl);
-                }
-
-                this.ytpl_continuation = playlist.continuation;
-                if (!playlist.continuation) {
-                    go_flag = false;
-                }
-            }
-        }
     }
 
     async showQueueHandler(args) {

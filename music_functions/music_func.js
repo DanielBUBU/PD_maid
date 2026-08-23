@@ -212,11 +212,11 @@ class DiscordConnectionClass {
                 // Seems to be reconnecting to a new channel - ignore disconnect
             } catch (error) {
                 // Seems to be a real disconnect which SHOULDN'T be recovered from
-                console.log("connection error!!");
+                console.log("connection error!!:" + error);
                 try {
                     this.destroy();
-                } catch (error) {
-                    console.log("Connection Destroy ERR" + error);
+                } catch (errordes) {
+                    console.log("Connection Destroy ERR" + errordes);
                 }
             }
         })
@@ -1551,8 +1551,8 @@ class discord_music {
                 resolve(info);
             }
             catch (error) {
-                console.log("Something is wrong when getting YTDLP info");
-                console.log(error);
+                console.log("Something is wrong when getting YTDLP info:" + error);
+                //console.log(error);
                 resolve(false);
             }
             resolve(false);
